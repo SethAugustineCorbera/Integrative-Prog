@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verify slip | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../auth/login.html">Log out</a></header>
+<section class="content">
+<h1>Verify slip</h1>
+<p class="muted">Check a student's clearance slip code through the Hub.</p>
+<div class="card">
+<h3>Slip code</h3>
+<div class="code">ECH-7K2Q-91XD</div>
+</div>
+<h2>Verification result</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Check</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>Signature</td><td><span class="badge verified">VERIFIED</span></td></tr>
+<tr><td>Student</td><td>Juan Dela Cruz (2023-****-14)</td></tr>
+<tr><td>Overall status</td><td><span class="badge hold">HOLD</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="muted">Sample result. Entering a code and verifying it will be added when the Hub API is connected.</p>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>
