@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearance status | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../auth/login.html">Log out</a></header>
+<section class="content">
+<h1>Clearance status</h1>
+<p class="muted">Your status for each office and your overall result.</p>
+<div class="grid">
+<div class="card"><h3>Overall</h3><div class="big"><span class="badge hold">HOLD</span></div></div>
+<div class="card"><h3>Student</h3><div>Juan Dela Cruz</div><div class="muted">BSIT, 3rd year</div></div>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Office</th><th>Status</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>Registrar</td><td><span class="badge cleared">CLEARED</span></td><td>Enrolled, no issues</td></tr>
+<tr><td>Library</td><td><span class="badge hold">HOLD</span></td><td>2 unreturned books</td></tr>
+<tr><td>Accounting / Cashier</td><td><span class="badge hold">HOLD</span></td><td>Unpaid balance of PHP 1,250.00</td></tr>
+<tr><td>Student Affairs</td><td><span class="badge cleared">CLEARED</span></td><td>No unreturned equipment</td></tr>
+</tbody>
+</table>
+</div>
+<div class="actions">
+<a class="btn" href="../clearance-slip/clearance-slip.html">View clearance slip</a>
+<a class="btn btn-outline" href="../deadline/deadline.html">View deadline</a>
+</div>
+<p class="muted">Sample data. The page will read from the Hub API once it is ready.</p>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

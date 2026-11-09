@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../../assets/css/layout.css">
+<link rel="stylesheet" href="../../assets/css/components.css">
+</head>
+<body>
+<div class="center-wrap">
+<div class="card login-card">
+<h1>DNSC e-Clearance Hub</h1>
+<p class="muted">Log in to check or manage clearance.</p>
+<div class="form-row"><label for="username">Username</label><input type="text" id="username"></div>
+<div class="form-row"><label for="password">Password</label><input type="password" id="password"></div>
+<div class="form-row">
+<label>Role</label>
+<div class="role-options">
+<label><input type="radio" name="role" value="student" checked> Student</label>
+<label><input type="radio" name="role" value="staff"> Office staff</label>
+<label><input type="radio" name="role" value="admin"> Admin</label>
+</div>
+</div>
+<button class="btn" id="login-btn" type="button">Log in</button>
+</div>
+</div>
+<script src="login.js"></script>
+</body>
+</html>
