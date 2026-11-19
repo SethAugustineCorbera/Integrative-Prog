@@ -16,30 +16,26 @@
 <section class="content">
 <h1>Import monitor</h1>
 <p class="muted">Signed import files and records that were rejected.</p>
+<form id="import-form" class="card">
+<div class="form-row"><label for="import-file">Library XML or Accounting CSV</label><input id="import-file" type="file" accept=".xml,.csv" required></div>
+<div class="form-row"><label for="import-manifest">Matching signed manifest JSON</label><input id="import-manifest" type="file" accept=".json,application/json" required></div>
+<button class="btn" type="submit">Verify and import</button>
+</form>
+<div class="actions"><button class="btn btn-outline" id="sync-registrar" type="button">Sync Registrar masterlist</button></div>
 <h2>Import files</h2>
 <div class="table-wrap">
 <table>
 <thead><tr><th>File</th><th>Source</th><th>Manifest</th><th>Imported</th><th>Rejected</th></tr></thead>
-<tbody>
-<tr><td>library_export_2026-11-20.xml</td><td>Library (XML)</td><td><span class="badge verified">VERIFIED</span></td><td>23</td><td>6</td></tr>
-<tr><td>accounting_balances_2026-11-20.csv</td><td>Accounting (CSV)</td><td><span class="badge verified">VERIFIED</span></td><td>39</td><td>3</td></tr>
-<tr><td>accounting_balances_tampered.csv</td><td>Accounting (CSV)</td><td><span class="badge rejected">REJECTED</span></td><td>0</td><td>All</td></tr>
-</tbody>
+<tbody></tbody>
 </table>
 </div>
 <h2>Reject log</h2>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Source</th><th>Record</th><th>Reason</th></tr></thead>
-<tbody>
-<tr><td>Library</td><td>Borrower B-014</td><td>Student ID not in masterlist</td></tr>
-<tr><td>Library</td><td>Borrower B-021</td><td>Negative fine amount</td></tr>
-<tr><td>Accounting</td><td>Row 18</td><td>Unknown student</td></tr>
-<tr><td>Accounting</td><td>Row 33</td><td>Corrupted row</td></tr>
-</tbody>
+<thead><tr><th>Batch</th><th>Row</th><th>Reason</th></tr></thead>
+<tbody></tbody>
 </table>
 </div>
-<p class="muted">Sample data.</p>
 </section>
 </main>
 </div>
