@@ -1,0 +1,9 @@
+{
+  "file": "accounting_balances_2026-11-20.csv",
+  "source": "accounting",
+  "sha256": "6a7fb3e9ca3bc3b1c8f374032002b83033c2d03dd75ab53d6e79e4a6391a69e5",
+  "record_count": 42,
+  "created_at": "2026-11-20T22:00:00+08:00",
+  "nonce": "b6d3dbb28c810f48ae9c8a00ecbb0612",
+  "signature": "72ab5a4c6ae70a3c90deb62f1c7415971ca465b87467d6c8fa53b61bdf73c453"
+}

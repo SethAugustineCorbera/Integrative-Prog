@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<borrowers exported="2026-11-20" branch="DNSC Main Library">
+  <borrower card="LIB-0001">
+    <name>MORALES, Rhea B.</name>
+    <studentNo>2023-59928</studentNo>
+    <program>BSA</program>
+    <yearLevel>4</yearLevel>
+    <email>rhea.morales@dnsc.edu.ph</email>
+    <lastBorrowed>10/27/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0002">
+    <name>MORALES, Ana C.</name>
+    <studentNo>2025-81367</studentNo>
+    <program>BSED-MATH</program>
+    <yearLevel>2</yearLevel>
+    <email>ana.morales@dnsc.edu.ph</email>
+    <lastBorrowed>09/09/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>40.50</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0003">
+    <name>SALAZAR, Rhea A.</name>
+    <studentNo>2023-21256</studentNo>
+    <program>BSCRIM</program>
+    <yearLevel>4</yearLevel>
+    <email>rhea.salazar@dnsc.edu.ph</email>
+    <lastBorrowed>09/25/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>25.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0004">
+    <name>MORALES, Mark D.</name>
+    <studentNo>2023-75691</studentNo>
+    <program>BSIT</program>
+    <yearLevel>4</yearLevel>
+    <email>mark.morales@dnsc.edu.ph</email>
+    <lastBorrowed>10/05/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0005">
+    <name>GONZALES, Joy D.</name>
+    <studentNo>2024-87679</studentNo>
+    <program>BSED-MATH</program>
+    <yearLevel>3</yearLevel>
+    <email>joy.gonzales@dnsc.edu.ph</email>
+    <lastBorrowed>08/28/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>40.50</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0006">
+    <name>DELA CRUZ, Ramil M.</name>
+    <studentNo>2024-26826</studentNo>
+    <program>BSA</program>
+    <yearLevel>3</yearLevel>
+    <email>ramil.delacruz@dnsc.edu.ph</email>
+    <lastBorrowed>09/08/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>25.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0007">
+    <name>VILLANUEVA, Kristine S.</name>
+    <studentNo>2025-38684</studentNo>
+    <program>BSA</program>
+    <yearLevel>2</yearLevel>
+    <email>kristine.villanueva@dnsc.edu.ph</email>
+    <lastBorrowed>09/01/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>10.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0008">
+    <name>PASCUAL, Juan C.</name>
+    <studentNo>2024-90510</studentNo>
+    <program>BSIS</program>
+    <yearLevel>3</yearLevel>
+    <email>juan.pascual@dnsc.edu.ph</email>
+    <lastBorrowed>10/01/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>10.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0009">
+    <name>MENDOZA, Juan C.</name>
+    <studentNo>2026-94256</studentNo>
+    <program>BSCRIM</program>
+    <yearLevel>1</yearLevel>
+    <email>juan.mendoza@dnsc.edu.ph</email>
+    <lastBorrowed>08/22/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0010">
+    <name>GONZALES, Vincent S.</name>
+    <studentNo>2024-65007</studentNo>
+    <program>BSA</program>
+    <yearLevel>3</yearLevel>
+    <email>vincent.gonzales@dnsc.edu.ph</email>
+    <lastBorrowed>09/09/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0011">
+    <name>SANTOS, Rhea D.</name>
+    <studentNo>2024-46072</studentNo>
+    <program>BSED-MATH</program>
+    <yearLevel>3</yearLevel>
+    <email>rhea.santos@dnsc.edu.ph</email>
+    <lastBorrowed>10/25/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>25.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0012">
+    <name>VILLANUEVA, Paolo M.</name>
+    <studentNo>2025-24758</studentNo>
+    <program>BSA</program>
+    <yearLevel>2</yearLevel>
+    <email>paolo.villanueva@dnsc.edu.ph</email>
+    <lastBorrowed>10/24/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0013">
+    <name>BAUTISTA, Kevin P.</name>
+    <studentNo>2025-29266</studentNo>
+    <program>BSED-MATH</program>
+    <yearLevel>2</yearLevel>
+    <email>kevin.bautista@dnsc.edu.ph</email>
+    <lastBorrowed>10/25/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>40.50</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0014">
+    <name>VILLANUEVA, Angelica E.</name>
+    <studentNo>2024-25052</studentNo>
+    <program>BSIT</program>
+    <yearLevel>3</yearLevel>
+    <email>angelica.villanueva@dnsc.edu.ph</email>
+    <lastBorrowed>10/16/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0015">
+    <name>RAMOS, Joy G.</name>
+    <studentNo>2026-61130</studentNo>
+    <program>BSCRIM</program>
+    <yearLevel>1</yearLevel>
+    <email>joy.ramos@dnsc.edu.ph</email>
+    <lastBorrowed>09/01/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0016">
+    <name>AQUINO, Juan E.</name>
+    <studentNo>2026-19950</studentNo>
+    <program>BSIT</program>
+    <yearLevel>1</yearLevel>
+    <email>juan.aquino@dnsc.edu.ph</email>
+    <lastBorrowed>10/19/2026</lastBorrowed>
+    <unreturnedBooks>2</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0017">
+    <name>SALAZAR, Princess R.</name>
+    <studentNo>2024-33361</studentNo>
+    <program>BSIT</program>
+    <yearLevel>3</yearLevel>
+    <email>princess.salazar@dnsc.edu.ph</email>
+    <lastBorrowed>10/09/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>40.50</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0018">
+    <name>NAVARRO, Mark D.</name>
+    <studentNo>2026-29417</studentNo>
+    <program>BSED-MATH</program>
+    <yearLevel>1</yearLevel>
+    <email>mark.navarro@dnsc.edu.ph</email>
+    <lastBorrowed>10/05/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0019">
+    <name>REYES, Vincent R.</name>
+    <studentNo>2023-24935</studentNo>
+    <program>BSED-MATH</program>
+    <yearLevel>4</yearLevel>
+    <email>vincent.reyes@dnsc.edu.ph</email>
+    <lastBorrowed>10/09/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0020">
+    <name>MENDOZA, Kevin L.</name>
+    <studentNo>2023-13093</studentNo>
+    <program>BSA</program>
+    <yearLevel>4</yearLevel>
+    <email>kevin.mendoza@dnsc.edu.ph</email>
+    <lastBorrowed>09/14/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>40.50</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0021">
+    <name>LIM, Princess L.</name>
+    <studentNo>2023-20570</studentNo>
+    <program>BSCRIM</program>
+    <yearLevel>4</yearLevel>
+    <email>princess.lim@dnsc.edu.ph</email>
+    <lastBorrowed>10/24/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>10.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0022">
+    <name>MORALES, Joy P.</name>
+    <studentNo>2025-35657</studentNo>
+    <program>BSCRIM</program>
+    <yearLevel>2</yearLevel>
+    <email>joy.morales@dnsc.edu.ph</email>
+    <lastBorrowed>09/23/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0023">
+    <name>DELA CRUZ, Mark C.</name>
+    <studentNo>2024-45481</studentNo>
+    <program>BSIS</program>
+    <yearLevel>3</yearLevel>
+    <email>mark.delacruz@dnsc.edu.ph</email>
+    <lastBorrowed>09/13/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>5.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0024">
+    <name>FLORES, Maria E.</name>
+    <studentNo>2025-40073</studentNo>
+    <program>BSA</program>
+    <yearLevel>2</yearLevel>
+    <email>maria.flores@dnsc.edu.ph</email>
+    <lastBorrowed>08/10/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0025">
+    <name>TORRES, John Lloyd M.</name>
+    <studentNo>2026-52526</studentNo>
+    <program>BSCRIM</program>
+    <yearLevel>1</yearLevel>
+    <email>john.torres@dnsc.edu.ph</email>
+    <lastBorrowed>10/18/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0026">
+    <name>PASCUAL Ramil</name>
+    <studentNo>2025-77777</studentNo>
+    <program>BSIT</program>
+    <yearLevel>2</yearLevel>
+    <email>ramil.pascual@dnsc.edu.ph</email>
+    <lastBorrowed>09/10/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0027">
+    <name>CRUZ, Ella M.</name>
+    <studentNo>2026-1234</studentNo>
+    <program>BSIT</program>
+    <yearLevel>1</yearLevel>
+    <email>ella.cruz@dnsc.edu.ph</email>
+    <lastBorrowed>09/15/2026</lastBorrowed>
+    <unreturnedBooks>1</unreturnedBooks>
+    <unpaidFines>0.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0028">
+    <name>TORRES, Ana B.</name>
+    <studentNo>2024-99999</studentNo>
+    <program>BSHM</program>
+    <yearLevel>3</yearLevel>
+    <email>ana.torres@dnsc.edu.ph</email>
+    <lastBorrowed>31/09/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>15.00</unpaidFines>
+  </borrower>
+  <borrower card="LIB-0029">
+    <name>MORALES, Rhea B.</name>
+    <studentNo>2023-59928</studentNo>
+    <program>BSA</program>
+    <yearLevel>4</yearLevel>
+    <email>rhea.morales@dnsc.edu.ph</email>
+    <lastBorrowed>10/20/2026</lastBorrowed>
+    <unreturnedBooks>0</unreturnedBooks>
+    <unpaidFines>-5.00</unpaidFines>
+  </borrower>
+</borrowers>

@@ -1,0 +1,18 @@
+{
+  "name": "DNSC e-Clearance Hub",
+  "short_name": "e-Clearance",
+  "description": "Mobile-friendly student clearance status and office verification.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#163f68",
+  "icons": [
+    {
+      "src": "./assets/icons/clearance.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
