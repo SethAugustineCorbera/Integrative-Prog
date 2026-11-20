@@ -1,0 +1,789 @@
+:root{
+    --bg:#D7CAB7;
+    --panel:#3E0911;
+    --brand:#71774B;
+    --sidebar:#383C23;
+    --hold:#85383E;
+    --nav-accent: var(--brand);
+}
+*{
+    box-sizing:border-box;
+}
+body{
+    margin:0;
+    min-height:100vh;
+    padding:1.5rem;
+    background:var(--bg);
+    font-family:Inter,"Segoe UI",Arial,Helvetica,sans-serif;
+    color:var(--bg);
+}
+.stage{
+    position:relative;
+    min-height:calc(100vh - 3rem);
+    border-radius:24px;
+    background:var(--panel);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    margin-top: 1rem;
+}
+.art{
+    position:absolute;
+    right:-1%;
+    top:70%;
+    width:min(110vw,1600px);
+    transform:translateY(-50%);
+    pointer-events:none;
+    animation:drift 13s ease-in-out infinite alternate;
+}
+
+/* Header and navigation */
+
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+}
+
+.brand {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    width: 100%;
+    min-height: 85px;
+    padding: 1rem 3rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    background: var(--panel);
+    color: var(--bg);
+    border-radius:24px;
+
+    border-bottom: 2px solid rgba(215, 202, 183, .12);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .12);
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: .02em;
+}
+
+.menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    padding: .5rem;
+    cursor: pointer;
+    z-index: 1002;
+}
+
+.menu-toggle span {
+    display: block;
+    width: 26px;
+    height: 3px;
+    margin: 5px 0;
+    border-radius: 5px;
+    background: var(--brand);
+    transition: transform .3s ease, opacity .3s ease;
+}
+
+.menu-toggle.open span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.menu-toggle.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.open span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+
+.navigation {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+
+    padding: .75rem .25rem;
+
+    color: var(--bg);
+    text-decoration: none;
+    font-size: .95rem;
+    font-weight: 600;
+
+    transition: color .25s ease;
+}
+
+/* =================================
+   NAVBAR SLIDE-OUT ANIMATION
+================================= */
+
+.brand {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+}
+
+/* Animated underline */
+
+.nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 4px;
+
+    background: var(--nav-accent);
+    border-radius: 10px;
+
+    transform: scaleX(0);
+    transform-origin: center;
+
+    transition: transform .3s ease;
+}
+
+/* Hover and active states */
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--nav-accent);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    transform: scaleX(1);
+}
+
+.nav-link:focus-visible {
+    outline: 2px solid var(--nav-accent);
+    outline-offset: 5px;
+    border-radius: 3px;
+}
+
+.hero{
+    position:relative;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 3rem 11rem 10rem;
+    max-width:760px;
+}
+h1{
+    margin:0;
+    font-size:clamp(3.5rem,10vw,10rem);
+    line-height:1;
+    font-weight:1000;
+    letter-spacing:-.03em;
+}
+.lead{
+    margin:0rem 0 1.5rem;
+    font-size:clamp(1.15rem,2.4vw,1.6rem);
+    font-weight:300;
+    padding:0 0rem 1rem 5rem;
+}
+
+/* About section */
+.about-section {
+    background: var(--panel);
+    color: var(--bg);
+    padding: 5rem 2rem;
+    text-align: center;
+    margin-top: 2rem;
+    border-radius:24px;
+}
+
+.about-content {
+    max-width: 750px;
+    margin: auto;
+}
+
+.about-content h2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-bottom: 1.5rem;
+}
+
+.about-content p {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    font-weight: 300;
+}
+
+.about-content h3 {
+    color: var(--bg);
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+/* =================================
+   SHARED SECTION STYLING
+================================= */
+
+.benefits-section,
+.developers-section {
+    margin-top: 2rem;
+    padding: 5rem 3rem;
+    background: var(--panel);
+    color: var(--bg);
+    border-radius: 24px;
+}
+
+.section-heading {
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 3rem;
+}
+
+.section-heading h2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin: 0 0 1rem;
+}
+
+.section-heading p {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    font-weight: 300;
+}
+
+/* =================================
+   BENEFITS CAROUSEL
+================================= */
+
+.benefits-carousel {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 2rem) / 3);
+    gap: 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: .5rem .25rem 1.5rem;
+}
+
+.benefits-carousel::-webkit-scrollbar {
+    height: 8px;
+}
+
+.benefits-carousel::-webkit-scrollbar-thumb {
+    background: var(--brand);
+    border-radius: 20px;
+}
+
+.benefits-carousel::-webkit-scrollbar-track {
+    background: rgba(215, 202, 183, .15);
+    border-radius: 20px;
+}
+
+.benefit-card {
+    height: 360px;
+    display: grid;
+    grid-template-rows: 50% 10% 40%;
+    background: var(--bg);
+    color: var(--panel);
+    border-radius: 18px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.benefit-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, .2);
+}
+
+.benefit-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.benefit-card h3,
+.developer-card h3,
+.developer-card h4 {
+    color: var(--panel);
+}
+.benefit-card p,
+.developer-card p {
+    color: var(--panel);
+}
+.about-section,
+.benefits-section,
+.developers-section {
+    background: var(--panel);
+    color: var(--bg);
+}
+.footer {
+    background: var(--sidebar);
+    color: var(--bg);
+}
+
+.benefit-card h3 {
+    margin: 0;
+    padding: .5rem 1rem 0;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+}
+
+.benefit-card p {
+    margin: 0;
+    padding: .5rem 1rem 1rem;
+    font-size: .9rem;
+    line-height: 1.5;
+    overflow-y: auto;
+}
+
+.carousel-hint {
+    text-align: center;
+    font-size: .85rem;
+    opacity: .75;
+    margin-top: 1rem;
+}
+
+/* =================================
+   DEVELOPERS
+================================= */
+
+.developers-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.developer-card {
+    min-width: 0;
+    min-height: 380px;
+    display: grid;
+    grid-template-rows: 50% 10% 5% 35%;
+    background: var(--bg);
+    color: var(--panel);
+    border-radius: 18px;
+    overflow: hidden;
+    text-align: center;
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.developer-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, .2);
+}
+
+.developer-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.developer-card h3 {
+    margin: 0;
+    padding: .5rem .4rem 0;
+    font-size: .95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.developer-card h4 {
+    margin: 0;
+    padding: 0 .4rem;
+    font-size: .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.developer-card p {
+    margin: 0;
+    padding: .5rem;
+    font-size: .85rem;
+    line-height: 1.4;
+    overflow-y: auto;
+}
+
+/* =================================
+   FOOTER
+================================= */
+
+.footer {
+    margin-top: 2rem;
+    padding: 3.5rem 3rem 1rem;
+    background: var(--sidebar);
+    color: var(--bg);
+    border-radius: 24px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 3rem;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.footer h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.footer p,
+.footer a {
+    font-size: .9rem;
+    line-height: 1.8;
+}
+
+.footer a {
+    color: var(--bg);
+    text-decoration: none;
+    transition: color .2s ease;
+}
+
+.footer a:hover {
+    color: var(--hold);
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.footer-bottom {
+    margin-top: 3rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(215, 202, 183, .25);
+    text-align: center;
+    font-size: .8rem;
+}
+
+.lm {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+    overflow-y: auto;
+
+    background: rgba(0, 0, 0, 0.68);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+/* Background when modal opens */
+.lm.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Login and registration card */
+.lm-card {
+    position: relative;
+    width: min(900px, 100%);
+    min-height: 520px;
+    margin: auto;
+
+    display: grid;
+    grid-template-columns: 42% 58%;
+
+    flex-shrink: 0;
+}
+
+/* Card when modal opens */
+.lm.is-open .lm-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+
+.login{
+    align-self:flex-start;
+    padding:.85rem 2.5rem;
+    border-radius:999px;
+    background:var(--brand);
+    color:#fff;
+    font-weight:700;
+    font-size:1rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    text-decoration:none;
+    border:2px solid var(--brand);
+    transition:background .2s,border-color .2s;
+}
+.login:hover{
+    background:var(--hold);
+    border-color:var(--hold);
+}
+.login:focus-visible{
+    outline:3px solid var(--bg);
+    outline-offset:3px;
+}
+
+@keyframes drift{
+    from{
+        transform:translateY(-50%) rotate(-3deg);
+    }
+    to{
+        transform:translateY(-50%) rotate(3deg) scale(1.03);
+    }
+}
+@media (max-width: 1000px) {
+    .developers-grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: calc((100% - 1rem) / 2);
+        grid-template-columns: none;
+        gap: 1rem;
+
+        overflow-x: auto;
+        overflow-y: hidden;
+
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        overscroll-behavior-x: contain;
+
+        padding: .5rem .25rem 1.5rem;
+    }
+
+    .developer-card {
+        scroll-snap-align: start;
+        min-width: 0;
+    }
+
+    .developers-grid::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .developers-grid::-webkit-scrollbar-thumb {
+        background: var(--brand);
+        border-radius: 20px;
+    }
+
+    .developers-grid::-webkit-scrollbar-track {
+        background: rgba(215, 202, 183, .15);
+        border-radius: 20px;
+    }
+
+    .benefits-carousel {
+        grid-auto-columns: calc((100% - 1rem) / 2);
+    }
+}
+
+@media(max-width:700px){
+    body{
+        padding:.75rem;
+    }
+    .stage{
+        min-height:calc(100vh - 1.5rem);
+        border-radius:18px;
+    }
+    .art{
+        width:140vw;
+        right:-45%;
+        opacity:.45;
+    }
+    .brand {
+        position: sticky;
+        top: 0;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 70px;
+        padding: 1rem 1.25rem;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .navigation {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+
+        padding: .5rem 1.25rem 1rem;
+
+        background: var(--panel);
+        border-top: 1px solid rgba(215, 202, 183, .15);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, .2);
+
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(-10px);
+
+        transition: opacity .25s ease,
+                    transform .25s ease,
+                    visibility .25s ease;
+    }
+
+    .navigation.show {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .nav-link {
+        width: 100%;
+        padding: .9rem .5rem;
+        font-size: .9rem;
+    }
+
+    .nav-link::after {
+        width: 45px;
+        bottom: .35rem;
+    }
+
+    .benefits-section,
+    .developers-section {
+        padding: 3rem 1rem;
+    }
+
+    .benefits-carousel {
+        grid-auto-columns: 85%;
+        gap: .85rem;
+    }
+
+    .benefit-card {
+        height: 350px;
+    }
+
+    .developers-grid {
+        grid-auto-columns: 85%;
+        gap: .85rem;
+    }
+
+    .developer-card {
+        min-height: 320px;
+    }
+
+    .footer {
+        padding: 2.5rem 1.5rem 1rem;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    /* .nav-about {
+        font-size: .85rem;
+        padding: .5rem .85rem;
+    } */
+
+    .about-section {
+        padding: 3.5rem 1.5rem;
+    }
+    .hero{
+        padding:0 1.5rem 3rem;
+    }
+    .lead{
+        padding:0 0rem 1rem 1rem;
+    }
+    lm {
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .lm-card {
+        width: 100%;
+        max-width: 600px;
+        min-height: auto;
+        max-height: 90vh;
+        max-height: 90dvh;
+        margin: 0;
+
+        grid-template-columns: 1fr;
+
+        border-radius: 22px 22px 0 0;
+        overflow-y: auto;
+
+        opacity: 0;
+        transform: translateY(100%);
+        transition:
+            transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+            opacity 0.25s ease;
+    }
+
+    .lm.is-open .lm-card {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Hide decorative artwork to give the form more room */
+    .lm-art {
+        display: none;
+    }
+
+    .lm-body {
+        padding: 2rem 1.5rem;
+    }
+}
+@media (max-width: 380px) {
+    .developers-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media(prefers-reduced-motion:reduce){
+    .art{
+        animation:none;
+    }
+    .login{
+        transition:none;
+    }
+     html {
+        scroll-behavior: auto;
+    }
+    .nav-link,
+    .nav-link::after,
+    .benefit-card,
+    .developer-card {
+        transition: none;
+    }
+    .menu-toggle span,
+    .navigation {
+        transition: none;
+    }
+    .lm,
+    .lm-card {
+        transition: none;
+    }
+}

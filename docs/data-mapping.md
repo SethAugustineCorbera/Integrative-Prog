@@ -44,10 +44,6 @@ The file is UTF-8/UTF-8-BOM CSV and includes one header row.
 
 Staff actions use `POST /api/clearance/{student_number}/{office}/signoff` or `/hold`. A staff account is bound to one office. The API validates the student and office, restricts staff to that office, stores status/reason, and records the actor and timestamp in `audit_logs`.
 
-## Student Affairs web form
-
-Student Affairs staff select an active student and enter organization membership/obligation details, borrowed-equipment review, a CLEARED/HOLD decision, and an assessment. Staff choose the decision according to office policy; membership or equipment text does not automatically determine it. The form combines the checked details and decision reason into the clearance record and audit event. The Hub does not edit an external Student Affairs system.
-
 ## Signed manifest and rejection handling
 
 Each import file has a sidecar named `<file-name>.manifest.json`:

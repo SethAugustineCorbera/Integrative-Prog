@@ -258,27 +258,6 @@ class ScheduleTests(unittest.TestCase):
         run.assert_not_called()
 
 
-class DemoSeedTests(HubTestCase):
-    def test_demo_seed_creates_staff_for_each_office(self) -> None:
-        with patch.dict("os.environ", {"DEMO_PASSWORD": PASSWORD}), patch("builtins.print"):
-            with hub.app.app_context():
-                hub_cli._seed_demo()
-        staff = hub.query_all(
-            """SELECT u.username, o.code AS office_code
-               FROM users AS u JOIN offices AS o ON o.id = u.office_id
-               WHERE u.role = 'staff' AND u.username LIKE 'demo.%'"""
-        )
-        self.assertEqual(
-            {row["username"]: row["office_code"] for row in staff},
-            {
-                "demo.registrar": "registrar",
-                "demo.library": "library",
-                "demo.accounting": "accounting",
-                "demo.student-affairs": "student-affairs",
-            },
-        )
-
-
 class ManifestTests(HubTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -763,92 +742,6 @@ class ApiTests(HubTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["office"]["code"], "library")
-
-    def test_registrar_staff_can_read_official_masterlist_as_json(self) -> None:
-        with hub.app.app_context():
-            hub.create_user(
-                "test.registrar", PASSWORD, "staff", office_name="registrar"
-            )
-            registrar = hub._find_office("registrar")
-            for student_number in ("2023-0001-14", "2023-0002-14"):
-                student = hub._find_student(student_number)
-                hub.upsert_clearance(
-                    student["id"],
-                    registrar["id"],
-                    "CLEARED",
-                    "Active in Registrar masterlist.",
-                    "registrar",
-                    None,
-                )
-            hub.commit()
-        token = self.login("test.registrar")
-        response = self.client.get(
-            "/api/registrar/masterlist",
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 200)
-        body = response.get_json()
-        self.assertEqual(body["format"], "JSON")
-        self.assertEqual(len(body["students"]), 2)
-        self.assertEqual(body["students"][0]["student_number"], "2023-0001-14")
-        self.assertIs(body["students"][0]["active"], True)
-        self.assertEqual(body["students"][0]["status"], "ACTIVE")
-
-    def test_non_registrar_staff_cannot_read_official_masterlist(self) -> None:
-        token = self.login("test.library")
-        response = self.client.get(
-            "/api/registrar/masterlist",
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_registrar_masterlist_excludes_local_demo_seed_records(self) -> None:
-        with hub.app.app_context():
-            hub.create_user(
-                "test.registrar", PASSWORD, "staff", office_name="registrar"
-            )
-            hub.upsert_student(
-                {
-                    "student_number": "DEMO-0001",
-                    "full_name": "Synthetic Demo Student",
-                    "program": "BSIT",
-                    "year_level": 1,
-                    "email": "demo.student@example.invalid",
-                    "active": 1,
-                }
-            )
-            student = hub._find_student("DEMO-0001")
-            registrar = hub._find_office("registrar")
-            hub.upsert_clearance(
-                student["id"],
-                registrar["id"],
-                "CLEARED",
-                "Demo seed record.",
-                "demo-seed",
-                None,
-            )
-            hub.commit()
-        token = self.login("test.registrar")
-        response = self.client.get(
-            "/api/registrar/masterlist",
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json()["students"], [])
-
-    def test_registrar_staff_cannot_manually_change_synced_clearance(self) -> None:
-        with hub.app.app_context():
-            hub.create_user(
-                "test.registrar", PASSWORD, "staff", office_name="registrar"
-            )
-        token = self.login("test.registrar")
-        response = self.client.post(
-            "/api/clearance/2023-0001-14/registrar/signoff",
-            json={"reason": "Manual change"},
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.get_json()["code"], "registrar_read_only")
 
     def test_staff_cannot_read_another_office(self) -> None:
         token = self.login("test.library")

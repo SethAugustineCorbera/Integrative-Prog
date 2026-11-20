@@ -58,13 +58,12 @@ See [solution-design.md](./solution-design.md) for the architecture, data flow, 
 - **Hub API/client:** Flask API documented in [api-spec.md](./api-spec.md); web screens use REST only.
 - **Data mapping:** CSV/XML field aliases and rejects are specified in [data-mapping.md](./data-mapping.md).
 - **Database:** XAMPP MySQL tables are created by `database/schema.sql`.
-- **Office staff pages:** Registrar JSON masterlist, Library XML clearance, Accounting/Cashier CSV balance review, and Student Affairs web review form.
 - **Emerging technology (R4):** mobile-friendly PWA plus a real, locally generated QR clearance slip encoding the signed token.
 - **Security:** PBKDF2, bearer sessions, role/office guards, parameterized SQL, environment secrets, HMAC files, signed slips, masking, and audit events.
 
 ## Chapter 4 — Testing and Evaluation
 
-The current automated evidence is 84 passing cases (the group minimum is 20), recorded with scenario, expected result, actual assertion outcome, and pass/fail in [test-report.md](./test-report.md). This suite uses temporary SQLite for isolation; run and record a separate XAMPP/MySQL browser smoke test before printing the final report.
+The current automated evidence is 79 passing cases (the group minimum is 20), recorded with scenario, expected result, actual assertion outcome, and pass/fail in [test-report.md](./test-report.md). This suite uses temporary SQLite for isolation; run and record a separate XAMPP/MySQL browser smoke test before printing the final report.
 
 The actual 30-rater evaluation is not included in this repository. Complete Appendix A's statistical summary from real sheets, then insert the signed sheets, consented photos, and official masterlist in Appendices B–D. Do not fill ratings on behalf of participants.
 

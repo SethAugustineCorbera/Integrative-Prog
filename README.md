@@ -49,7 +49,7 @@ For a fictional local presentation only, set `DEMO_PASSWORD` in `.env` to a uniq
 python python.py seed-demo
 ```
 
-This creates three synthetic students and the accounts `demo.student`, `demo.registrar`, `demo.library`, `demo.accounting`, `demo.student-affairs`, and `demo.admin`, all using the configured `DEMO_PASSWORD`. Each office account has its own page and office assignment. Student records use `.invalid` email addresses and are not real people. Re-running the command adds any missing demo accounts without replacing existing passwords and resets the seeded demo clearance statuses. Remove demo accounts and records before any authorized production use.
+This creates three synthetic students and the accounts `demo.student`, `demo.library`, and `demo.admin`, all using the configured `DEMO_PASSWORD`. Student records use `.invalid` email addresses and are not real people. Remove demo accounts and records before any authorized production use.
 
 ### D. Run the API and open the UI
 
@@ -62,7 +62,7 @@ python python.py serve
 
 Confirm the API responds at `http://localhost:8000/api/health` with a database-connected result. Keep this window open. In a browser open `http://localhost/Integrative-Prog/` and log in with one of the demo usernames and the local `DEMO_PASSWORD`.
 
-To try student sign-up, start the bundled mock Registrar as described in [Registrar integration](#5-registrar-integration), then run `python python.py sync-registrar`. Select **Register an account** on the login page, enter an active student number and the matching roster name, then create a username and a password of at least 12 characters. The bundled roster includes synthetic student `2026-29417` / `Mark D. Navarro` for testing. After successful registration, return to the login form and sign in with the username and password you chose. Staff and admin accounts must be provisioned by an administrator. For the seeded demo accounts, use `demo.student`, `demo.registrar`, `demo.library`, `demo.accounting`, `demo.student-affairs`, or `demo.admin` with `DEMO_PASSWORD` configured before `seed-demo`. See the [user guide](docs/user-guide.md) for the office-specific workflows.
+To try student sign-up, start the bundled mock Registrar as described in [Registrar integration](#5-registrar-integration), then run `python python.py sync-registrar`. Select **Register an account** on the login page, enter an active student number and the matching roster name, then create a username and a password of at least 12 characters. The bundled roster includes synthetic student `2026-29417` / `Mark D. Navarro` for testing. After successful registration, return to the login form and sign in with the username and password you chose. Staff and admin accounts must be provisioned by an administrator. For the separate demo accounts, use `demo.student`, `demo.library`, or `demo.admin` with `DEMO_PASSWORD` configured before `seed-demo`. See the [user guide](docs/user-guide.md) for the full login flow.
 
 The browser UI is served by XAMPP Apache; the API binds to `127.0.0.1:8000` by default. The API CORS allow-list is in `FRONTEND_ORIGINS`. Do not expose the Flask development server to the public internet.
 
@@ -86,11 +86,11 @@ The fresh-install [schema](database/schema.sql) includes account-management audi
 
 ### Office staff flow
 
-1. Sign in with an account assigned to one office. The sidebar opens a separate Registrar, Library, Accounting/Cashier, or Student Affairs page.
-2. Registrar staff view the synchronized official masterlist as JSON; they cannot add records or manually change Registrar clearance. An admin synchronizes the source through **Import monitor**.
-3. Library staff review XML-imported unreturned books and fines. Accounting/Cashier staff review CSV-imported tuition and fee balances. Both may sign off or place a HOLD after checking their office records.
-4. Student Affairs staff use a dedicated web form to record organization membership/obligation details, equipment review, and their chosen CLEARED/HOLD decision.
-5. **HOLD summary** lists unresolved records for the assigned office. **Verify slip** checks a student's signed short code or token.
+1. Sign in with an account assigned to one office.
+2. **Office queue** calls the Hub API and shows only that office's students. The role/office restriction is checked by the server, not trusted from the page.
+3. **Sign off** records the staff action and reason; **Place HOLD** requires a reason. Each change creates an audit event.
+4. **HOLD summary** lists unresolved records for the assigned office.
+5. **Verify slip** accepts the short code or full signed token (which can be read from the QR), then checks signature, revocation, and expiry.
 
 ### Admin flow
 

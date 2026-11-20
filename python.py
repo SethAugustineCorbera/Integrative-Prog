@@ -103,20 +103,14 @@ def _seed_demo() -> None:
 
     demo_users = [
         ("demo.student", "student", "DEMO-0001", None),
-        ("demo.registrar", "staff", None, "registrar"),
         ("demo.library", "staff", None, "library"),
-        ("demo.accounting", "staff", None, "accounting"),
-        ("demo.student-affairs", "staff", None, "student-affairs"),
         ("demo.admin", "admin", None, None),
     ]
     for username, role, student_number, office in demo_users:
         if query_one("SELECT id FROM users WHERE username = %s", (username,)) is None:
             create_user(username, password, role, student_number, office)
     print("Synthetic demo records and accounts are ready.")
-    print(
-        "Sign in as demo.student, demo.registrar, demo.library, demo.accounting, "
-        "demo.student-affairs, or demo.admin using DEMO_PASSWORD."
-    )
+    print("Sign in as demo.student, demo.library, or demo.admin using DEMO_PASSWORD.")
 
 
 def _create_user(args: argparse.Namespace) -> None:

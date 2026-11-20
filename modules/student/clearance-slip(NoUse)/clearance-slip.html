@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearance slip | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../../index.html#login">Log out</a></header>
+<section class="content">
+<h1>Clearance slip</h1>
+<p class="muted">Show this signed QR code or short code at any office for verification through the Hub.</p>
+<div class="card slip">
+<h3>DNSC clearance slip</h3>
+<div>Loading...</div>
+<div class="muted">ID: Loading...</div>
+<div class="qr" id="qr"></div>
+<div class="code" id="slip-code">Loading...</div>
+<p class="muted">The QR contains the signed token. The short code is also available for manual verification.</p>
+</div>
+<div class="note">Loading the signed QR code...</div>
+<div class="actions"><a class="btn btn-outline" href="../clearance-status/clearance-status.html">Back to status</a></div>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

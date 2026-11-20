@@ -1,25 +1,10 @@
 const NAV = {
-    student: [["Clearance status", "clearance-status"], ["Clearance slip", "clearance-slip"], ["Deadline", "deadline"]],
+    staff: [["Office queue", "office-queue"], ["Hold summary", "hold-summary"], ["Verify slip", "verify-slip"]],
     admin: [["Import monitor", "import-monitor"], ["Reports", "reports"], ["Users", "users"], ["Audit log", "audit-log"], ["API reference", "api-reference"],
             ["Office queue", "office-queue"], ["Hold summary", "hold-summary"], ["Verify slip", "verify-slip"]]
 };
-const STAFF_OFFICE_PAGES = {
-    registrar: ["Registrar masterlist", "registrar"],
-    library: ["Library clearance", "library"],
-    accounting: ["Accounting / Cashier", "accounting"],
-    "student-affairs": ["Student Affairs", "student-affairs"]
-};
 const ROLE_NAMES = { student: "Student", staff: "Office staff", admin: "Admin" };
 const HUB_SCRIPT_URL = document.currentScript ? document.currentScript.src : location.href;
-
-function navigationForUser(user) {
-    if (user.role === "staff") {
-        const officePage = STAFF_OFFICE_PAGES[user.office_code];
-        if (!officePage) return [];
-        return [officePage, ["HOLD summary", "hold-summary"], ["Verify slip", "verify-slip"]];
-    }
-    return NAV[user.role] || [];
-}
 
 function setupPwa() {
     const manifest = document.createElement("link");
@@ -74,29 +59,6 @@ function showEmpty(tableBody, columnCount, message) {
     item.textContent = message;
 }
 
-async function loadStudentStatus() {
-    const data = await HubApi.myStatus();
-    const cards = document.querySelectorAll(".grid .card");
-    if (cards[0]) {
-        const badge = cards[0].querySelector(".badge");
-        if (badge) {
-            badge.className = "badge " + data.overall.toLowerCase();
-            badge.textContent = data.overall;
-        }
-    }
-    if (cards[1]) {
-        cards[1].children[1].textContent = data.student.full_name;
-        cards[1].children[2].textContent = data.student.program + ", year " + data.student.year_level;
-    }
-    const body = clearRows(document.querySelector("table tbody"));
-    data.offices.forEach(function (item) {
-        const row = body.insertRow();
-        cell(row, item.office);
-        statusCell(row, item.status);
-        cell(row, item.reason);
-    });
-}
-
 function createActionButton(label, callback) {
     const button = document.createElement("button");
     button.className = "btn btn-outline table-action";
@@ -109,16 +71,12 @@ function createActionButton(label, callback) {
 async function loadOfficeQueue(user, page, status) {
     const office = user.role === "staff" ? user.office_code : "library";
     if (!office) throw new Error("This staff account is not assigned to an office.");
-    if (user.role === "staff" && STAFF_OFFICE_PAGES[page] && page !== office) {
-        throw new Error("This page is for a different office. Open your assigned office page.");
-    }
     const result = await HubApi.officeQueue(office, status);
     const officeLabel = document.querySelector(".content strong");
     if (officeLabel && officeLabel.parentElement) officeLabel.parentElement.textContent = "Office: " + result.office.name;
     const table = document.querySelector(".content table");
     const head = table.querySelector("thead tr");
-    const showActions = user.role === "staff" && user.office_code !== "student-affairs";
-    if (showActions && head.lastElementChild.textContent !== "Actions") {
+    if (user.role === "staff" && head.lastElementChild.textContent !== "Actions") {
         const heading = document.createElement("th");
         heading.textContent = "Actions";
         head.appendChild(heading);
@@ -130,7 +88,7 @@ async function loadOfficeQueue(user, page, status) {
         cell(row, student.full_name);
         statusCell(row, student.status);
         cell(row, student.reason);
-        if (showActions) {
+        if (user.role === "staff") {
             const actions = document.createElement("td");
             actions.appendChild(createActionButton("Sign off", async function () {
                 const reason = window.prompt("Enter the sign-off reason:");
@@ -157,71 +115,7 @@ async function loadOfficeQueue(user, page, status) {
             row.appendChild(actions);
         }
     });
-    if (!result.students.length) showEmpty(body, showActions ? 5 : 4, "No matching students.");
-    return result;
-}
-
-async function loadRegistrarMasterlist() {
-    const output = document.getElementById("registrar-json");
-    const refresh = document.getElementById("refresh-masterlist");
-    async function render() {
-        refresh.disabled = true;
-        output.textContent = "Loading the synchronized Registrar masterlist...";
-        try {
-            const result = await HubApi.registrarMasterlist();
-            output.textContent = JSON.stringify(result, null, 2);
-            showMessage("Loaded " + result.students.length + " Registrar records. This view is read-only.", false);
-        } catch (error) {
-            output.textContent = "The masterlist could not be loaded.";
-            showMessage(error.message, true);
-        } finally {
-            refresh.disabled = false;
-        }
-    }
-    refresh.addEventListener("click", render);
-    await render();
-}
-
-async function loadStudentAffairsPage(user) {
-    const result = await loadOfficeQueue(user, "student-affairs", "");
-    const form = document.getElementById("affairs-review-form");
-    const studentSelect = form.elements.student_number;
-    studentSelect.replaceChildren();
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Select a student";
-    studentSelect.appendChild(placeholder);
-    result.students.forEach(function (student) {
-        const option = document.createElement("option");
-        option.value = student.student_number;
-        option.textContent = student.student_number + " — " + student.full_name;
-        studentSelect.appendChild(option);
-    });
-    form.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        const membership = form.elements.membership.value.trim();
-        const equipment = form.elements.equipment.value.trim();
-        const assessment = form.elements.assessment.value.trim();
-        const decision = form.elements.decision.value;
-        const reason = "Organization membership/obligation: " + membership
-            + "; Borrowed equipment: " + equipment
-            + "; Staff assessment: " + assessment;
-        if (reason.length > 500) {
-            showMessage("Combined review details must be 500 characters or fewer.", true);
-            return;
-        }
-        try {
-            const update = decision === "CLEARED"
-                ? HubApi.signOff(studentSelect.value, "student-affairs", reason)
-                : HubApi.placeHold(studentSelect.value, "student-affairs", reason);
-            await update;
-            form.reset();
-            await loadOfficeQueue(user, "student-affairs", "");
-            showMessage("Student Affairs review saved as " + decision + ".", false);
-        } catch (error) {
-            showMessage(error.message, true);
-        }
-    });
+    if (!result.students.length) showEmpty(body, user.role === "staff" ? 5 : 4, "No matching students.");
 }
 
 async function loadHoldSummary(user) {
@@ -250,46 +144,6 @@ async function loadHoldSummary(user) {
         cell(row, item.reason);
     });
     if (!rows.length) showEmpty(body, user.role === "admin" ? 4 : 3, "No students are on HOLD.");
-}
-
-async function loadDeadline() {
-    const data = await HubApi.deadline();
-    const cards = document.querySelectorAll(".grid .card");
-    if (cards[0]) cards[0].querySelector(".big").textContent = new Date(data.deadline + "T00:00:00").toLocaleDateString();
-    if (cards[1]) cards[1].querySelector(".big").textContent = data.working_days;
-    const body = clearRows(document.querySelector("table tbody"));
-    data.skipped_days.forEach(function (item) {
-        const row = body.insertRow();
-        cell(row, item.date);
-        cell(row, item.reason);
-    });
-    if (!data.skipped_days.length) showEmpty(body, 2, "No weekends or holidays fell in this range.");
-}
-
-async function loadSlip() {
-    const data = await HubApi.mySlip();
-    if (typeof data.qr_svg !== "string" || !data.qr_svg.includes("<svg")) {
-        throw new Error("The Hub returned an invalid QR code. Refresh the page or contact an administrator.");
-    }
-    const card = document.querySelector(".slip");
-    card.querySelector("h3").textContent = "DNSC clearance slip";
-    card.children[1].textContent = data.student.full_name;
-    card.children[2].textContent = "ID: " + data.student.student_number;
-    const qr = document.getElementById("qr");
-    const previousUrl = qr.dataset.imageUrl;
-    if (previousUrl) URL.revokeObjectURL(previousUrl);
-    const imageUrl = URL.createObjectURL(
-        new Blob([data.qr_svg], { type: "image/svg+xml" })
-    );
-    const image = document.createElement("img");
-    image.alt = "QR code containing the signed clearance token";
-    image.src = imageUrl;
-    qr.dataset.imageUrl = imageUrl;
-    qr.replaceChildren(image);
-    qr.hidden = false;
-    document.getElementById("slip-code").textContent = data.public_code;
-    const note = document.querySelector(".note");
-    note.textContent = "Show the QR code or signed short code to office staff. It expires " + new Date(data.expires_at).toLocaleString() + ".";
 }
 
 async function loadImports() {
@@ -599,7 +453,7 @@ async function loadAdminUsers(currentUser) {
                 sessionStorage.removeItem("role");
                 sessionStorage.removeItem("user");
                 sessionStorage.setItem("loginNotice", response.message);
-                location.href = "../../auth/login.html";
+                location.href = "../../../index.html#login";
                 return;
             }
             await loadAdminUsers(currentUser);
@@ -693,19 +547,8 @@ function bindReportDownloads() {
 
 async function loadPage(user) {
     const folder = location.pathname.split("/").slice(-2, -1)[0];
-    if (folder === "clearance-status") return loadStudentStatus();
     if (folder === "office-queue") return loadOfficeQueue(user, folder, "");
-    if (STAFF_OFFICE_PAGES[folder]) {
-        if (user.role !== "staff" || user.office_code !== folder) {
-            throw new Error("Open the page for your assigned office.");
-        }
-        if (folder === "registrar") return loadRegistrarMasterlist();
-        if (folder === "student-affairs") return loadStudentAffairsPage(user);
-        return loadOfficeQueue(user, folder, "");
-    }
     if (folder === "hold-summary") return loadHoldSummary(user);
-    if (folder === "deadline") return loadDeadline();
-    if (folder === "clearance-slip") return loadSlip();
     if (folder === "import-monitor") {
         bindImportForm();
         return loadImports();
@@ -723,7 +566,7 @@ async function loadPage(user) {
     setupPwa();
     const token = sessionStorage.getItem("token");
     if (!token) {
-        location.href = "../../auth/login.html";
+        location.href = "../../../index.html#login";
         return;
     }
     try {
@@ -731,37 +574,25 @@ async function loadPage(user) {
         const user = result.user;
         sessionStorage.setItem("role", user.role);
         sessionStorage.setItem("user", JSON.stringify(user));
-        const navigation = navigationForUser(user);
-        if (!navigation.length) {
-            throw new Error("This account has no supported office assignment. Ask an administrator to assign an office.");
-        }
         const parts = location.pathname.split("/");
         const currentFolder = parts[parts.length - 2];
         const currentRole = parts[parts.length - 3];
-        const links = navigation.map(function (item) {
+        const links = (NAV[user.role] || []).map(function (item) {
             const active = item[1] === currentFolder && user.role === currentRole ? ' class="active"' : "";
             return '<a href="../../' + user.role + "/" + item[1] + "/" + item[1] + '.html"' + active + ">" + item[0] + "</a>";
         }).join("");
         document.getElementById("sidebar").innerHTML = '<div class="brand">DNSC e-Clearance Hub</div>' + links;
-        const staffPage = user.role === "staff" ? STAFF_OFFICE_PAGES[user.office_code] : null;
-        const roleName = staffPage ? "Office staff — " + staffPage[0] : ROLE_NAMES[user.role];
-        document.getElementById("role-label").textContent = "Signed in as: " + roleName + " (" + user.username + ")";
+        document.getElementById("role-label").textContent = "Signed in as: " + ROLE_NAMES[user.role] + " (" + user.username + ")";
         document.querySelector(".topbar a.btn-outline").addEventListener("click", async function (event) {
             event.preventDefault();
             try { await HubApi.logout(); } catch (error) { showMessage(error.message, true); }
             sessionStorage.clear();
-            location.href = "../../auth/login.html";
+            location.href = "../../../index.html#login";
         });
-        if (user.role === "staff" && currentFolder === "office-queue") {
-            location.href = "../../staff/" + navigation[0][1] + "/" + navigation[0][1] + ".html";
-            return;
-        }
         if (currentRole !== user.role && !(user.role === "admin" && currentRole === "staff")) {
-            location.href = "../../" + user.role + "/" + navigation[0][1] + "/" + navigation[0][1] + ".html";
-            return;
-        }
-        if (user.role === "staff" && STAFF_OFFICE_PAGES[currentFolder] && user.office_code !== currentFolder) {
-            location.href = "../../staff/" + navigation[0][1] + "/" + navigation[0][1] + ".html";
+            location.href = user.role === "student"
+                ? "../../student/student.html"
+                : "../../" + user.role + "/" + NAV[user.role][0][1] + "/" + NAV[user.role][0][1] + ".html";
             return;
         }
         await loadPage(user);
@@ -769,7 +600,7 @@ async function loadPage(user) {
         showMessage(error.message || "Unable to load Hub data.", true);
         if (error.status === 401) {
             sessionStorage.clear();
-            location.href = "../../auth/login.html";
+            location.href = "../../../index.html#login";
         }
     }
 })();

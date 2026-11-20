@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3E0911">
+<title>My Clearance | DNSC e-Clearance Hub</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icons/clearance.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/student.css">
+</head>
+<body>
+<div class="shell">
+
+<!-- LEFT NAV BAR -->
+<aside class="sidebar" id="site-nav">
+    <div class="side-top">
+        <div class="brand-logo">
+            <img src="../../assets/icons/clearance.svg" alt="" width="36" height="36">
+            <span>DNSC e-Clearance Hub</span>
+        </div>
+        <p class="signed-in" id="role-label">Signed in as: &hellip;</p>
+        <button class="menu-toggle" id="menu-toggle" type="button"
+                aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+
+    <nav class="navigation" id="main-navigation" aria-label="Student sections">
+        <a href="#status" class="nav-link active" data-tab="status">Clearance</a>
+        <a href="#deadline" class="nav-link" data-tab="deadline">Deadline</a>
+        <button class="logout" id="logout-btn" type="button">Log out</button>
+    </nav>
+</aside>
+
+<!-- CONTENT -->
+<main class="stage">
+<img class="art" src="../../assets/icons/contours.svg" alt="">
+
+<div class="stage-inner">
+    <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
+
+    <!-- STATUS -->
+    <section class="tab" id="tab-status" aria-labelledby="welcome-title">
+        <div class="welcome">
+            <h1 id="welcome-title">Hello!</h1>
+            <p class="lead" id="welcome-sub">Loading your record&hellip;</p>
+        </div>
+        <div class="panel split">
+            <div class="split-slip">
+                <h2 id="h-slip">Clearance Slip</h2>
+                <p class="panel-sub">Show this signed QR code or short code at any office.</p>
+                <div class="slip-card">
+                    <h3>DNSC clearance slip</h3>
+                    <div class="slip-name" id="slip-name">&mdash;</div>
+                    <div class="muted" id="slip-id"></div>
+                    <div class="qr" id="qr" hidden></div>
+                    <div class="code" id="slip-code" hidden></div>
+                    <p class="muted" id="slip-note">Loading your slip&hellip;</p>
+                </div>
+            </div>
+            <div class="split-status">
+                <h2>Clearance Status</h2>
+                <p class="panel-sub">Your status for each office and your overall result.</p>
+                <div class="cards">
+                    <div class="card">
+                        <h3>Overall</h3>
+                        <div class="big"><span class="badge pending" id="overall-badge">Loading</span></div>
+                    </div>
+                    <div class="card">
+                        <h3>Student</h3>
+                        <div class="big small" id="student-name">Loading&hellip;</div>
+                        <div class="muted" id="student-meta"></div>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Office</th><th>Status</th><th>Reason</th></tr></thead>
+                        <tbody id="status-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DEADLINE -->
+    <section class="tab" id="tab-deadline" aria-labelledby="h-deadline" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-deadline">Clearance Deadline</h2>
+            <p class="panel-sub">Counted in working days only. Weekends and Philippine holidays are skipped.</p>
+
+            <div class="deadline-layout">
+                <div class="calendar" aria-label="Deadline calendar">
+                    <div class="cal-head">
+                        <button class="cal-btn" id="cal-prev" type="button" aria-label="Previous month">&#8249;</button>
+                        <div class="cal-title" id="cal-title" aria-live="polite">&mdash;</div>
+                        <button class="cal-btn" id="cal-next" type="button" aria-label="Next month">&#8250;</button>
+                        <button class="cal-today" id="cal-today" type="button">Today</button>
+                    </div>
+                    <div class="cal-dow" aria-hidden="true">
+                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                    </div>
+                    <div class="cal-grid" id="cal-grid" role="grid"></div>
+                    <div class="cal-legend">
+                        <span><i class="dot d-deadline"></i>Deadline</span>
+                        <span><i class="dot d-range"></i>Your window</span>
+                        <span><i class="dot d-holiday"></i>Holiday</span>
+                        <span><i class="dot d-weekend"></i>Weekend</span>
+                        <span><i class="dot d-today"></i>Today</span>
+                    </div>
+                </div>
+
+                <div class="dl-side">
+                    <div class="cards cards-stack">
+                        <div class="card"><h3>Deadline</h3><div class="big small" id="deadline-date">Loading&hellip;</div><div class="muted" id="deadline-left"></div></div>
+                        <div class="card"><h3>Working days given</h3><div class="big small" id="deadline-days">&hellip;</div></div>
+                    </div>
+                    <div class="day-info" id="day-info" aria-live="polite">
+                        <h3>Selected day</h3>
+                        <div class="day-info-date" id="day-info-date">Pick a date</div>
+                        <div class="muted" id="day-info-text">Select any day on the calendar to see what it means for your deadline.</div>
+                    </div>
+                    <div class="skipped">
+                        <h3>Skipped days</h3>
+                        <ul id="skipped-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</main>
+</div>
+
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/student.js"></script>
+</body>
+</html>
