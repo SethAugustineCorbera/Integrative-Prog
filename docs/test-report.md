@@ -15,7 +15,7 @@ presenting and perform the separate XAMPP/browser checks in
 
 | Run date | Environment | Cases | Passed | Failed | Evidence |
 |---|---|---:|---:|---:|---|
-| 2026-11-19 | Project virtual environment, temporary SQLite test database | 79 | 79 | 0 | `python -m unittest discover -s tests -v`; exit code 0. Python compilation, JavaScript syntax check, and `git diff --check` also passed. |
+| 2026-11-19 | Project virtual environment, temporary SQLite test database | 84 | 84 | 0 | `python -m unittest discover -s tests -v`; exit code 0. Python compilation, JavaScript syntax check, and `git diff --check` also passed. |
 
 The input/scenario is the named test and fixture in `tests/test_hub.py`.
 “Assertions passed” is the observed actual result: the test runner reported
@@ -34,6 +34,7 @@ individual test method contains the concrete fixture values and requests.
 | `test_malformed_password_hash_is_rejected` — malformed stored hash | Verification fails safely. | Assertions passed. | PASS |
 | `test_schedule_installer_registers_daily_jobs_in_order` — valid daily task times | Registrar, importer, and summary tasks are registered in order. | Assertions passed. | PASS |
 | `test_schedule_installer_rejects_invalid_time_before_creating_tasks` — invalid schedule time | Validation fails before any task is created. | Assertions passed. | PASS |
+| `test_demo_seed_creates_staff_for_each_office` — run demo seeder with a local password | Registrar, Library, Accounting, and Student Affairs demo accounts are assigned to their matching offices. | Assertions passed. | PASS |
 
 ### Signed files and data mapping
 
@@ -88,6 +89,10 @@ individual test method contains the concrete fixture values and requests.
 | `test_student_cannot_read_office_queue` — student requests staff queue | Role guard denies access. | Assertions passed. | PASS |
 | `test_staff_reads_assigned_office_queue` — staff requests own office | Assigned-office queue is returned. | Assertions passed. | PASS |
 | `test_staff_cannot_read_another_office` — staff requests different office | Office guard denies access. | Assertions passed. | PASS |
+| `test_registrar_staff_can_read_official_masterlist_as_json` — Registrar staff request the synchronized roster | JSON masterlist contains Registrar-sourced student records. | Assertions passed. | PASS |
+| `test_non_registrar_staff_cannot_read_official_masterlist` — other office staff request the Registrar roster | Request is denied with 403. | Assertions passed. | PASS |
+| `test_registrar_masterlist_excludes_local_demo_seed_records` — demo-seeded clearance record | Local demo data is not presented as Registrar-sourced masterlist data. | Assertions passed. | PASS |
+| `test_registrar_staff_cannot_manually_change_synced_clearance` — Registrar staff attempts a manual sign-off | Request is denied; Registrar clearance remains sync-controlled. | Assertions passed. | PASS |
 | `test_invalid_office_status_query_is_rejected` — unsupported status filter | Query parameter is rejected. | Assertions passed. | PASS |
 | `test_staff_signoff_updates_record_and_audit` — authorized sign-off with reason | Clearance changes and audit event is recorded. | Assertions passed. | PASS |
 | `test_staff_signoff_requires_a_reason` — sign-off without reason | Request is rejected. | Assertions passed. | PASS |

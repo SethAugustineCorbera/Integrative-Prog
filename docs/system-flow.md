@@ -64,12 +64,20 @@ are blocked. Do not enter fabricated records as official students.
 
 ## 4. Staff flow
 
-1. An administrator creates a staff account and assigns its office.
-2. Staff sign in and open **Office queue**. The API limits them to their assigned
-   office.
-3. Staff review a student and either sign off with a reason or place a HOLD with
-   a reason.
-4. The API updates the clearance record and writes an audit event.
+1. An administrator creates a staff account and assigns Registrar, Library,
+   Accounting/Cashier, or Student Affairs. The staff account opens a separate
+   page for that office.
+2. Registrar staff view the read-only, synchronized official student masterlist
+   in JSON. An administrator triggers synchronization from the Registrar API;
+   the Hub does not create or edit Registrar records.
+3. Library staff review XML-imported unreturned books and fines.
+   Accounting/Cashier staff review CSV-imported tuition and fee balances.
+   Authorized staff may sign off or place a HOLD after checking their office's
+   records.
+4. Student Affairs staff use the Hub web form to record membership/obligation
+   details, equipment review, and their chosen status and reason.
+5. The API enforces the office assignment and records each decision in the
+   audit log.
 
 ## 5. Administrator flow
 

@@ -44,6 +44,7 @@ const HubApi = {
   myStatus: () => hubRequest("GET", "/students/me/clearance"),
   mySlip: () => hubRequest("GET", "/slips/me"),
   deadline: () => hubRequest("GET", "/deadline"),
+  registrarMasterlist: () => hubRequest("GET", "/registrar/masterlist"),
   officeQueue: (office, status) => hubRequest("GET", "/offices/" + encodeURIComponent(office) + "/students" + (status ? "?status=" + encodeURIComponent(status) : "")),
   signOff: (studentId, office, reason) => hubRequest("POST", "/clearance/" + encodeURIComponent(studentId) + "/" + encodeURIComponent(office) + "/signoff", { reason }),
   placeHold: (studentId, office, reason) => hubRequest("POST", "/clearance/" + encodeURIComponent(studentId) + "/" + encodeURIComponent(office) + "/hold", { reason }),

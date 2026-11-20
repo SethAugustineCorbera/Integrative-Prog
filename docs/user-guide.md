@@ -159,12 +159,58 @@ After signing in:
 
 ## Office staff
 
-1. Sign in with an account assigned to your office.
-2. Use **Office queue** to review active students. A staff account cannot access another office's queue.
-3. Choose **Sign off** only after checking the authoritative office record. Add a HOLD with a clear reason when an outstanding item exists.
-4. Use **HOLD summary** for the office's current unresolved records.
-5. Use **Verify slip** to enter a student's signed short code or full signed token. A verifier may scan the QR with a QR reader and enter the returned token. The result shows whether the slip is valid, expired, revoked, or unknown.
-6. Every sign-off and hold action is recorded in the admin audit log.
+Sign in with the account assigned to your office. Each office account opens its
+own page and the API prevents staff from accessing another office's records.
+
+### Registrar
+
+- **Registrar masterlist** displays the official roster synchronized from the
+  Registrar API as read-only JSON.
+- Use **Reload synchronized JSON** to reload the Hub's local copy. This does
+  not call the Registrar service or add/edit records.
+- Ask an administrator to synchronize the latest roster through **Import
+  monitor**. Registrar staff cannot manually change Registrar clearance.
+
+### Library
+
+- **Library clearance** shows status and reasons from the latest accepted,
+  signed XML import.
+- Check the authoritative library record for unreturned books, borrowed items,
+  and fines. Choose **Sign off** when clear or **Place HOLD** with a reason when
+  an item remains outstanding.
+- Source XML is uploaded/processed by the admin import monitor or daily
+  importer; the staff page does not replace the source system.
+
+### Accounting / Cashier
+
+- **Accounting / Cashier clearance** shows status and reasons from the latest
+  accepted, signed CSV export.
+- Check tuition and other fee balances in the authoritative cashier records.
+  Choose **Sign off** when there is no outstanding balance or **Place HOLD**
+  with a reason when an amount remains due.
+- Source CSV is uploaded/processed by the admin import monitor or daily
+  importer.
+
+### Student Affairs
+
+- **Student Affairs clearance** provides a web form for selecting a student
+  and recording organization membership/obligation details, borrowed-equipment
+  review, the staff decision, and its reason.
+- Staff choose CLEARED or HOLD according to Student Affairs policy; the Hub
+  does not infer a decision from membership or equipment text.
+
+All office decisions are recorded in the audit log. Use **HOLD summary** for
+the assigned office's unresolved records. Use **Verify slip** to enter a
+student's signed short code or the token scanned from the QR; the result shows
+whether the slip is valid, expired, revoked, or unknown.
+
+For local demonstrations, `python python.py seed-demo` creates
+`demo.registrar`, `demo.library`, `demo.accounting`, and `demo.student-affairs`.
+They use the local `DEMO_PASSWORD` and are assigned to their named office.
+To create a non-demo staff account, an administrator opens **Users**, chooses
+**Office staff**, selects the desired office (including **Accounting /
+Cashier**), sets a username and initial password, then gives the credentials
+to the employee through an approved private channel.
 
 ## Admin
 

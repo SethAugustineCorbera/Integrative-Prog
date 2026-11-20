@@ -622,6 +622,39 @@ def my_clearance() -> Any:
     return jsonify(clearance_for_student(student))
 
 
+@app.get("/api/registrar/masterlist")
+@require_roles("staff", "admin")
+def registrar_masterlist() -> Any:
+    registrar_office = _find_office("registrar")
+    if registrar_office is None:
+        return _error("Registrar office is missing from the database.", 500, "configuration_error")
+    if g.user["role"] == "staff" and g.user["office_id"] != registrar_office["id"]:
+        return _error("Only Registrar staff may view the official masterlist.", 403, "office_forbidden")
+    students = query_all(
+        """SELECT s.student_number, s.full_name, s.program, s.year_level,
+                  s.email, s.active
+           FROM students AS s
+           JOIN clearance_records AS c
+             ON c.student_id = s.id AND c.office_id = %s AND c.source = 'registrar'
+           ORDER BY s.student_number""",
+        (registrar_office["id"],),
+    )
+    return jsonify(
+        {
+            "source": "Registrar API synchronized masterlist",
+            "format": "JSON",
+            "students": [
+                {
+                    **student,
+                    "active": bool(student["active"]),
+                    "status": "ACTIVE" if student["active"] else "INACTIVE",
+                }
+                for student in students
+            ],
+        }
+    )
+
+
 @app.get("/api/offices/<office_name>/students")
 @require_roles("staff", "admin")
 def office_students(office_name: str) -> Any:
@@ -663,6 +696,12 @@ def _change_clearance(
         return _error("Student or office was not found.", 404, "record_not_found")
     if g.user["role"] != "staff" or g.user["office_id"] != office["id"]:
         return _error("Only staff assigned to this office can update its clearance.", 403, "office_forbidden")
+    if office["code"] == "registrar":
+        return _error(
+            "Registrar records are read-only in the Hub. Ask an administrator to sync the official masterlist.",
+            403,
+            "registrar_read_only",
+        )
     upsert_clearance(
         student["id"], office["id"], status, reason, "staff", g.user["id"]
     )

@@ -1,7 +1,12 @@
 const HOME = {
   student: "../student/clearance-status/clearance-status.html",
-  staff: "../staff/office-queue/office-queue.html",
   admin: "../admin/import-monitor/import-monitor.html"
+};
+const STAFF_HOME = {
+  registrar: "../staff/registrar/registrar.html",
+  library: "../staff/library/library.html",
+  accounting: "../staff/accounting/accounting.html",
+  "student-affairs": "../staff/student-affairs/student-affairs.html"
 };
 const LOGIN_SCRIPT_URL = document.currentScript ? document.currentScript.src : location.href;
 const manifest = document.createElement("link");
@@ -57,10 +62,16 @@ document.getElementById("login-form").addEventListener("submit", async function 
       username: document.getElementById("login-username").value.trim(),
       password: document.getElementById("login-password").value
     });
+    const home = result.user.role === "staff"
+      ? STAFF_HOME[result.user.office_code]
+      : HOME[result.user.role];
+    if (!home) {
+      throw new Error("This account has no supported office assignment. Ask an administrator to assign an office.");
+    }
     sessionStorage.setItem("token", result.token);
     sessionStorage.setItem("role", result.user.role);
     sessionStorage.setItem("user", JSON.stringify(result.user));
-    location.href = HOME[result.user.role] || "../auth/login.html";
+    location.href = home;
   } catch (error) {
     message.textContent = error.message || "Unable to sign in. Check the Hub API and try again.";
     message.classList.add("error");

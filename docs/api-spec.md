@@ -10,6 +10,7 @@ Base URL: `http://127.0.0.1:8000/api` for local XAMPP development. All protected
 | `GET /auth/me` | Any signed-in user | — | `200 {"user":{...}}` | `401` missing/expired token |
 | `POST /auth/logout` | Any signed-in user | `{}` | `200 {"message":"Logged out."}` | `401` missing/expired token |
 | `GET /students/me/clearance` | Student | — | `200 {"student":{...},"overall":"HOLD","offices":[...]}` | `401`, `403`, `404` |
+| `GET /registrar/masterlist` | Registrar staff or admin | — | `200 {"source":"Registrar API synchronized masterlist","format":"JSON","students":[{"student_number":"...","full_name":"...","program":"...","year_level":1,"email":"...","active":true,"status":"ACTIVE"}]}` | `401`, `403` for other office staff |
 | `GET /offices/{office}/students?status=HOLD` | Staff/Admin | Optional `status=HOLD|CLEARED` | `200 {"office":{...},"students":[...]}` | `400` invalid status, `403` wrong office, `404` office |
 | `POST /clearance/{student_number}/{office}/signoff` | Assigned staff | `{"reason":"Verified with office records"}` | `200 {"status":"CLEARED",...}` | `400`, `401`, `403`, `404` |
 | `POST /clearance/{student_number}/{office}/hold` | Assigned staff | `{"reason":"Outstanding item"}` | `200 {"status":"HOLD",...}` | `400`, `401`, `403`, `404` |
@@ -71,6 +72,7 @@ Authorization: Bearer <token>
 - Admin account-management operations are recorded in `audit_logs`; passwords and password hashes are never included in account-list or audit responses. Changing a role/assignment, deactivating an account, or resetting its password revokes its active sessions.
 - Account audit action values are added by `database/schema.sql` for new databases or `database/migrations/001_user_management_audit.sql` for an existing database. Apply the migration once before using the account-management endpoints on an older installation.
 - A staff account can only change records for its assigned office; admin is read-only for office queue views.
+- The Registrar masterlist endpoint is read-only. Only Registrar-assigned staff or an admin may read the synchronized JSON roster; only admins can trigger an upstream sync. Registrar clearance cannot be manually signed off or placed on HOLD in the Hub.
 - A slip's signed payload expires after 30 days. The public short code is a server-side lookup key; verification still validates the stored HMAC signature and expiry.
 - The slip response includes a locally generated SVG QR that encodes the signed token; it does not send student data or tokens to a third-party QR service.
 - Registrar and holiday API error details are surfaced as service errors. The API does not silently substitute sample data.

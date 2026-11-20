@@ -79,13 +79,26 @@ th{
     font-weight:bold;
     margin-bottom:.25rem;
 }
-input[type=text],input[type=email],input[type=password],input[type=file],select{
+input[type=text],input[type=email],input[type=password],input[type=file],select,textarea{
     width:100%;
     padding:.55rem;
     border:1px solid var(--line);
     border-radius:4px;
     background:var(--card);
     color:var(--ink);
+}
+textarea{
+    resize:vertical;
+}
+.json-view{
+    max-height:65vh;
+    overflow:auto;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--card);
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
 }
 input[type=checkbox]{
     width:auto;
