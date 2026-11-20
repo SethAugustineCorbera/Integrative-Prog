@@ -501,3 +501,182 @@
 2026-11-20 21:12:33,500 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
  * Running on http://127.0.0.1:8000
 2026-11-20 21:12:33,500 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-11-20 21:46:16,802 INFO werkzeug WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8000
+2026-11-20 21:46:16,803 INFO werkzeug Press CTRL+C to quit
+2026-11-20 21:46:51,824 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:46:51] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:46:52,725 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:46:52] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:46:52,760 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:46:52] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:46:52,963 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:46:52] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:46:52,979 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:46:52] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:46:53,128 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:46:53] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:47:32,935 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:47:32] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:47:36,311 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:47:36] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:51:01,613 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:51:01] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:51:24,604 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:51:24] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:51:26,523 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:51:26] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:53:16,254 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:16] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:53:16,965 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:16] "POST /api/auth/login HTTP/1.1" 401 -
+2026-11-20 21:53:19,292 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:19] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:53:19,362 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:19] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:53:19,640 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:19] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:53:19,653 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:19] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:53:19,862 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:19] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:53:22,414 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:22] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:53:22,652 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:53:22] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:54:36,066 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:36] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:54:36,776 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:36] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:54:36,971 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:36] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:54:37,250 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:37] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:54:37,269 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:37] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:54:37,274 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:37] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-20 21:54:37,872 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:37] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:54:37,895 ERROR hub Exception on /api/slips/me [GET]
+Traceback (most recent call last):
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 264, in guarded
+    return view(*args, **kwargs)
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 914, in my_slip
+    "qr_svg": _slip_qr_svg(token),
+              ~~~~~~~~~~~~^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 852, in _slip_qr_svg
+    import qrcode
+ModuleNotFoundError: No module named 'qrcode'
+2026-11-20 21:54:37,992 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:37] "GET /api/slips/me HTTP/1.1" 500 -
+2026-11-20 21:54:38,474 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:38] "OPTIONS /api/deadline HTTP/1.1" 200 -
+2026-11-20 21:54:38,814 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:38] "GET /api/deadline HTTP/1.1" 200 -
+2026-11-20 21:54:47,926 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:47] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 21:54:48,281 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:54:48] "POST /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 21:55:27,186 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:27] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:55:27,946 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:27] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 21:55:28,109 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:28] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:55:28,465 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:28] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:55:28,472 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:28] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:55:28,477 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:28] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-20 21:55:28,970 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:28] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:55:28,991 ERROR hub Exception on /api/slips/me [GET]
+Traceback (most recent call last):
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 264, in guarded
+    return view(*args, **kwargs)
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 914, in my_slip
+    "qr_svg": _slip_qr_svg(token),
+              ~~~~~~~~~~~~^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 852, in _slip_qr_svg
+    import qrcode
+ModuleNotFoundError: No module named 'qrcode'
+2026-11-20 21:55:29,007 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:29] "GET /api/slips/me HTTP/1.1" 500 -
+2026-11-20 21:55:45,620 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:45] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:55:45,816 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:45] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 21:55:45,838 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:45] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:55:45,844 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:45] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-20 21:55:46,438 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:46] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 21:55:46,447 ERROR hub Exception on /api/slips/me [GET]
+Traceback (most recent call last):
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 264, in guarded
+    return view(*args, **kwargs)
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 914, in my_slip
+    "qr_svg": _slip_qr_svg(token),
+              ~~~~~~~~~~~~^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 852, in _slip_qr_svg
+    import qrcode
+ModuleNotFoundError: No module named 'qrcode'
+2026-11-20 21:55:46,457 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:46] "GET /api/slips/me HTTP/1.1" 500 -
+2026-11-20 21:55:51,638 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:51] "OPTIONS /api/deadline HTTP/1.1" 200 -
+2026-11-20 21:55:51,927 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:51] "GET /api/deadline HTTP/1.1" 200 -
+2026-11-20 21:55:54,388 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:54] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 21:55:54,789 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:55:54] "POST /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 21:56:58,228 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:56:58] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 21:56:58,385 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 21:56:58] "POST /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 22:02:17,119 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:17] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 22:02:17,462 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:17] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 22:02:17,537 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:17] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:17,710 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:17] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:19,637 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:19] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:21,018 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:21] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 22:02:21,158 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:21] "POST /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 22:02:29,159 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:29] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 22:02:29,938 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:29] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 22:02:30,097 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:30] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:30,310 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:30] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:30,328 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:30] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 22:02:30,334 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:30] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-20 22:02:30,885 ERROR hub Exception on /api/slips/me [GET]
+Traceback (most recent call last):
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 264, in guarded
+    return view(*args, **kwargs)
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 914, in my_slip
+    "qr_svg": _slip_qr_svg(token),
+              ~~~~~~~~~~~~^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 852, in _slip_qr_svg
+    import qrcode
+ModuleNotFoundError: No module named 'qrcode'
+2026-11-20 22:02:30,898 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:30] "GET /api/slips/me HTTP/1.1" 500 -
+2026-11-20 22:02:30,916 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:30] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 22:02:35,048 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:35] "OPTIONS /api/deadline HTTP/1.1" 200 -
+2026-11-20 22:02:35,448 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:35] "GET /api/deadline HTTP/1.1" 200 -
+2026-11-20 22:02:36,172 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:36] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 22:02:36,589 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:36] "POST /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 22:02:54,622 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:54] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-20 22:02:55,286 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:55] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-20 22:02:55,427 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:55] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:55,842 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:55] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-20 22:02:55,865 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:55] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 22:02:55,876 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:55] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-20 22:02:56,426 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:56] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-20 22:02:56,442 ERROR hub Exception on /api/slips/me [GET]
+Traceback (most recent call last):
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\kylec\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 264, in guarded
+    return view(*args, **kwargs)
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 914, in my_slip
+    "qr_svg": _slip_qr_svg(token),
+              ~~~~~~~~~~~~^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 852, in _slip_qr_svg
+    import qrcode
+ModuleNotFoundError: No module named 'qrcode'
+2026-11-20 22:02:56,455 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:56] "GET /api/slips/me HTTP/1.1" 500 -
+2026-11-20 22:02:58,570 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:58] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
+2026-11-20 22:02:58,683 INFO werkzeug 127.0.0.1 - - [20/Nov/2026 22:02:58] "POST /api/auth/logout HTTP/1.1" 200 -
