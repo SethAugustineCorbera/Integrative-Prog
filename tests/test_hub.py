@@ -569,6 +569,14 @@ class ApiTests(HubTestCase):
                 "INSERT INTO users (username, password_hash, role, office_id) VALUES (%s, %s, %s, %s)",
                 ("test.library", TEST_PASSWORD_HASH, "staff", library["id"]),
             )
+            registrar = hub.query_one(
+                "SELECT id FROM offices WHERE code = %s", ("registrar",)
+            )
+            if registrar is not None:
+                hub.execute(
+                    "INSERT INTO users (username, password_hash, role, office_id) VALUES (%s, %s, %s, %s)",
+                    ("test.registrar", TEST_PASSWORD_HASH, "staff", registrar["id"]),
+                )
             hub.execute(
                 "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
                 ("test.admin", TEST_PASSWORD_HASH, "admin"),
@@ -962,6 +970,42 @@ class ApiTests(HubTestCase):
         xml_response = self.client.get("/api/reports/clearance?format=xml", headers=headers)
         self.assertTrue(csv_response.mimetype == "text/csv")
         self.assertTrue(xml_response.mimetype == "application/xml")
+
+    def test_registrar_staff_can_download_report(self) -> None:
+        token = self.login("test.registrar")
+        response = self.client.get(
+            "/api/reports/clearance?format=csv",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_other_office_staff_cannot_download_report(self) -> None:
+        token = self.login("test.library")
+        response = self.client.get(
+            "/api/reports/clearance?format=json",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_hold_summary_is_limited_to_own_office_for_staff(self) -> None:
+        staff = self.client.get(
+            "/api/admin/hold-summary",
+            headers={"Authorization": "Bearer " + self.login("test.library")},
+        )
+        admin = self.client.get(
+            "/api/admin/hold-summary",
+            headers={"Authorization": "Bearer " + self.login("test.admin")},
+        )
+        self.assertEqual(staff.status_code, 200)
+        self.assertTrue(all(row["office_code"] == "library" for row in staff.get_json()["holds"]))
+        self.assertEqual(admin.status_code, 200)
+
+    def test_student_cannot_read_hold_summary(self) -> None:
+        response = self.client.get(
+            "/api/admin/hold-summary",
+            headers={"Authorization": "Bearer " + self.login("test.student")},
+        )
+        self.assertEqual(response.status_code, 403)
 
     def test_report_rejects_unsupported_format(self) -> None:
         token = self.login("test.admin")

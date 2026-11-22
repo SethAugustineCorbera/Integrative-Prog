@@ -31,6 +31,7 @@
         <a href="#imports" class="nav-link" data-tab="imports">Imports</a>
         <a href="#users" class="nav-link" data-tab="users">Users</a>
         <a href="#reports" class="nav-link" data-tab="reports">Reports</a>
+        <a href="#holds" class="nav-link" data-tab="holds">Hold Summary</a>
         <a href="#audit" class="nav-link" data-tab="audit">Audit Log</a>
         <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
         <a href="#api" class="nav-link" data-tab="api">API Reference</a>
@@ -68,7 +69,7 @@
             </div>
             <p class="hint">Click a student to see the reason from each office.</p>
             <div class="table-wrap grow">
-                <table>
+                <table class="matrix">
                     <thead><tr><th>Student ID</th><th>Name</th><th>Library</th><th>Student Affairs</th><th>Accounting</th><th>Registrar</th><th>Overall</th></tr></thead>
                     <tbody id="queue-body"></tbody>
                 </table>
@@ -157,6 +158,27 @@
                 <table>
                     <thead><tr><th>Student</th><th>Program</th><th>Overall</th></tr></thead>
                     <tbody id="report-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOLD SUMMARY -->
+    <section class="tab" id="tab-holds" aria-labelledby="h-holds" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-holds">Hold Summary</h2>
+            <p class="panel-sub">Students on HOLD in each office with the reason. The scheduled script writes the same summary every day.</p>
+            <div class="cards" id="hold-cards"></div>
+            <div class="toolbar">
+                <select id="hold-office" aria-label="Filter by office"><option value="">All offices</option></select>
+                <input type="search" id="hold-search" placeholder="Search student or reason" aria-label="Search hold summary" maxlength="80" autocomplete="off">
+                <button class="btn btn-outline" id="hold-refresh" type="button">Refresh</button>
+                <button class="btn" id="hold-download" type="button">Download CSV</button>
+            </div>
+            <div class="table-wrap grow">
+                <table>
+                    <thead><tr><th>Office</th><th>Student ID</th><th>Name</th><th>Reason</th></tr></thead>
+                    <tbody id="hold-body"></tbody>
                 </table>
             </div>
         </div>

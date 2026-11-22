@@ -628,7 +628,12 @@ def office_students(office_name: str) -> Any:
     office = _find_office(office_name)
     if office is None:
         return _error("Office was not found.", 404, "office_not_found")
-    if g.user["role"] == "staff" and g.user["office_id"] != office["id"]:
+    # Registrar staff give the final sign-off, so they may read (never change) every office's queue.
+    if (
+        g.user["role"] == "staff"
+        and g.user["office_id"] != office["id"]
+        and g.user.get("office_code") != "registrar"
+    ):
         return _error("Staff may only view their assigned office.", 403, "office_forbidden")
     status = request.args.get("status", "").upper()
     if status and status not in {"HOLD", "CLEARED"}:
@@ -817,8 +822,11 @@ def _report_rows() -> list[dict[str, Any]]:
 
 
 @app.get("/api/reports/clearance")
-@require_roles("admin")
+@require_roles("admin", "staff")
 def clearance_report() -> Any:
+    # The Registrar downloads the report (office staff of the Registrar and admins only).
+    if g.user["role"] == "staff" and g.user.get("office_code") != "registrar":
+        return _error("Only the Registrar office and administrators can download this report.", 403, "forbidden")
     export_format = request.args.get("format", "json").lower()
     if export_format not in {"csv", "json", "xml"}:
         return _error("format must be csv, json, or xml.", 400, "invalid_format")
@@ -1115,8 +1123,12 @@ def sync_registrar() -> Any:
 
 
 @app.get("/api/admin/hold-summary")
-@require_roles("admin")
+@require_roles("admin", "staff")
 def hold_summary() -> Any:
+    # Admins see every office; office staff see only their own office.
+    own_office = g.user.get("office_code") if g.user["role"] == "staff" else None
+    if g.user["role"] == "staff" and not own_office:
+        return _error("Your account is not linked to an office.", 403, "forbidden")
     summaries = query_all(
         """SELECT o.code AS office_code, o.name AS office,
                   s.student_number, s.full_name,
@@ -1129,6 +1141,8 @@ def hold_summary() -> Any:
              AND COALESCE(c.status, 'HOLD') = 'HOLD'
            ORDER BY o.name, s.student_number"""
     )
+    if own_office:
+        summaries = [row for row in summaries if row["office_code"] == own_office]
     return jsonify({"holds": summaries})
 
 

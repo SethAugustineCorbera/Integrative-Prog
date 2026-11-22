@@ -7,8 +7,8 @@
 <title>Welcome | DNSC e-Clearance Hub</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icons/clearance.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/css/landing.css?v=20">
-<link rel="stylesheet" href="assets/css/login-modal.css?v=20">
+<link rel="stylesheet" href="assets/css/landing.css?v=21">
+<link rel="stylesheet" href="assets/css/login-modal.css?v=21">
 </head>
 <body>
 <!-- NAVBAR SECTION -->
@@ -31,147 +31,108 @@
     <nav class="navigation" id="main-navigation">
         <a href="#home" class="nav-link active">Home</a>
         <a href="#about" class="nav-link">About</a>
-        <a href="#benefits" class="nav-link">Benefits</a>
         <a href="#developers" class="nav-link">Developers</a>
         <a href="#contact" class="nav-link">Contact</a>
     </nav>
 </header>
-<main class="stage" id="home">
-<img class="art" src="assets/icons/contours.svg" alt="">
+<main id="home">
 
+<!-- HERO -->
 <section class="hero">
-<h1>Welcome!</h1>
-<p class="lead">to the clearance signing page.</p>
-<a class="login" id="open-login" href="#login">Log in</a>
+    <img class="art" src="assets/icons/contours.svg" alt="">
+    <div class="wrap hero-grid">
+        <div class="hero-text">
+            <span class="eyebrow on-dark">Davao del Norte State College</span>
+            <h1>Welcome!</h1>
+            <p class="lead">to the clearance signing page.</p>
+            <p class="hero-copy">Complete your clearance online. Track every office from one place and receive a signed slip once everything is cleared.</p>
+            <div class="hero-actions">
+                <a class="login" id="open-login" href="#login">Log in</a>
+                <a class="ghost" href="#about">Learn more</a>
+            </div>
+        </div>
+        <aside class="status-card" aria-hidden="true">
+            <div class="status-head"><strong>Clearance progress</strong><span>Sample view</span></div>
+            <div class="status-bar"><i class="on"></i><i class="on"></i><i class="hold"></i><i></i></div>
+            <ul>
+                <li><span>Library</span><b class="ok">Cleared</b></li>
+                <li><span>Student Affairs</span><b class="ok">Cleared</b></li>
+                <li><span>Accounting</span><b class="hold">On hold</b></li>
+                <li><span>Registrar</span><b>Waiting</b></li>
+            </ul>
+        </aside>
+    </div>
 </section>
-</main>
 
-<!-- ABOUT SECTION -->
-<section class="about-section" id="about">
-    
-    <div class="about-content">
-        <h2>About DNSC e-Clearance Hub</h2>
-        <p>
-            The DNSC e-Clearance Hub is a digital platform designed
-            to simplify and organize the school's clearance signing
-            process. It allows students to conveniently manage their
-            clearance requirements, obtain necessary approvals, and
-            monitor their clearance status through one centralized
-            system.
-        </p>
+<!-- HOW IT WORKS -->
+<section class="process" id="process" aria-labelledby="process-title">
+    <div class="wrap">
+        <h2 class="sr-only" id="process-title">How clearance works</h2>
+        <ol class="steps">
+            <li><span class="step-no">1</span><h3>Log in</h3><p>Sign in with your Hub account using your student number.</p></li>
+            <li><span class="step-no">2</span><h3>Offices review</h3><p>Library, Student Affairs and Accounting check your records and sign off.</p></li>
+            <li><span class="step-no">3</span><h3>Registrar signs last</h3><p>The Registrar gives the final sign-off once the other offices have cleared you.</p></li>
+            <li><span class="step-no">4</span><h3>Get your slip</h3><p>Download the signed clearance slip with its QR code and short code.</p></li>
+        </ol>
+    </div>
+</section>
 
-        <h3>Complete Your Clearance, One Step at a Time.</h3>
-
-        <h3 class="users-title">Who Uses the Hub</h3>
-        <div class="users-grid">
-            <article class="user-card">
-                <img src="assets/icons/student.svg" alt="" width="64" height="64">
-                <h4>Student</h4>
-                <p>Checks clearance status for every office, shows the signed slip and follows the deadline.</p>
-            </article>
-            <article class="user-card">
-                <img src="assets/icons/library.svg" alt="" width="64" height="64">
-                <h4>Library</h4>
-                <p>Records borrowed books and fines, and signs off students with nothing unreturned.</p>
-            </article>
-            <article class="user-card">
-                <img src="assets/icons/student-affairs.svg" alt="" width="64" height="64">
-                <h4>Student Affairs</h4>
-                <p>Tracks borrowed equipment and organization memberships before signing off.</p>
-            </article>
-            <article class="user-card">
-                <img src="assets/icons/accounting.svg" alt="" width="64" height="64">
-                <h4>Accounting</h4>
-                <p>Checks tuition, fee and fine balances before signing off a student.</p>
-            </article>
-            <article class="user-card">
-                <img src="assets/icons/registrar.svg" alt="" width="64" height="64">
-                <h4>Registrar</h4>
-                <p>Keeps the official masterlist and gives the final clearance sign-off.</p>
-            </article>
-            <article class="user-card">
-                <img src="assets/icons/admin.svg" alt="" width="64" height="64">
-                <h4>Admin</h4>
-                <p>Manages accounts, imports office data, reviews reports and the audit log.</p>
-            </article>
+<!-- ABOUT -->
+<section class="section about-section" id="about">
+    <div class="wrap about-grid">
+        <div class="about-info">
+            <span class="eyebrow">About</span>
+            <h2>About DNSC e-Clearance Hub</h2>
+            <p>The DNSC e-Clearance Hub is a digital platform designed to simplify and organize the school's clearance signing process. It allows students to conveniently manage their clearance requirements, obtain necessary approvals, and monitor their clearance status through one centralized system.</p>
+            <h3>Complete Your Clearance, One Step at a Time.</h3>
+            <ul class="facts">
+                <li>One clear status for every office, with the reason shown for any hold.</li>
+                <li>Automatic sign-off for students with no outstanding obligations.</li>
+                <li>A signed, verifiable clearance slip once every office has cleared you.</li>
+            </ul>
+        </div>
+        <div class="about-users">
+            <h3 class="users-title">Who Uses the Hub</h3>
+            <div class="users-grid">
+                <article class="user-card">
+                    <img src="assets/icons/student.svg" alt="" width="56" height="56">
+                    <h4>Student</h4>
+                    <p>Checks clearance status for every office, shows the signed slip and follows the deadline.</p>
+                </article>
+                <article class="user-card">
+                    <img src="assets/icons/library.svg" alt="" width="56" height="56">
+                    <h4>Library</h4>
+                    <p>Records borrowed books and fines, and signs off students with nothing unreturned.</p>
+                </article>
+                <article class="user-card">
+                    <img src="assets/icons/student-affairs.svg" alt="" width="56" height="56">
+                    <h4>Student Affairs</h4>
+                    <p>Tracks borrowed equipment and organization memberships before signing off.</p>
+                </article>
+                <article class="user-card">
+                    <img src="assets/icons/accounting.svg" alt="" width="56" height="56">
+                    <h4>Accounting</h4>
+                    <p>Checks tuition, fee and fine balances before signing off a student.</p>
+                </article>
+                <article class="user-card">
+                    <img src="assets/icons/registrar.svg" alt="" width="56" height="56">
+                    <h4>Registrar</h4>
+                    <p>Keeps the official masterlist and gives the final clearance sign-off.</p>
+                </article>
+                <article class="user-card">
+                    <img src="assets/icons/admin.svg" alt="" width="56" height="56">
+                    <h4>Admin</h4>
+                    <p>Manages accounts, imports office data, reviews reports and the audit log.</p>
+                </article>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- BENEFITS SECTION -->
-<section class="benefits-section" id="benefits">
-    <div class="section-heading">
-        <h2>Why Use DNSC e-Clearance Hub?</h2>
-        <p>
-            Discover how our digital clearance system makes
-            the clearance process easier and more organized.
-        </p>
-    </div>
-
-    <div class="benefits-carousel">
-
-        <article class="benefit-card">
-            <img src="assets/images/benefits/convenience.jpg" alt="Convenient access">
-            <h3>Convenient Access</h3>
-            <p>
-                Access your clearance requirements and monitor
-                your progress through one centralized platform.
-            </p>
-        </article>
-
-        <article class="benefit-card">
-            <img src="assets/images/benefits/time-saving.jpg" alt="Time saving">
-            <h3>Time-Saving Process</h3>
-            <p>
-                Reduce unnecessary trips and simplify the process
-                of obtaining clearance signatures.
-            </p>
-        </article>
-
-        <article class="benefit-card">
-            <img src="assets/images/benefits/tracking.jpg" alt="Clearance tracking">
-            <h3>Progress Tracking</h3>
-            <p>
-                Keep track of your clearance status and identify
-                which requirements still need attention.
-            </p>
-        </article>
-
-        <article class="benefit-card">
-            <img src="assets/images/benefits/organization.jpg" alt="Organized records">
-            <h3>Organized Records</h3>
-            <p>
-                Keep clearance information organized and
-                accessible in one digital location.
-            </p>
-        </article>
-
-        <article class="benefit-card">
-            <img src="assets/images/benefits/accessibility.jpg" alt="Easy accessibility">
-            <h3>Easy Accessibility</h3>
-            <p>
-                Use the platform through compatible devices
-                whenever you need to check your clearance.
-            </p>
-        </article>
-
-        <article class="benefit-card">
-            <img src="assets/images/benefits/transparency.jpg" alt="Transparent process">
-            <h3>Clear Process</h3>
-            <p>
-                Stay informed about your clearance requirements
-                and the progress of your approvals.
-            </p>
-        </article>
-
-    </div>
-
-    <p class="carousel-hint">Scroll horizontally to explore more benefits →</p>
-</section>
-
 <!-- DEV SECTION -->
-<section class="developers-section" id="developers">
-    <div class="section-heading">
+<section class="section dev-section" id="developers">
+    <div class="section-head">
+        <span class="eyebrow">The team</span>
         <h2>Meet the Developers</h2>
         <p>
             The people behind the development of DNSC e-Clearance Hub.
@@ -218,6 +179,8 @@
     </div>
 </section>
 
+</main>
+
 <!-- FOOTER SECTION -->
 <footer class="footer" id="contact">
 
@@ -242,7 +205,6 @@
             <h3>Useful Links</h3>
             <a href="#home">Home</a>
             <a href="#about">About</a>
-            <a href="#benefits">Benefits</a>
             <a href="#developers">Developers</a>
         </div>
 

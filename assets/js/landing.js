@@ -153,7 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const sections = [
         "home",
         "about",
-        "benefits",
         "developers",
         "contact"
     ]

@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "dnsc-clearance-shell-v21";
+const CACHE_NAME = "dnsc-clearance-shell-v27";
 const BASE_URL = new URL("./", self.registration.scope);
 const APP_SHELL = [
   "index.html",

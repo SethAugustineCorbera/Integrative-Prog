@@ -52,6 +52,7 @@ async function loadStatus() {
     document.getElementById("welcome-sub").textContent = data.overall === "CLEARED"
         ? "Every office has cleared you."
         : "Some offices still need your attention.";
+    studentInfo = data.student;
     renderProgress(data.offices);
 }
 
@@ -200,6 +201,153 @@ document.getElementById("od-close").addEventListener("click", function () { offi
 officeDialog.addEventListener("click", function (event) { if (event.target === officeDialog) officeDialog.close(); });
 
 /* ---------- Slip ---------- */
+let slipData = null;
+let studentInfo = null;
+
+function loadImage(url) {
+    return new Promise(function (resolve, reject) {
+        const image = new Image();
+        image.onload = function () { resolve(image); };
+        image.onerror = function () { reject(new Error("The QR code could not be prepared for download.")); };
+        image.src = url;
+    });
+}
+
+function wrapText(ctx, text, maxWidth) {
+    const words = String(text).split(/\s+/);
+    const lines = [];
+    let line = "";
+    words.forEach(function (word) {
+        const attempt = line ? line + " " + word : word;
+        if (ctx.measureText(attempt).width > maxWidth && line) { lines.push(line); line = word; } else { line = attempt; }
+    });
+    if (line) lines.push(line);
+    return lines;
+}
+
+/* Draws the slip on an A4 canvas (150 dpi). */
+async function drawSlip() {
+    const W = 1240, H = 1754, M = 100;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    const INK = "#12354F", SKY = "#87CEFA", SKY2 = "#B5E8FF", BUTTER = "#FBFABA", MUTED = "#3D5F78", LINE = "#D3DEE6";
+    const font = function (size, weight) { return (weight || 400) + " " + size + "px Inter, 'Segoe UI', Arial, sans-serif"; };
+    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, W, H);
+    const band = ctx.createLinearGradient(0, 0, W, 0);
+    band.addColorStop(0, "#0E2B42"); band.addColorStop(1, "#1B4B70");
+    ctx.fillStyle = band; ctx.fillRect(0, 0, W, 220);
+    ctx.fillStyle = SKY; ctx.fillRect(0, 220, W, 10);
+    ctx.fillStyle = "#F4F4F2"; ctx.textBaseline = "alphabetic";
+    ctx.font = font(30, 600); ctx.fillText("DNSC e-Clearance Hub", M, 95);
+    ctx.font = font(62, 800); ctx.fillText("Clearance Slip", M, 168);
+
+    const info = studentInfo || {};
+    ctx.fillStyle = INK; ctx.font = font(50, 800);
+    ctx.fillText(slipData.student.full_name, M, 330);
+    ctx.fillStyle = MUTED; ctx.font = font(28, 500);
+    ctx.fillText("Student ID: " + slipData.student.student_number, M, 378);
+    if (info.program) ctx.fillText(info.program + ", year " + info.year_level, M, 420);
+
+    /* Office table */
+    let y = 480;
+    ctx.fillStyle = INK; ctx.font = font(24, 700);
+    ctx.fillText("OFFICE", M + 20, y + 40); ctx.fillText("STATUS", 620, y + 40); ctx.fillText("DATE", 880, y + 40);
+    ctx.fillStyle = SKY2; ctx.fillRect(M, y, W - 2 * M, 64);
+    ctx.fillStyle = INK; ctx.font = font(24, 700);
+    ctx.fillText("OFFICE", M + 20, y + 41); ctx.fillText("STATUS", 620, y + 41); ctx.fillText("DATE", 880, y + 41);
+    y += 64;
+    officeRows.forEach(function (row, index) {
+        ctx.fillStyle = index % 2 ? "#F4F4F2" : "#FFFFFF"; ctx.fillRect(M, y, W - 2 * M, 72);
+        ctx.fillStyle = INK; ctx.font = font(28, 600); ctx.fillText(row.office, M + 20, y + 46);
+        const cleared = row.status === "CLEARED";
+        ctx.fillStyle = cleared ? SKY : BUTTER;
+        ctx.beginPath(); ctx.roundRect(620, y + 14, 190, 44, 22); ctx.fill();
+        if (!cleared) { ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke(); }
+        ctx.fillStyle = INK; ctx.font = font(22, 700); ctx.textAlign = "center";
+        ctx.fillText(row.status, 715, y + 45); ctx.textAlign = "left";
+        ctx.fillStyle = MUTED; ctx.font = font(24, 400);
+        ctx.fillText(row.updated_at ? new Date(row.updated_at).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : "-", 880, y + 45);
+        y += 72;
+    });
+    ctx.strokeStyle = LINE; ctx.lineWidth = 2; ctx.strokeRect(M, 480, W - 2 * M, y - 480);
+
+    /* Overall result */
+    y += 60;
+    ctx.fillStyle = INK; ctx.font = font(30, 700);
+    ctx.fillText("Overall result: CLEARED", M, y);
+
+    /* QR + code */
+    y += 50;
+    const svgUrl = URL.createObjectURL(new Blob([slipData.qr_svg], { type: "image/svg+xml" }));
+    try {
+        const qr = await loadImage(svgUrl);
+        const size = 420, qx = (W - size) / 2;
+        ctx.fillStyle = "#FFFFFF"; ctx.fillRect(qx - 20, y - 20, size + 40, size + 40);
+        ctx.strokeStyle = LINE; ctx.strokeRect(qx - 20, y - 20, size + 40, size + 40);
+        ctx.drawImage(qr, qx, y, size, size);
+        y += size + 90;
+    } finally { URL.revokeObjectURL(svgUrl); }
+    ctx.textAlign = "center";
+    ctx.fillStyle = INK; ctx.font = "700 44px Consolas, 'Courier New', monospace";
+    ctx.fillText(slipData.public_code, W / 2, y);
+    ctx.fillStyle = MUTED; ctx.font = font(24, 400);
+    y += 50;
+    wrapText(ctx, "Present this signed QR code or short code to the Registrar. It expires " + new Date(slipData.expires_at).toLocaleString() + ".", W - 2 * M - 80).forEach(function (line) { ctx.fillText(line, W / 2, y); y += 36; });
+    ctx.fillStyle = SKY; ctx.fillRect(0, H - 90, W, 6);
+    ctx.fillStyle = MUTED; ctx.font = font(22, 400);
+    ctx.fillText("Generated " + new Date().toLocaleString() + " by the DNSC e-Clearance Hub", W / 2, H - 40);
+    ctx.textAlign = "left";
+    return canvas;
+}
+
+/* Wraps a JPEG in a one-page A4 PDF (no libraries). */
+function pdfFromJpeg(jpegBytes, width, height) {
+    const encoder = new TextEncoder();
+    const parts = [];
+    const offsets = [];
+    let length = 0;
+    function push(chunk) { const bytes = typeof chunk === "string" ? encoder.encode(chunk) : chunk; parts.push(bytes); length += bytes.length; }
+    function object(number, body) { offsets[number] = length; push(number + " 0 obj\n" + body + "\nendobj\n"); }
+    push("%PDF-1.4\n");
+    object(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    object(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+    object(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>");
+    offsets[4] = length;
+    push("4 0 obj\n<< /Type /XObject /Subtype /Image /Width " + width + " /Height " + height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jpegBytes.length + " >>\nstream\n");
+    push(jpegBytes);
+    push("\nendstream\nendobj\n");
+    const content = "q 595 0 0 842 0 0 cm /Im0 Do Q";
+    object(5, "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream");
+    const xref = length;
+    let table = "xref\n0 6\n0000000000 65535 f \n";
+    for (let i = 1; i <= 5; i++) table += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+    push(table + "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+    return new Blob(parts, { type: "application/pdf" });
+}
+
+document.getElementById("slip-download").addEventListener("click", async function () {
+    const button = this;
+    if (!slipData) return;
+    button.disabled = true;
+    try {
+        const canvas = await drawSlip();
+        const jpeg = await new Promise(function (resolve) { canvas.toBlob(resolve, "image/jpeg", 0.92); });
+        const bytes = new Uint8Array(await jpeg.arrayBuffer());
+        const pdf = pdfFromJpeg(bytes, canvas.width, canvas.height);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(pdf);
+        link.download = "clearance-slip-" + slipData.student.full_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(link.href); }, 2000);
+    } catch (error) {
+        document.getElementById("slip-note").textContent = error.message || "The slip could not be downloaded.";
+    } finally {
+        button.disabled = false;
+    }
+});
 async function loadSlip() {
     const qr = document.getElementById("qr");
     const code = document.getElementById("slip-code");
@@ -221,12 +369,16 @@ async function loadSlip() {
         qr.hidden = false;
         code.textContent = data.public_code;
         code.hidden = false;
+        slipData = data;
+        document.getElementById("slip-download").hidden = false;
         note.textContent = "Show the QR code or signed short code to office staff. It expires "
             + new Date(data.expires_at).toLocaleString() + ".";
     } catch (error) {
         if (error.status === 401) throw error;
         qr.hidden = true;
         code.hidden = true;
+        slipData = null;
+        document.getElementById("slip-download").hidden = true;
         // 409 = still on HOLD: not an error in the page, just no slip yet.
         note.textContent = error.status === 409
             ? "Your slip is not available yet. " + error.message

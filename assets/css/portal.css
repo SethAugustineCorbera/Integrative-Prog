@@ -58,7 +58,7 @@ body{
     border-bottom:1px solid rgba(18,53,79,.18);
 }
 .menu-toggle{display:none;background:transparent;border:none;padding:.5rem;cursor:pointer}
-.menu-toggle span{display:block;width:26px;height:3px;margin:5px 0;border-radius:5px;background:var(--brand);transition:transform .3s ease,opacity .3s ease}
+.menu-toggle span{display:block;width:26px;height:3px;margin:5px 0;border-radius:5px;background:var(--ink);transition:transform .3s ease,opacity .3s ease}
 .menu-toggle.open span:nth-child(1){transform:translateY(8px) rotate(45deg)}
 .menu-toggle.open span:nth-child(2){opacity:0}
 .menu-toggle.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
@@ -146,8 +146,38 @@ body{
 .tab[hidden]{display:none}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-.welcome{margin-bottom:1.25rem}
-h1{margin:0;font-size:clamp(2.2rem,5vw,4rem);line-height:1.05;font-weight:900;letter-spacing:-.03em}
+.welcome{
+    position:relative;
+    margin-bottom:1rem;
+    padding:1rem 1.5rem 1.1rem;
+    border-radius:18px;
+    background:linear-gradient(135deg,#0E2B42 0%,#12354F 45%,#1B4B70 100%);
+    color:#F4F4F2;
+    box-shadow:0 10px 24px rgba(18,53,79,.2);
+}
+.welcome::before{
+    content:"Student portal";
+    display:inline-block;
+    margin-bottom:.4rem;
+    padding:.2rem .75rem;
+    border-radius:999px;
+    background:rgba(181,232,255,.16);
+    color:#B5E8FF;
+    font-size:.68rem;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+body[data-office="library"] .welcome::before{content:"Library office"}
+body[data-office="accounting"] .welcome::before{content:"Accounting office"}
+body[data-office="registrar"] .welcome::before{content:"Registrar office"}
+body[data-office="student-affairs"] .welcome::before{content:"Student Affairs office"}
+body.admin .welcome::before{content:"Administration"}
+.welcome h1{color:#F4F4F2}
+.welcome .lead{color:#B5E8FF;margin-top:.3rem}
+h1{margin:0;font-size:clamp(2rem,4vw,3rem);line-height:1.1;font-weight:800;letter-spacing:-.02em}
+.btn[hidden]{display:none!important}
+#slip-download{margin-top:.9rem}
 .lead{margin:.5rem 0 0;font-size:clamp(1rem,1.8vw,1.25rem);font-weight:300}
 
 /* ---------- Light panel ---------- */
@@ -176,8 +206,9 @@ h1{margin:0;font-size:clamp(2.2rem,5vw,4rem);line-height:1.05;font-weight:900;le
 .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line);background:#fff}
 table{width:100%;border-collapse:collapse;font-size:.92rem}
 th,td{padding:.7rem 1rem;text-align:left;border-bottom:1px solid #DDE6EC;color:var(--panel)}
-th{background:var(--bg);font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--sidebar);position:sticky;top:0}
+th{background:#EAF6FD;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--sidebar);position:sticky;top:0}
 tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--cream)}
 
 .badge{display:inline-block;padding:.2rem .8rem;border-radius:999px;font-size:.8rem;font-weight:700;background:var(--bg);color:var(--panel)}
 .badge.cleared{background:var(--brand);color:var(--ink)}
@@ -323,7 +354,7 @@ tbody tr:last-child td{border-bottom:0}
     .stage-inner{padding:1.1rem 1rem}
     .panel{padding:1.1rem}
     h1{font-size:2.2rem}
-    .welcome{margin-bottom:.9rem}
+    .welcome{margin-bottom:.8rem;padding:.8rem 1rem .9rem}
     .art{width:140vw;right:-45%;opacity:.3}
 }
 @media(prefers-reduced-motion:reduce){
@@ -460,7 +491,7 @@ tr.clickable:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
 .detail-head .panel-sub{margin:.2rem 0 0}
 .fee-table{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;font-size:.95rem}
 .fee-table th,.fee-table td{padding:.65rem .9rem;border-bottom:1px solid #DDE6EC;text-align:left}
-.fee-table thead th{background:var(--bg);font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--sidebar)}
+.fee-table thead th{background:#EAF6FD;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--sidebar)}
 .fee-table td.amount,.fee-table thead th:last-child{text-align:right}
 .fee-table tfoot th,.fee-table tfoot td{border-bottom:0;border-top:2px solid var(--panel);font-size:1.05rem;font-weight:800;background:var(--light)}
 .fee-table td.amount.bad{color:var(--ink)}
@@ -689,3 +720,14 @@ body.admin .table-wrap td,body.admin .table-wrap th{padding:.55rem .6rem;font-si
     body[data-office] .split-side .card h3{font-size:.72rem;letter-spacing:.03em}
 }
 @media(max-width:900px){.table-wrap td:empty{display:none}}
+
+/* Office queue matrix: fixed columns, status columns centred so every row lines up */
+@media(min-width:901px){
+    table.matrix{table-layout:fixed;width:100%}
+    table.matrix th,table.matrix td{vertical-align:middle}
+    table.matrix th:nth-child(1){width:14%}
+    table.matrix th:nth-child(2){width:23%}
+    table.matrix th:nth-child(n+3){width:12.6%;text-align:center}
+    table.matrix td:nth-child(n+3){text-align:center}
+    table.matrix td:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}

@@ -702,7 +702,7 @@ function reportError(error) {
     const body = document.getElementById("report-body");
     body.replaceChildren();
     emptyRow(body, 4, "Reports are not available to this account.");
-    showMessage(error.status === 403 ? "Report export is limited to administrator accounts on this Hub." : error.message, true);
+    showMessage(error.status === 403 ? "Only the Registrar office and administrators can export reports. If you are the Registrar and see this, restart the Hub server so it loads the latest hub.py." : error.message, true);
 }
 
 async function loadReport() {
@@ -732,7 +732,7 @@ document.querySelectorAll("[data-export]").forEach(function (button) {
             await HubApi.downloadReport(button.dataset.export);
             showMessage("Report downloaded.", false);
         } catch (error) {
-            showMessage(/40[13]/.test(error.message) ? "Report export is limited to administrator accounts on this Hub." : error.message, true);
+            showMessage(/40[13]/.test(error.message) ? "Only the Registrar office and administrators can export reports. If you are the Registrar and see this, restart the Hub server so it loads the latest hub.py." : error.message, true);
         } finally {
             button.disabled = false;
         }

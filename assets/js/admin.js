@@ -4,7 +4,7 @@
 
 const LOGIN_URL = "../../index.html#login";
 const OFFICES = [["library", "Library"], ["student-affairs", "Student Affairs"], ["accounting", "Accounting"], ["registrar", "Registrar"]];
-const TABS = ["queue", "imports", "users", "reports", "audit", "verify", "api"];
+const TABS = ["queue", "imports", "users", "reports", "holds", "audit", "verify", "api"];
 const messageBox = document.getElementById("api-message");
 const navigation = document.getElementById("main-navigation");
 const menuToggle = document.getElementById("menu-toggle");
@@ -515,6 +515,81 @@ document.getElementById("audit-refresh").addEventListener("click", async functio
     try { await loadAudit(); } catch (error) { handleError(error); }
 });
 
+/* ---------- Hold summary ---------- */
+let holdRows = [];
+
+async function loadHolds() {
+    const result = await HubApi.holdSummary();
+    holdRows = result.holds || [];
+    const select = document.getElementById("hold-office");
+    const chosen = select.value;
+    const offices = [];
+    holdRows.forEach(function (row) { if (!offices.some(function (o) { return o.code === row.office_code; })) offices.push({ code: row.office_code, name: row.office }); });
+    select.replaceChildren(new Option("All offices", ""));
+    offices.forEach(function (o) { select.appendChild(new Option(o.name, o.code)); });
+    select.value = offices.some(function (o) { return o.code === chosen; }) ? chosen : "";
+    renderHolds();
+}
+
+function renderHolds() {
+    const office = document.getElementById("hold-office").value;
+    const query = document.getElementById("hold-search").value.trim().toLowerCase();
+    const cards = document.getElementById("hold-cards");
+    cards.replaceChildren();
+    OFFICES.forEach(function (item) {
+        const count = holdRows.filter(function (row) { return row.office_code === item[0]; }).length;
+        const card = document.createElement("div");
+        card.className = "card";
+        const title = document.createElement("h3");
+        title.textContent = item[1];
+        const big = document.createElement("div");
+        big.className = "big";
+        big.textContent = count + (count === 1 ? " hold" : " holds");
+        card.append(title, big);
+        cards.appendChild(card);
+    });
+    const body = document.getElementById("hold-body");
+    body.replaceChildren();
+    const rows = holdRows.filter(function (row) {
+        return (!office || row.office_code === office)
+            && (!query || (row.student_number + " " + row.full_name + " " + row.reason).toLowerCase().indexOf(query) !== -1);
+    });
+    rows.forEach(function (row) {
+        const tr = body.insertRow();
+        addCell(tr, row.office);
+        addCell(tr, row.student_number);
+        addCell(tr, row.full_name);
+        addCell(tr, row.reason);
+    });
+    if (!rows.length) emptyRow(body, 4, holdRows.length ? "No holds match this filter." : "No students are on hold.");
+}
+
+function csvCell(value) {
+    let text = String(value == null ? "" : value);
+    if (/^[=+\-@]/.test(text)) text = "'" + text; // stop spreadsheet formula injection
+    return '"' + text.replace(/"/g, '""') + '"';
+}
+
+document.getElementById("hold-office").addEventListener("change", renderHolds);
+document.getElementById("hold-search").addEventListener("input", renderHolds);
+document.getElementById("hold-refresh").addEventListener("click", async function () {
+    try { await loadHolds(); } catch (error) { handleError(error); }
+});
+document.getElementById("hold-download").addEventListener("click", function () {
+    const office = document.getElementById("hold-office").value;
+    const rows = holdRows.filter(function (row) { return !office || row.office_code === office; });
+    const lines = [["office", "student_number", "full_name", "reason"].join(",")].concat(rows.map(function (row) {
+        return [row.office, row.student_number, row.full_name, row.reason].map(csvCell).join(",");
+    }));
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([lines.join("\r\n")], { type: "text/csv" }));
+    link.download = "hold-summary-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 2000);
+});
+
 /* ---------- Verify slip ---------- */
 function showResult(pairs) {
     const list = document.getElementById("verify-list");
@@ -573,14 +648,14 @@ const API_ROWS = [
     ["POST", "/clearance/{student_number}/{office}/signoff", "Sign off a student", "Assigned staff", "200, 400, 403, 404"],
     ["POST", "/clearance/{student_number}/{office}/hold", "Put a student on hold with a reason", "Assigned staff", "200, 400, 403, 404"],
     ["GET", "/deadline", "Computed clearance deadline", "Authenticated", "200, 401"],
-    ["GET", "/reports/clearance?format=csv|json|xml", "Export clearance data with masked IDs", "Admin", "200, 400, 403"],
+    ["GET", "/reports/clearance?format=csv|json|xml", "Export clearance data with masked IDs", "Admin, Registrar staff", "200, 400, 403"],
     ["GET", "/slips/me", "Get own signed slip token and QR data", "Student", "200, 401"],
     ["POST", "/slips/verify", "Verify a signed slip token or short code", "Staff, Admin", "200, 400, 401"],
     ["GET", "/audit", "View sign-off and hold history", "Admin", "200, 403"],
     ["GET", "/imports", "View imports and reject log", "Admin", "200, 403"],
     ["POST", "/admin/import", "Upload source file and signed manifest", "Admin", "200, 400, 403"],
     ["POST", "/admin/sync-registrar", "Sync student masterlist", "Admin", "200, 403, 502, 503"],
-    ["GET", "/admin/hold-summary", "View unresolved clearance holds", "Admin", "200, 403"],
+    ["GET", "/admin/hold-summary", "View unresolved clearance holds (staff see their own office)", "Admin, Staff", "200, 403"],
     ["GET", "/admin/users", "List user accounts and offices for administration", "Admin", "200, 403"],
     ["POST", "/admin/users", "Create student, staff, or admin account", "Admin", "201, 400, 403, 409"],
     ["PUT", "/admin/users/{user_id}", "Update login ID, role, assignment, profile, or status", "Admin", "200, 400, 403, 404, 409"],
@@ -605,7 +680,7 @@ function renderApi() {
 document.getElementById("api-search").addEventListener("input", renderApi);
 
 /* ---------- Tabs ---------- */
-const LOADERS = { queue: loadQueue, imports: loadImports, users: loadUsers, reports: loadReport, audit: loadAudit, api: renderApi };
+const LOADERS = { queue: loadQueue, imports: loadImports, users: loadUsers, reports: loadReport, holds: loadHolds, audit: loadAudit, api: renderApi };
 
 async function showTab(name) {
     if (TABS.indexOf(name) === -1) name = "queue";

@@ -8,15 +8,14 @@
     --lm-light:#FFFFFF;
     --lm-ease:cubic-bezier(.22,1,.36,1);
 }
-.stage{
-    transition:transform .6s var(--lm-ease),filter .6s var(--lm-ease);
+main{
+    transition:filter .6s var(--lm-ease);
 }
 body.modal-open{
     overflow:hidden;
 }
-body.modal-open .stage{
-    transform:scale(.97);
-    filter:brightness(.8);
+body.modal-open main{
+    filter:brightness(.85);
 }
 .login{
     transition:background .2s,border-color .2s,transform .15s var(--lm-ease);
@@ -27,11 +26,11 @@ body.modal-open .stage{
 .lm{
     position:fixed;
     inset:0;
-    z-index:100;
+    z-index:1100;             
     display:flex;
     justify-content:center;
     align-items:flex-start;
-    padding:5vh 1rem 1rem;
+    padding:14vh 1rem 1rem;    
     background:rgba(18,53,79,0);
     visibility:hidden;
     pointer-events:none;
@@ -45,7 +44,7 @@ body.modal-open .stage{
 }
 .lm-card{
     width:min(940px,100%);
-    max-height:90vh;
+    max-height:calc(100vh - 14vh - 1rem); 
     display:grid;
     grid-template-columns:1fr 1fr;
     border-radius:20px;
@@ -67,7 +66,9 @@ body.modal-open .stage{
     justify-content:space-between;
     padding:1.75rem;
     min-height:480px;
-    background:var(--lm-earth) url("../icons/contours-light.svg") center/cover no-repeat;
+    background:
+        url("../icons/contours-light.svg") center/cover no-repeat,
+        linear-gradient(160deg,#6EC6F5 0%,#B5E8FF 55%,#E9F8F2 82%,#FEFFDF 100%);
     color:var(--lm-ink);
 }
 .lm-art-brand{
@@ -166,18 +167,19 @@ body.modal-open .stage{
 .lm-submit{
     width:100%;
     padding:.8rem 1rem;
-    border:0;
+    border:1px solid #E6E39A;   
     border-radius:10px;
-    background:linear-gradient(135deg,#87CEFA,#B5E8FF);
+    background:var(--lm-pink);
     color:var(--lm-ink);
     font:inherit;
     font-weight:700;
     cursor:pointer;
-    transition:background .2s,transform .15s var(--lm-ease);
+    transition:background .2s,border-color .2s,transform .15s var(--lm-ease);
 }
 .lm-submit:hover{
-    background:var(--lm-ink);
-    color:#FEFFDF;
+    background:#FEFFDF;
+    border-color:#EFEDB5;
+    color:var(--lm-ink);
 }
 .lm-submit:active{
     transform:scale(.98);
