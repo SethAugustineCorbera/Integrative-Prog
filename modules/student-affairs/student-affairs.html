@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12354F">
+<title>Student Affairs | DNSC e-Clearance Hub</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icons/student-affairs.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/portal.css">
+</head>
+<body data-office="student-affairs" data-source="Entered by staff in the Hub">
+<div class="shell">
+
+<!-- LEFT NAV BAR -->
+<aside class="sidebar" id="site-nav">
+    <div class="side-top">
+        <div class="brand-logo">
+            <img src="../../assets/icons/student-affairs.svg" alt="Student Affairs icon" width="36" height="36">
+            <span>DNSC e-Clearance Hub</span>
+        </div>
+        <p class="signed-in" id="role-label">Signed in as: &hellip;</p>
+        <button class="menu-toggle" id="menu-toggle" type="button"
+                aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+
+    <nav class="navigation" id="main-navigation" aria-label="Student Affairs sections">
+        <a href="#queue" class="nav-link active" data-tab="queue">Obligations</a>
+        <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
+        <a href="#sign" class="nav-link" data-tab="sign">Clearance Signing</a>
+        <a href="#lend" class="nav-link" data-tab="lend">Lend &amp; Orgs</a>
+        <button class="logout" id="logout-btn" type="button">Log out</button>
+    </nav>
+</aside>
+
+<!-- CONTENT -->
+<main class="stage">
+<img class="art" src="../../assets/icons/contours-light.svg" alt="">
+
+<div class="stage-inner">
+    <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
+
+    <!-- OFFICE QUEUE + HOLD SUMMARY -->
+    <section class="tab" id="tab-queue" aria-labelledby="office-title">
+        <div class="welcome">
+            <h1 id="office-title">Student Affairs</h1>
+            <p class="lead" id="office-sub">Entered by staff in the Hub</p>
+        </div>
+        <div class="panel split split-queue">
+            <div class="split-main">
+                <h2>Student Obligations</h2>
+                <p class="panel-sub">Organization memberships and borrowed equipment per student.</p>
+                <div class="toolbar">
+                    <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
+                    <select id="queue-filter" aria-label="Filter by status">
+                        <option value="">All</option>
+                        <option value="HOLD" id="filter-hold">On HOLD</option>
+                        <option value="CLEARED" id="filter-clear">Cleared</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr id="queue-head"></tr></thead>
+                        <tbody id="queue-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="split-side">
+                <h2>Open Obligations</h2>
+                <p class="panel-sub">Students with something still outstanding.</p>
+                <div class="cards">
+                    <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
+                    <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Student</th><th>Reason</th></tr></thead>
+                        <tbody id="hold-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VERIFY SLIP -->
+    <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-verify">Verify Slip</h2>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
+            <div class="verify-layout">
+                <form id="verify-form" class="verify-form">
+                    <label for="slip-code-input">Signed short code</label>
+                    <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
+                </form>
+                <div class="result-card" id="verify-result" aria-live="polite">
+                    <h3>Verification result</h3>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
+                    <dl id="verify-list" hidden></dl>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLEARANCE SIGNING (all offices) -->
+    <section class="tab" id="tab-sign" aria-labelledby="h-sign" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-sign">Clearance Signing</h2>
+            <p class="panel-sub">Enter the student and, if they have it, the slip code. Student Affairs checks for borrowed equipment and unpaid organization fees before signing.</p>
+            <div class="verify-layout">
+                <form id="sign-form" class="verify-form form-card">
+                    <h3>Student</h3>
+                    <label for="sign-name">Student name</label>
+                    <input type="text" id="sign-name" list="sign-names" maxlength="160" autocomplete="off" placeholder="Full name or student ID" required>
+                    <datalist id="sign-names"></datalist>
+                    <label for="sign-code">Slip code</label>
+                    <input type="text" id="sign-code" maxlength="16" autocomplete="off" placeholder="ECH-XXXXXX (optional)">
+                    <button class="btn" id="sign-check" type="submit">Check clearance</button>
+                </form>
+                <div class="form-card" id="sign-result" aria-live="polite">
+                    <h3>Result</h3>
+                    <p class="muted" id="sign-hint">Enter the student and press Check clearance. You will see whether anything still has to be settled before this office signs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LEND EQUIPMENT + ORGANIZATIONS (Student Affairs) -->
+    <section class="tab" id="tab-lend" aria-labelledby="h-lend" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-lend">Lend Equipment &amp; Organizations</h2>
+            <p class="panel-sub">Record equipment a student borrows, or add a student to an organization.</p>
+            <div class="verify-layout">
+                <form id="lend-form" class="verify-form form-card">
+                    <h3>Lend equipment</h3>
+                    <label for="lend-student">Student ID</label>
+                    <input type="text" id="lend-student" maxlength="40" autocomplete="off" placeholder="2026-00001" required>
+                    <label for="lend-equipment">Equipment borrowed</label>
+                    <input type="text" id="lend-equipment" maxlength="60" autocomplete="off" placeholder="e.g. Projector" required>
+                    <button class="btn" id="lend-btn" type="submit">Record loan</button>
+                </form>
+                <form id="org-form" class="verify-form form-card">
+                    <h3>Organization member</h3>
+                    <label for="org-student">Student ID</label>
+                    <input type="text" id="org-student" maxlength="40" autocomplete="off" placeholder="2026-00001" required>
+                    <label for="org-name">Organization</label>
+                    <select id="org-name">
+                        <option>Codex</option>
+                        <option>SERT</option>
+                        <option>DNSC SEA</option>
+                    </select>
+                    <label class="check-row" for="org-paid"><input type="checkbox" id="org-paid"> Membership fee already paid</label>
+                    <button class="btn" id="org-btn" type="submit">Add to organization</button>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
+</main>
+</div>
+
+<!-- Reason dialog for sign-off / hold -->
+<dialog id="reason-dialog" aria-labelledby="reason-title">
+    <form method="dialog" id="reason-form">
+        <h2 id="reason-title">Sign off</h2>
+        <p class="panel-sub" id="reason-student"></p>
+        <ul class="check-list" id="check-list" aria-label="Clearance checks"></ul>
+        <label class="override" id="override-row" hidden><input type="checkbox" id="override-box"><span id="override-text"></span></label>
+        <label for="reason-input">Reason</label>
+        <textarea id="reason-input" rows="3" maxlength="255" required></textarea>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="reason-cancel" type="button">Cancel</button>
+            <button class="btn" id="reason-save" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="../../assets/js/tables.js"></script>
+
+<!-- Student Affairs: student card + picker -->
+<dialog id="sa-detail-dialog" class="detail-dialog" aria-labelledby="sa-name">
+    <div class="detail-head">
+        <div>
+            <h2 id="sa-name">Student</h2>
+            <p class="panel-sub" id="sa-meta"></p>
+        </div>
+        <span id="sa-status"></span>
+    </div>
+    <h3 class="mini-head">Borrowed equipment</h3>
+    <ul class="item-list" id="sa-equipment"></ul>
+    <h3 class="mini-head">Organization membership</h3>
+    <ul class="item-list" id="sa-orgs"></ul>
+    <div class="dialog-actions">
+        <button class="btn btn-outline" id="sa-close" type="button">Close</button>
+        <button class="btn" id="sa-return" type="button">Equipment returned</button>
+        <button class="btn" id="sa-paid" type="button">Membership paid</button>
+    </div>
+</dialog>
+<dialog id="pick-dialog" aria-labelledby="pick-title">
+    <form method="dialog" id="pick-form">
+        <h2 id="pick-title">Confirm</h2>
+        <p class="panel-sub" id="pick-student"></p>
+        <ul class="pick-list" id="pick-list"></ul>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="pick-cancel" type="button">Cancel</button>
+            <button class="btn" id="pick-save" type="submit">Confirm</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/office.js"></script>
+</body>
+</html>

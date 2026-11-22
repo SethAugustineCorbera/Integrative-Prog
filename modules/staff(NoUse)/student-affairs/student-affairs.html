@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Affairs clearance | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../auth/login.html">Log out</a></header>
+<section class="content">
+<h1>Student Affairs clearance</h1>
+<p class="muted">Record the student’s organization membership and borrowed-equipment review using this Hub web form.</p>
+<p class="note">Staff choose CLEARED or HOLD according to Student Affairs policy. Membership and equipment details are recorded for the decision; the Hub does not decide the outcome automatically.</p>
+<form id="affairs-review-form" class="card">
+<div class="form-row">
+<label for="affairs-student-number">Student</label>
+<select id="affairs-student-number" name="student_number" required>
+<option value="">Loading students...</option>
+</select>
+</div>
+<div class="form-row">
+<label for="affairs-membership">Organization membership / obligation details</label>
+<input id="affairs-membership" name="membership" type="text" maxlength="100" placeholder="Enter the checked details, or None" required>
+</div>
+<div class="form-row">
+<label for="affairs-equipment">Borrowed equipment / return details</label>
+<input id="affairs-equipment" name="equipment" type="text" maxlength="100" placeholder="Enter the checked details, or None" required>
+</div>
+<div class="form-row">
+<label for="affairs-decision">Student Affairs decision</label>
+<select id="affairs-decision" name="decision" required>
+<option value="">Select a decision</option>
+<option value="CLEARED">CLEARED</option>
+<option value="HOLD">HOLD</option>
+</select>
+</div>
+<div class="form-row">
+<label for="affairs-assessment">Assessment / reason</label>
+<textarea id="affairs-assessment" name="assessment" maxlength="200" rows="3" required></textarea>
+</div>
+<button class="btn" type="submit">Save Student Affairs review</button>
+</form>
+<h2>Student Affairs records</h2>
+<p><strong>Office:</strong> Loading...</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Student ID</th><th>Name</th><th>Status</th><th>Recorded review</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

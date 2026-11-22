@@ -83,3 +83,12 @@ const HubApi = {
     return result;
   }
 };
+
+/* Where each signed-in user lands. `root` is the path from the current page back to the project root. */
+const OFFICE_PAGES = { library: "library", accounting: "accounting", registrar: "registrar", "student-affairs": "student-affairs" };
+function homeFor(user, root) {
+  if (user.role === "student") return root + "modules/student/student.html";
+  if (user.role === "admin") return root + "modules/admin/admin.html";
+  const page = user.role === "staff" ? OFFICE_PAGES[user.office_code] : undefined;
+  return page ? root + "modules/" + page + "/" + page + ".html" : root + "index.html#login";
+}

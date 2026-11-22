@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "dnsc-clearance-shell-v6";
+const CACHE_NAME = "dnsc-clearance-shell-v21";
 const BASE_URL = new URL("./", self.registration.scope);
 const APP_SHELL = [
   "index.html",
@@ -9,16 +9,29 @@ const APP_SHELL = [
   "assets/css/layout.css",
   "assets/css/components.css",
   "assets/css/landing.css",
-  "assets/css/student.css",
+  "assets/css/portal.css",
   "assets/css/login-modal.css",
   "assets/js/landing.js",
   "assets/js/student.js",
   "modules/student/student.html",
+  "assets/js/office.js",
+  "modules/library/library.html",
+  "modules/accounting/accounting.html",
+  "modules/registrar/registrar.html",
+  "modules/student-affairs/student-affairs.html",
   "assets/icons/contours-light.svg",
   "assets/icons/contours.svg",
   "assets/js/api.js",
-  "assets/js/common.js",
-  "assets/icons/clearance.svg"
+  "assets/js/tables.js",
+  "assets/js/admin.js",
+  "modules/admin/admin.html",
+  "assets/icons/clearance.svg",
+  "assets/icons/library.svg",
+  "assets/icons/accounting.svg",
+  "assets/icons/student-affairs.svg",
+  "assets/icons/registrar.svg",
+  "assets/icons/admin.svg",
+  "assets/icons/student.svg"
 ].map(function (path) {
   return new URL(path, BASE_URL).href;
 });

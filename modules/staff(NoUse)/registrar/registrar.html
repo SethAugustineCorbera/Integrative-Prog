@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrar masterlist | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../auth/login.html">Log out</a></header>
+<section class="content">
+<h1>Official student masterlist</h1>
+<p class="muted">Read-only JSON records synchronized from the Registrar API. The Registrar system remains the official source; this page cannot add or edit students.</p>
+<p>Ask a Hub administrator to synchronize the latest roster from <strong>Import monitor</strong>.</p>
+<div class="actions"><button class="btn" id="refresh-masterlist" type="button">Reload synchronized JSON</button></div>
+<pre class="json-view" id="registrar-json" aria-live="polite">Loading...</pre>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

@@ -2,10 +2,6 @@
 "use strict";
 
 const LOGIN_URL = "../../index.html#login";
-const OTHER_HOMES = {
-    staff: "../staff/office-queue/office-queue.html",
-    admin: "../admin/import-monitor/import-monitor.html"
-};
 const TABS = ["status", "deadline"]; // old #slip links fall back to the status tab
 const loaded = { status: false, deadline: false };
 
@@ -56,16 +52,152 @@ async function loadStatus() {
     document.getElementById("welcome-sub").textContent = data.overall === "CLEARED"
         ? "Every office has cleared you."
         : "Some offices still need your attention.";
-    const body = document.getElementById("status-body");
-    body.replaceChildren();
-    data.offices.forEach(function (item) {
-        const row = body.insertRow();
-        addCell(row, item.office);
-        addBadgeCell(row, item.status);
-        addCell(row, item.reason);
-    });
-    if (!data.offices.length) emptyRow(body, 3, "No offices are configured yet.");
+    renderProgress(data.offices);
 }
+
+/* The four offices, in the order students visit them. */
+const OFFICE_ORDER = ["library", "accounting", "student-affairs", "registrar"];
+const OFFICE_HINT = {
+    "library": "Return any borrowed books and pay any fines at the Library, then wait for the Library to sign you off.",
+    "accounting": "Settle your tuition, fees and fines at the Accounting office. The balance clears once Accounting confirms payment.",
+    "student-affairs": "Return borrowed equipment and pay any organization membership fee at Student Affairs.",
+    "registrar": "Visit the Registrar to fix your enrollment record. The Registrar signs you off last."
+};
+let officeRows = [];
+
+function orderedOffices(offices) {
+    return offices.slice().sort(function (a, b) {
+        const x = OFFICE_ORDER.indexOf(a.office_code), y = OFFICE_ORDER.indexOf(b.office_code);
+        return (x < 0 ? 99 : x) - (y < 0 ? 99 : y);
+    });
+}
+
+/* Offices keep their findings as text; turn the structured ones into readable lines. */
+function reasonLines(item) {
+    const today = dateKey(new Date());
+    const lines = [];
+    String(item.reason || "").split(/;\s*(?![^()]*\))/).forEach(function (raw) {
+        const part = raw.trim();
+        let m;
+        if (!part) return;
+        if ((m = /^Outstanding balance of (PHP [\d.,]+)\s*\((.*)\)$/i.exec(part))) {
+            lines.push("Outstanding balance: " + m[1]);
+            m[2].split(/;\s*/).forEach(function (piece) { lines.push(piece.charAt(0).toUpperCase() + piece.slice(1)); });
+        } else if ((m = /^Book:\s*(.*?)\s*\((?:due (\d{4}-\d{2}-\d{2})|no due date)\)$/i.exec(part))) {
+            const late = m[2] && m[2] < today ? Math.round((parseKey(today) - parseKey(m[2])) / 86400000) : 0;
+            lines.push("Unreturned book: " + m[1] + (m[2] ? ", due " + m[2] : "") + (late ? " (" + late + " day" + (late === 1 ? "" : "s") + " overdue, fine is growing)" : ""));
+        } else if ((m = /^Fine:\s*(.*?)\s*\((PHP [\d.,]+)\)$/i.exec(part))) {
+            lines.push("Unpaid library fine: " + m[2] + " for " + m[1]);
+        } else if ((m = /^Organization membership:\s*(.*?)\s*\((paid|unpaid)\)$/i.exec(part))) {
+            lines.push("Membership fee, " + m[1] + ": " + m[2]);
+        } else if ((m = /^Borrowed equipment:\s*(.+)$/i.exec(part))) {
+            lines.push("Borrowed equipment not returned: " + m[1]);
+        } else if (part !== "Awaiting office review.") {
+            lines.push(part);
+        }
+    });
+    if (!lines.length) lines.push(item.status === "CLEARED" ? "Nothing outstanding. This office has signed you off." : "This office has not reviewed your record yet.");
+    return lines;
+}
+
+function iconFor(code) {
+    return "../../assets/icons/" + (OFFICE_ORDER.indexOf(code) >= 0 ? code : "clearance") + ".svg";
+}
+
+/* Progress tracker (one labelled segment per office) and the clickable checklist. */
+function renderProgress(offices) {
+    officeRows = orderedOffices(offices);
+    const total = officeRows.length;
+    const cleared = officeRows.filter(function (item) { return item.status === "CLEARED"; });
+    const percent = total ? Math.round((cleared.length / total) * 100) : 0;
+    document.getElementById("progress-text").textContent = total
+        ? cleared.length + " of " + total + " offices cleared"
+        : "No offices are configured yet.";
+    document.getElementById("progress-percent").textContent = percent + "%";
+    const track = document.getElementById("progress-track");
+    track.setAttribute("aria-valuenow", String(percent));
+    track.replaceChildren();
+    officeRows.forEach(function (item) {
+        const cell = document.createElement("div");
+        cell.className = "segment-cell";
+        const segment = document.createElement("span");
+        segment.className = "segment " + (item.status === "CLEARED" ? "done" : "open");
+        segment.title = item.office + ": " + item.status;
+        const label = document.createElement("small");
+        label.textContent = item.office;
+        cell.append(segment, label);
+        track.appendChild(cell);
+    });
+    const pending = officeRows.filter(function (item) { return item.status !== "CLEARED"; });
+    document.getElementById("progress-next").textContent = !total ? ""
+        : pending.length ? "Still needed: " + pending.map(function (item) { return item.office; }).join(", ") + "."
+        : "You are fully cleared. Show your slip at the Registrar.";
+
+    const list = document.getElementById("checklist");
+    list.replaceChildren();
+    officeRows.forEach(function (item) {
+        const done = item.status === "CLEARED";
+        const li = document.createElement("li");
+        li.className = (done ? "done" : "open") + " clickable";
+        li.tabIndex = 0;
+        li.setAttribute("role", "button");
+        li.setAttribute("aria-label", item.office + ": " + item.status + ". Show details.");
+        const icon = document.createElement("img");
+        icon.src = iconFor(item.office_code);
+        icon.alt = "";
+        icon.width = 34;
+        icon.height = 34;
+        const text = document.createElement("div");
+        text.className = "check-text";
+        const name = document.createElement("strong");
+        name.textContent = item.office;
+        const summary = document.createElement("span");
+        summary.textContent = done ? "Signed off" : "On hold. Click to see why.";
+        text.append(name, summary);
+        const state = document.createElement("span");
+        state.className = "badge " + item.status.toLowerCase();
+        state.textContent = item.status;
+        li.append(icon, text, state);
+        li.addEventListener("click", function () { openOffice(item); });
+        li.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openOffice(item);
+            }
+        });
+        list.appendChild(li);
+    });
+}
+
+const officeDialog = document.getElementById("office-dialog");
+
+function openOffice(item) {
+    const done = item.status === "CLEARED";
+    document.getElementById("od-icon").src = iconFor(item.office_code);
+    document.getElementById("od-name").textContent = item.office;
+    document.getElementById("od-updated").textContent = item.updated_at
+        ? "Updated " + new Date(String(item.updated_at).replace(" ", "T") + "Z").toLocaleString() : "";
+    const badge = document.createElement("span");
+    badge.className = "badge " + item.status.toLowerCase();
+    badge.textContent = item.status;
+    document.getElementById("od-status").replaceChildren(badge);
+    document.getElementById("od-why-title").textContent = done ? "Status" : "Why you are on hold";
+    const list = document.getElementById("od-reasons");
+    list.replaceChildren();
+    reasonLines(item).forEach(function (line) {
+        const li = document.createElement("li");
+        li.textContent = line;
+        list.appendChild(li);
+    });
+    document.getElementById("od-next-title").hidden = done;
+    document.getElementById("od-next").hidden = done;
+    document.getElementById("od-next").textContent = OFFICE_HINT[item.office_code] || "Contact this office to settle the item above.";
+    officeDialog.showModal();
+    document.getElementById("od-close").focus();
+}
+
+document.getElementById("od-close").addEventListener("click", function () { officeDialog.close(); });
+officeDialog.addEventListener("click", function (event) { if (event.target === officeDialog) officeDialog.close(); });
 
 /* ---------- Slip ---------- */
 async function loadSlip() {
@@ -311,7 +443,7 @@ document.getElementById("logout-btn").addEventListener("click", async function (
         sessionStorage.setItem("role", user.role);
         sessionStorage.setItem("user", JSON.stringify(user));
         if (user.role !== "student") {
-            location.href = OTHER_HOMES[user.role] || LOGIN_URL;
+            location.href = homeFor(user, "../../");
             return;
         }
         document.getElementById("role-label").textContent = "Signed in as: " + user.username;

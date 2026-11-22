@@ -590,9 +590,7 @@ async function loadPage(user) {
             location.href = "../../../index.html#login";
         });
         if (currentRole !== user.role && !(user.role === "admin" && currentRole === "staff")) {
-            location.href = user.role === "student"
-                ? "../../student/student.html"
-                : "../../" + user.role + "/" + NAV[user.role][0][1] + "/" + NAV[user.role][0][1] + ".html";
+            location.href = homeFor(user, "../../../");
             return;
         }
         await loadPage(user);

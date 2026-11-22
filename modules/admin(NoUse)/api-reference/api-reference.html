@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../../index.html#login">Log out</a></header>
+<section class="content">
+<h1>API reference</h1>
+<p class="muted">Live Hub REST API. Request and response examples are in the API specification in the project documentation.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Method</th><th>Path</th><th>Purpose</th><th>Role</th><th>Key status codes</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td>/health</td><td>Check API and database availability</td><td>Public</td><td>200, 500</td></tr>
+<tr><td>POST</td><td>/auth/register</td><td>Create student account from active roster details</td><td>Public; student only</td><td>201, 400, 409</td></tr>
+<tr><td>POST</td><td>/auth/login</td><td>Authenticate and issue a token</td><td>Public</td><td>200, 400, 401, 403</td></tr>
+<tr><td>GET</td><td>/auth/me</td><td>Get current signed-in user</td><td>Authenticated</td><td>200, 401</td></tr>
+<tr><td>POST</td><td>/auth/logout</td><td>Invalidate current session</td><td>Authenticated</td><td>200, 401</td></tr>
+<tr><td>GET</td><td>/students/me/clearance</td><td>Own status per office and overall</td><td>Student</td><td>200, 401</td></tr>
+<tr><td>GET</td><td>/offices/{office}/students?status=HOLD</td><td>List students for an office</td><td>Staff, Admin</td><td>200, 401, 403</td></tr>
+<tr><td>POST</td><td>/clearance/{student_number}/{office}/signoff</td><td>Sign off a student</td><td>Assigned staff</td><td>200, 400, 403, 404</td></tr>
+<tr><td>POST</td><td>/clearance/{student_number}/{office}/hold</td><td>Put a student on hold with a reason</td><td>Assigned staff</td><td>200, 400, 403, 404</td></tr>
+<tr><td>GET</td><td>/deadline</td><td>Computed clearance deadline</td><td>Authenticated</td><td>200, 401</td></tr>
+<tr><td>GET</td><td>/reports/clearance?format=csv|json|xml</td><td>Export clearance data with masked IDs</td><td>Admin</td><td>200, 400, 403</td></tr>
+<tr><td>GET</td><td>/slips/me</td><td>Get own signed slip token and QR data</td><td>Student</td><td>200, 401</td></tr>
+<tr><td>POST</td><td>/slips/verify</td><td>Verify a signed slip token or short code</td><td>Staff, Admin</td><td>200, 400, 401</td></tr>
+<tr><td>GET</td><td>/audit</td><td>View sign-off and hold history</td><td>Admin</td><td>200, 403</td></tr>
+<tr><td>GET</td><td>/imports</td><td>View imports and reject log</td><td>Admin</td><td>200, 403</td></tr>
+<tr><td>POST</td><td>/admin/import</td><td>Upload source file and signed manifest</td><td>Admin</td><td>200, 400, 403</td></tr>
+<tr><td>POST</td><td>/admin/sync-registrar</td><td>Sync student masterlist</td><td>Admin</td><td>200, 403, 502, 503</td></tr>
+<tr><td>GET</td><td>/admin/hold-summary</td><td>View unresolved clearance holds</td><td>Admin</td><td>200, 403</td></tr>
+<tr><td>GET</td><td>/admin/users</td><td>List user accounts and offices for administration</td><td>Admin</td><td>200, 403</td></tr>
+<tr><td>POST</td><td>/admin/users</td><td>Create student, staff, or admin account</td><td>Admin</td><td>201, 400, 403, 409</td></tr>
+<tr><td>PUT</td><td>/admin/users/{user_id}</td><td>Update login ID, role, assignment, profile, or status</td><td>Admin</td><td>200, 400, 403, 404, 409</td></tr>
+<tr><td>POST</td><td>/admin/users/{user_id}/password</td><td>Set a new password and revoke sessions</td><td>Admin</td><td>200, 400, 403, 404</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

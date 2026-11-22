@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#3E0911">
+<meta name="theme-color" content="#12354F">
 <title>My Clearance | DNSC e-Clearance Hub</title>
 <link rel="manifest" href="../../manifest.webmanifest">
-<link rel="icon" href="../../assets/icons/clearance.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../../assets/css/student.css">
+<link rel="icon" href="../../assets/icons/student.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/portal.css">
 </head>
 <body>
 <div class="shell">
@@ -16,7 +16,7 @@
 <aside class="sidebar" id="site-nav">
     <div class="side-top">
         <div class="brand-logo">
-            <img src="../../assets/icons/clearance.svg" alt="" width="36" height="36">
+            <img src="../../assets/icons/student.svg" alt="Student icon" width="36" height="36">
             <span>DNSC e-Clearance Hub</span>
         </div>
         <p class="signed-in" id="role-label">Signed in as: &hellip;</p>
@@ -35,7 +35,7 @@
 
 <!-- CONTENT -->
 <main class="stage">
-<img class="art" src="../../assets/icons/contours.svg" alt="">
+<img class="art" src="../../assets/icons/contours-light.svg" alt="">
 
 <div class="stage-inner">
     <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
@@ -62,7 +62,7 @@
             <div class="split-status">
                 <h2>Clearance Status</h2>
                 <p class="panel-sub">Your status for each office and your overall result.</p>
-                <div class="cards">
+                <div class="cards cards-compact">
                     <div class="card">
                         <h3>Overall</h3>
                         <div class="big"><span class="badge pending" id="overall-badge">Loading</span></div>
@@ -73,12 +73,17 @@
                         <div class="muted" id="student-meta"></div>
                     </div>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Office</th><th>Status</th><th>Reason</th></tr></thead>
-                        <tbody id="status-body"></tbody>
-                    </table>
+                <div class="progress" aria-label="Clearance progress">
+                    <div class="progress-head">
+                        <strong id="progress-text">Loading&hellip;</strong>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-track" id="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Offices cleared"></div>
+                    <p class="muted" id="progress-next"></p>
                 </div>
+                <h3 class="mini-head">Clearance checklist</h3>
+                <p class="hint">Click an office to see why it is cleared or on hold.</p>
+                <ul class="checklist" id="checklist"></ul>
             </div>
         </div>
     </section>
@@ -132,6 +137,28 @@
 </main>
 </div>
 
+<!-- Why an office is cleared or on hold -->
+<dialog id="office-dialog" class="detail-dialog" aria-labelledby="od-name">
+    <div class="detail-head">
+        <div class="od-title">
+            <img id="od-icon" src="../../assets/icons/clearance.svg" alt="" width="44" height="44">
+            <div>
+                <h2 id="od-name">Office</h2>
+                <p class="panel-sub" id="od-updated"></p>
+            </div>
+        </div>
+        <span id="od-status"></span>
+    </div>
+    <h3 class="mini-head" id="od-why-title">Why</h3>
+    <ul class="item-list" id="od-reasons"></ul>
+    <h3 class="mini-head" id="od-next-title">What to do</h3>
+    <p class="muted" id="od-next"></p>
+    <div class="dialog-actions">
+        <button class="btn btn-outline" id="od-close" type="button">Close</button>
+    </div>
+</dialog>
+
+<script src="../../assets/js/tables.js"></script>
 <script src="../../assets/js/api.js"></script>
 <script src="../../assets/js/student.js"></script>
 </body>

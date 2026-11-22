@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User management | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../../index.html#login">Log out</a></header>
+<section class="content">
+<h1>User management</h1>
+<p class="muted">Create accounts, assign roles and offices, update profiles, reset passwords, and deactivate accounts. Passwords are stored as salted hashes and are never shown in the account list.</p>
+<p class="note">A login email is used as the username only; this system does not send email or password-reset links. Share initial or reset passwords through an approved private channel.</p>
+<section class="card">
+<h2>Create account</h2>
+<form id="create-user-form">
+<div class="form-row">
+<label for="create-username">Login email or username</label>
+<input id="create-username" name="username" type="text" minlength="3" maxlength="80" autocomplete="off" required>
+</div>
+<div class="form-row">
+<label for="create-role">Role</label>
+<select id="create-role" name="role" required>
+<option value="">Select a role</option>
+<option value="student">Student</option>
+<option value="staff">Office staff</option>
+<option value="admin">Admin</option>
+</select>
+</div>
+<div id="create-student-fields" hidden>
+<div class="form-row">
+<label for="create-student-number">Existing active student number</label>
+<select id="create-student-number" name="student_number" required>
+<option value="">Select an active Registrar record</option>
+</select>
+</div>
+<p id="create-student-help" class="note" hidden>No active Registrar records are loaded. Configure a valid Registrar API URL and key, then use Sync Registrar masterlist in Import monitor. Student accounts require an official active roster record.</p>
+</div>
+<div id="create-staff-fields" hidden>
+<div class="form-row">
+<label for="create-office-code">Assigned office</label>
+<select id="create-office-code" name="office_code"></select>
+</div>
+</div>
+<div class="form-row">
+<label for="create-password">Initial password (at least 12 characters)</label>
+<input id="create-password" name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+</div>
+<div class="form-row">
+<label for="create-password-confirm">Confirm initial password</label>
+<input id="create-password-confirm" name="password_confirm" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+</div>
+<div class="actions">
+<button class="btn" type="submit">Create account</button>
+<button class="btn btn-outline" id="cancel-create-user" type="reset">Clear</button>
+</div>
+</form>
+</section>
+<h2>Accounts</h2>
+<div class="actions">
+<div class="form-row">
+<label for="user-search">Search accounts</label>
+<input id="user-search" type="search" placeholder="Login ID, name, student number, or office">
+</div>
+<div class="form-row">
+<label for="user-role-filter">Filter by role</label>
+<select id="user-role-filter">
+<option value="">All roles</option>
+<option value="student">Student</option>
+<option value="staff">Office staff</option>
+<option value="admin">Admin</option>
+<option value="unassigned">Unassigned role</option>
+</select>
+</div>
+<div class="form-row">
+<label for="user-status-filter">Filter by status</label>
+<select id="user-status-filter">
+<option value="">All statuses</option>
+<option value="active">Active</option>
+<option value="inactive">Inactive</option>
+</select>
+</div>
+</div>
+<div class="table-wrap">
+<table id="users-table">
+<thead><tr><th>Username</th><th>Role</th><th>Name / office</th><th>Student number</th><th>Account</th><th>Actions</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<form id="user-form" class="card" hidden>
+<h2>Edit account</h2>
+<input type="hidden" name="user_id">
+<div class="form-row">
+<label for="edit-username">Login email or username</label>
+<input id="edit-username" name="username" type="text" minlength="3" maxlength="80" required>
+</div>
+<div class="form-row">
+<label for="edit-role">Role</label>
+<select id="edit-role" name="role" required>
+<option value="">Select a role</option>
+<option value="student">Student</option>
+<option value="staff">Office staff</option>
+<option value="admin">Admin</option>
+</select>
+</div>
+<div id="edit-student-fields" hidden>
+<div class="form-row">
+<label for="edit-student-number">Active student number</label>
+<select id="edit-student-number" name="student_number" required>
+<option value="">Select an active Registrar record</option>
+</select>
+</div>
+<p id="edit-student-help" class="note" hidden>No active Registrar records are loaded. Configure the Registrar integration and sync the official masterlist before assigning a student account.</p>
+<div class="form-row">
+<label for="edit-full-name">Full name</label>
+<input id="edit-full-name" name="full_name" type="text" maxlength="160">
+</div>
+<div class="form-row">
+<label for="edit-email">Contact email</label>
+<input id="edit-email" name="email" type="email" maxlength="254">
+</div>
+</div>
+<div id="edit-staff-fields" hidden>
+<div class="form-row">
+<label for="edit-office-code">Assigned office</label>
+<select id="edit-office-code" name="office_code"></select>
+</div>
+</div>
+<div class="form-row">
+<label><input name="active" type="checkbox"> Account is active</label>
+</div>
+<div class="actions">
+<button class="btn" type="submit">Save changes</button>
+<button class="btn btn-outline" id="cancel-user-edit" type="button">Cancel</button>
+</div>
+</form>
+<form id="password-form" class="card" hidden>
+<h2>Set account password</h2>
+<p id="password-target" class="muted"></p>
+<input type="hidden" name="user_id">
+<div class="form-row">
+<label for="new-password">New password (at least 12 characters)</label>
+<input id="new-password" name="password" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+</div>
+<div class="form-row">
+<label for="new-password-confirm">Confirm new password</label>
+<input id="new-password-confirm" name="password_confirm" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+</div>
+<div class="actions">
+<button class="btn" type="submit">Set password and sign out sessions</button>
+<button class="btn btn-outline" id="cancel-password-reset" type="button">Cancel</button>
+</div>
+</form>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

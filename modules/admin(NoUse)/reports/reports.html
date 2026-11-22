@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrar report | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../../index.html#login">Log out</a></header>
+<section class="content">
+<h1>Registrar report</h1>
+<p class="muted">Preview of the clearance report. IDs are masked in posted reports.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Student ID</th><th>Program</th><th>Overall</th></tr></thead>
+<tbody>
+</tbody>
+</table>
+</div>
+<h2>Export formats</h2>
+<p>CSV, JSON and XML downloads with masked student numbers.</p>
+<div class="actions">
+<button class="btn" type="button" data-report-format="csv">Download CSV</button>
+<button class="btn" type="button" data-report-format="json">Download JSON</button>
+<button class="btn" type="button" data-report-format="xml">Download XML</button>
+</div>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

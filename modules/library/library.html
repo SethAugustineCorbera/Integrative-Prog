@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12354F">
+<title>Library | DNSC e-Clearance Hub</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icons/library.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/portal.css">
+</head>
+<body data-office="library" data-source="Nightly XML export">
+<div class="shell">
+
+<!-- LEFT NAV BAR -->
+<aside class="sidebar" id="site-nav">
+    <div class="side-top">
+        <div class="brand-logo">
+            <img src="../../assets/icons/library.svg" alt="Library icon" width="36" height="36">
+            <span>DNSC e-Clearance Hub</span>
+        </div>
+        <p class="signed-in" id="role-label">Signed in as: &hellip;</p>
+        <button class="menu-toggle" id="menu-toggle" type="button"
+                aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+
+    <nav class="navigation" id="main-navigation" aria-label="Library sections">
+        <a href="#queue" class="nav-link active" data-tab="queue">Borrowers</a>
+        <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
+        <a href="#sign" class="nav-link" data-tab="sign">Clearance Signing</a>
+        <a href="#lend" class="nav-link" data-tab="lend">Lend Books</a>
+        <button class="logout" id="logout-btn" type="button">Log out</button>
+    </nav>
+</aside>
+
+<!-- CONTENT -->
+<main class="stage">
+<img class="art" src="../../assets/icons/contours-light.svg" alt="">
+
+<div class="stage-inner">
+    <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
+
+    <!-- OFFICE QUEUE + HOLD SUMMARY -->
+    <section class="tab" id="tab-queue" aria-labelledby="office-title">
+        <div class="welcome">
+            <h1 id="office-title">Library</h1>
+            <p class="lead" id="office-sub">Nightly XML export</p>
+        </div>
+        <div class="panel split split-queue">
+            <div class="split-main">
+                <h2>Library Borrowers</h2>
+                <p class="panel-sub">Unreturned books and fines per borrower. Click a student to see the details.</p>
+                <div class="toolbar">
+                    <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
+                    <select id="queue-filter" aria-label="Filter by status">
+                        <option value="">All</option>
+                        <option value="HOLD" id="filter-hold">On HOLD</option>
+                        <option value="CLEARED" id="filter-clear">Cleared</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr id="queue-head"></tr></thead>
+                        <tbody id="queue-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="split-side">
+                <h2>Outstanding</h2>
+                <p class="panel-sub">Borrowers who must settle books or fines before sign-off.</p>
+                <div class="cards">
+                    <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
+                    <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Student</th><th>Reason</th></tr></thead>
+                        <tbody id="hold-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VERIFY SLIP -->
+    <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-verify">Verify Slip</h2>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
+            <div class="verify-layout">
+                <form id="verify-form" class="verify-form">
+                    <label for="slip-code-input">Signed short code</label>
+                    <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
+                </form>
+                <div class="result-card" id="verify-result" aria-live="polite">
+                    <h3>Verification result</h3>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
+                    <dl id="verify-list" hidden></dl>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLEARANCE SIGNING (all offices) -->
+    <section class="tab" id="tab-sign" aria-labelledby="h-sign" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-sign">Clearance Signing</h2>
+            <p class="panel-sub">Enter the student and, if they have it, the slip code. The Library checks for unreturned books and fines before signing.</p>
+            <div class="verify-layout">
+                <form id="sign-form" class="verify-form form-card">
+                    <h3>Student</h3>
+                    <label for="sign-name">Student name</label>
+                    <input type="text" id="sign-name" list="sign-names" maxlength="160" autocomplete="off" placeholder="Full name or student ID" required>
+                    <datalist id="sign-names"></datalist>
+                    <label for="sign-code">Slip code</label>
+                    <input type="text" id="sign-code" maxlength="16" autocomplete="off" placeholder="ECH-XXXXXX (optional)">
+                    <button class="btn" id="sign-check" type="submit">Check clearance</button>
+                </form>
+                <div class="form-card" id="sign-result" aria-live="polite">
+                    <h3>Result</h3>
+                    <p class="muted" id="sign-hint">Enter the student and press Check clearance. You will see whether anything still has to be settled before this office signs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LEND BOOKS (Library) -->
+    <section class="tab" id="tab-lend" aria-labelledby="h-lend" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-lend">Lend Books</h2>
+            <p class="panel-sub">Record a book a student borrows. Fines are added automatically for every day after the due date.</p>
+            <div class="verify-layout">
+                <form id="book-form" class="verify-form form-card">
+                    <h3>Lend a book</h3>
+                    <label for="book-student">Student ID</label>
+                    <input type="text" id="book-student" maxlength="40" autocomplete="off" placeholder="2026-00001" required>
+                    <label for="book-title">Book title</label>
+                    <input type="text" id="book-title" maxlength="60" autocomplete="off" placeholder="e.g. Database Systems" required>
+                    <label for="book-due">Due date</label>
+                    <input type="date" id="book-due" required>
+                    <button class="btn" id="book-btn" type="submit">Record loan</button>
+                </form>
+                <div class="form-card">
+                    <h3>How fines work</h3>
+                    <p class="muted" id="fine-rule"></p>
+                    <p class="muted">A student stays on HOLD while a book is out or a fine is unpaid. When an overdue book is returned, its fine is fixed and stays on the record until you confirm it is paid.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</main>
+</div>
+
+<!-- Reason dialog for sign-off / hold -->
+<dialog id="reason-dialog" aria-labelledby="reason-title">
+    <form method="dialog" id="reason-form">
+        <h2 id="reason-title">Sign off</h2>
+        <p class="panel-sub" id="reason-student"></p>
+        <ul class="check-list" id="check-list" aria-label="Clearance checks"></ul>
+        <label class="override" id="override-row" hidden><input type="checkbox" id="override-box"><span id="override-text"></span></label>
+        <label for="reason-input">Reason</label>
+        <textarea id="reason-input" rows="3" maxlength="255" required></textarea>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="reason-cancel" type="button">Cancel</button>
+            <button class="btn" id="reason-save" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="../../assets/js/tables.js"></script>
+
+<!-- Library: student card + picker -->
+<dialog id="lib-detail-dialog" class="detail-dialog" aria-labelledby="lib-name">
+    <div class="detail-head">
+        <div>
+            <h2 id="lib-name">Student</h2>
+            <p class="panel-sub" id="lib-meta"></p>
+        </div>
+        <span id="lib-status"></span>
+    </div>
+    <h3 class="mini-head">Unreturned books</h3>
+    <ul class="item-list" id="lib-books"></ul>
+    <h3 class="mini-head">Fines</h3>
+    <ul class="item-list" id="lib-fines"></ul>
+    <p class="muted" id="lib-total"></p>
+    <div class="dialog-actions">
+        <button class="btn btn-outline" id="lib-close" type="button">Close</button>
+        <button class="btn" id="lib-return" type="button">Book returned</button>
+        <button class="btn" id="lib-paid" type="button">Fee paid</button>
+    </div>
+</dialog>
+<dialog id="lpick-dialog" aria-labelledby="lpick-title">
+    <form method="dialog" id="lpick-form">
+        <h2 id="lpick-title">Confirm</h2>
+        <p class="panel-sub" id="lpick-student"></p>
+        <ul class="pick-list" id="lpick-list"></ul>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="lpick-cancel" type="button">Cancel</button>
+            <button class="btn" id="lpick-save" type="submit">Confirm</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/office.js"></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12354F">
+<title>Registrar | DNSC e-Clearance Hub</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icons/registrar.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/portal.css">
+</head>
+<body data-office="registrar" data-source="Official masterlist (JSON API)">
+<div class="shell">
+
+<!-- LEFT NAV BAR -->
+<aside class="sidebar" id="site-nav">
+    <div class="side-top">
+        <div class="brand-logo">
+            <img src="../../assets/icons/registrar.svg" alt="Registrar icon" width="36" height="36">
+            <span>DNSC e-Clearance Hub</span>
+        </div>
+        <p class="signed-in" id="role-label">Signed in as: &hellip;</p>
+        <button class="menu-toggle" id="menu-toggle" type="button"
+                aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+
+    <nav class="navigation" id="main-navigation" aria-label="Registrar sections">
+        <a href="#queue" class="nav-link active" data-tab="queue">Master List</a>
+        <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
+        <a href="#sign" class="nav-link" data-tab="sign">Clearance Signing</a>
+        <a href="#reports" class="nav-link" data-tab="reports">Reports</a>
+        <button class="logout" id="logout-btn" type="button">Log out</button>
+    </nav>
+</aside>
+
+<!-- CONTENT -->
+<main class="stage">
+<img class="art" src="../../assets/icons/contours-light.svg" alt="">
+
+<div class="stage-inner">
+    <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
+
+    <!-- OFFICE QUEUE + HOLD SUMMARY -->
+    <section class="tab" id="tab-queue" aria-labelledby="office-title">
+        <div class="welcome">
+            <h1 id="office-title">Registrar</h1>
+            <p class="lead" id="office-sub">Official masterlist (JSON API)</p>
+        </div>
+        <div class="panel split split-queue">
+            <div class="split-main">
+                <h2>Official Student Master List</h2>
+                <p class="panel-sub">Every student on the Registrar masterlist, the master record all other offices match against.</p>
+                <div class="toolbar">
+                    <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
+                    <select id="queue-filter" aria-label="Filter by status">
+                        <option value="">All</option>
+                        <option value="HOLD" id="filter-hold">On HOLD</option>
+                        <option value="CLEARED" id="filter-clear">Cleared</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr id="queue-head"></tr></thead>
+                        <tbody id="queue-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="split-side">
+                <h2>Not in Good Standing</h2>
+                <p class="panel-sub">Inactive or on-leave students on the masterlist.</p>
+                <div class="cards">
+                    <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
+                    <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Student</th><th>Reason</th></tr></thead>
+                        <tbody id="hold-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VERIFY SLIP -->
+    <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-verify">Verify Slip</h2>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
+            <div class="verify-layout">
+                <form id="verify-form" class="verify-form">
+                    <label for="slip-code-input">Signed short code</label>
+                    <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
+                </form>
+                <div class="result-card" id="verify-result" aria-live="polite">
+                    <h3>Verification result</h3>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
+                    <dl id="verify-list" hidden></dl>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLEARANCE SIGNING (all offices) -->
+    <section class="tab" id="tab-sign" aria-labelledby="h-sign" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-sign">Clearance Signing</h2>
+            <p class="panel-sub">The last step. Enter the student and, if they have it, the slip code. The Registrar signs only when the student is enrolled and the Library, Accounting and Student Affairs have all signed.</p>
+            <div class="verify-layout">
+                <form id="sign-form" class="verify-form form-card">
+                    <h3>Student</h3>
+                    <label for="sign-name">Student name</label>
+                    <input type="text" id="sign-name" list="sign-names" maxlength="160" autocomplete="off" placeholder="Full name or student ID" required>
+                    <datalist id="sign-names"></datalist>
+                    <label for="sign-code">Slip code</label>
+                    <input type="text" id="sign-code" maxlength="16" autocomplete="off" placeholder="ECH-XXXXXX (optional)">
+                    <button class="btn" id="sign-check" type="submit">Check clearance</button>
+                </form>
+                <div class="form-card" id="sign-result" aria-live="polite">
+                    <h3>Result</h3>
+                    <p class="muted" id="sign-hint">Enter the student and press Check clearance. You will see whether anything still has to be settled before this office signs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- REPORTS (Registrar) -->
+    <section class="tab" id="tab-reports" aria-labelledby="h-reports" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-reports">Clearance Reports</h2>
+            <p class="panel-sub">Export the clearance report. Student numbers are masked in every format.</p>
+            <div class="export-row">
+                <button class="btn" type="button" data-export="csv">Download CSV</button>
+                <button class="btn" type="button" data-export="json">Download JSON</button>
+                <button class="btn" type="button" data-export="xml">Download XML</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Student</th><th>Program</th><th>Year</th><th>Overall</th></tr></thead>
+                    <tbody id="report-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+</main>
+</div>
+
+<!-- Reason dialog for sign-off / hold -->
+<dialog id="reason-dialog" aria-labelledby="reason-title">
+    <form method="dialog" id="reason-form">
+        <h2 id="reason-title">Sign off</h2>
+        <p class="panel-sub" id="reason-student"></p>
+        <ul class="check-list" id="check-list" aria-label="Clearance checks"></ul>
+        <label class="override" id="override-row" hidden><input type="checkbox" id="override-box"><span id="override-text"></span></label>
+        <label for="reason-input">Reason</label>
+        <textarea id="reason-input" rows="3" maxlength="255" required></textarea>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="reason-cancel" type="button">Cancel</button>
+            <button class="btn" id="reason-save" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="../../assets/js/tables.js"></script>
+
+<!-- Registrar: sign-off status of the other offices -->
+<dialog id="reg-detail-dialog" class="detail-dialog" aria-labelledby="reg-name">
+    <div class="detail-head">
+        <div>
+            <h2 id="reg-name">Student</h2>
+            <p class="panel-sub" id="reg-meta"></p>
+        </div>
+        <span id="reg-status"></span>
+    </div>
+    <h3 class="mini-head">Clearance signs</h3>
+    <ul class="check-list" id="reg-checks"></ul>
+    <p class="muted" id="reg-summary"></p>
+    <div class="dialog-actions">
+        <button class="btn btn-outline" id="reg-close" type="button">Close</button>
+        <button class="btn" id="reg-signoff" type="button">Review and sign off</button>
+    </div>
+</dialog>
+
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/office.js"></script>
+</body>
+</html>

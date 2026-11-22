@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verify slip | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../../index.html#login">Log out</a></header>
+<section class="content">
+<h1>Verify slip</h1>
+<p class="muted">Check a student's clearance slip code through the Hub.</p>
+<form id="verify-form" class="card">
+<div class="form-row"><label for="slip-code-input">Signed short code</label><input type="text" id="slip-code-input" maxlength="24" autocomplete="off"></div>
+<div class="form-row"><label for="slip-token-input">Or signed token</label><input type="text" id="slip-token-input" maxlength="512" autocomplete="off"></div>
+<button class="btn" type="submit">Verify slip</button>
+</form>
+<h2>Verification result</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Check</th><th>Result</th></tr></thead>
+<tbody>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>

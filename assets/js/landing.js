@@ -1,10 +1,4 @@
 /* Landing page: opens the log in modal and handles log in and registration through the Hub API. */
-const HOME = {
-    student: "modules/student/student.html",
-    staff: "modules/staff/office-queue/office-queue.html",
-    admin: "modules/admin/import-monitor/import-monitor.html"
-};
-
 const modal = document.getElementById("login-modal");
 const openButton = document.getElementById("open-login");
 const closeButton = document.getElementById("lm-close");
@@ -104,7 +98,10 @@ document.getElementById("login-form").addEventListener("submit", async function 
         sessionStorage.setItem("token", result.token);
         sessionStorage.setItem("role", result.user.role);
         sessionStorage.setItem("user", JSON.stringify(result.user));
-        location.href = HOME[result.user.role] || "index.html#login";
+        if (result.user.role === "staff" && !OFFICE_PAGES[result.user.office_code]) {
+            throw new Error("This staff account is not assigned to an office. Ask an administrator to assign one.");
+        }
+        location.href = homeFor(result.user, "");
     } catch (error) {
         message.textContent = error.message || "Unable to sign in. Check the Hub API and try again.";
         message.classList.add("error");

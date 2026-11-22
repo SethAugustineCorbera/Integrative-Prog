@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12354F">
+<title>Admin | DNSC e-Clearance Hub</title>
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../assets/icons/admin.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/portal.css">
+</head>
+<body class="admin">
+<div class="shell">
+
+<!-- LEFT NAV BAR -->
+<aside class="sidebar" id="site-nav">
+    <div class="side-top">
+        <div class="brand-logo">
+            <img src="../../assets/icons/admin.svg" alt="Admin icon" width="36" height="36">
+            <span>DNSC e-Clearance Hub</span>
+        </div>
+        <p class="signed-in" id="role-label">Signed in as: &hellip;</p>
+        <button class="menu-toggle" id="menu-toggle" type="button"
+                aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+
+    <nav class="navigation" id="main-navigation" aria-label="Admin sections">
+        <a href="#queue" class="nav-link active" data-tab="queue">Office Queue</a>
+        <a href="#imports" class="nav-link" data-tab="imports">Imports</a>
+        <a href="#users" class="nav-link" data-tab="users">Users</a>
+        <a href="#reports" class="nav-link" data-tab="reports">Reports</a>
+        <a href="#audit" class="nav-link" data-tab="audit">Audit Log</a>
+        <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
+        <a href="#api" class="nav-link" data-tab="api">API Reference</a>
+        <button class="logout" id="logout-btn" type="button">Log out</button>
+    </nav>
+</aside>
+
+<!-- CONTENT -->
+<main class="stage">
+<img class="art" src="../../assets/icons/contours-light.svg" alt="">
+
+<div class="stage-inner">
+    <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
+
+    <!-- OFFICE QUEUE: all four offices in one table -->
+    <section class="tab" id="tab-queue" aria-labelledby="h-queue">
+        <div class="welcome">
+            <h1 id="h-queue">Office Queue</h1>
+            <p class="lead">Every student and where each office stands.</p>
+        </div>
+        <div class="panel panel-full">
+            <div class="cards cards-row">
+                <div class="card"><h3>Students</h3><div class="big" id="count-all">&ndash;</div></div>
+                <div class="card"><h3>Fully cleared</h3><div class="big" id="count-clear">&ndash;</div></div>
+                <div class="card"><h3>With a HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
+            </div>
+            <div class="toolbar">
+                <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
+                <select id="queue-filter" aria-label="Filter students">
+                    <option value="">All students</option>
+                    <option value="HOLD">With a HOLD</option>
+                    <option value="CLEARED">Fully cleared</option>
+                </select>
+                <button class="btn btn-outline" id="queue-refresh" type="button">Refresh</button>
+            </div>
+            <p class="hint">Click a student to see the reason from each office.</p>
+            <div class="table-wrap grow">
+                <table>
+                    <thead><tr><th>Student ID</th><th>Name</th><th>Library</th><th>Student Affairs</th><th>Accounting</th><th>Registrar</th><th>Overall</th></tr></thead>
+                    <tbody id="queue-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- IMPORTS -->
+    <section class="tab" id="tab-imports" aria-labelledby="h-imports" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-imports">Import Monitor</h2>
+            <p class="panel-sub">Upload a signed office export, sync the Registrar masterlist, and review rejected records.</p>
+            <div class="verify-layout">
+                <form id="import-form" class="verify-form form-card">
+                    <h3>Signed import</h3>
+                    <label for="import-file">Library XML or Accounting CSV</label>
+                    <input id="import-file" type="file" accept=".xml,.csv" required>
+                    <label for="import-manifest">Matching signed manifest (JSON)</label>
+                    <input id="import-manifest" type="file" accept=".json,application/json" required>
+                    <button class="btn" id="import-btn" type="submit">Verify and import</button>
+                </form>
+                <div class="form-card">
+                    <h3>Registrar masterlist</h3>
+                    <p class="muted">Pull the official student list from the Registrar service. Active students are signed off by the Registrar automatically.</p>
+                    <button class="btn" id="sync-registrar" type="button">Sync Registrar masterlist</button>
+                </div>
+            </div>
+            <h3 class="mini-head">Import files</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>File</th><th>Source</th><th>Manifest</th><th>Imported</th><th>Rejected</th></tr></thead>
+                    <tbody id="batch-body"></tbody>
+                </table>
+            </div>
+            <h3 class="mini-head">Reject log</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Batch</th><th>Row</th><th>Reason</th></tr></thead>
+                    <tbody id="reject-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- USERS -->
+    <section class="tab" id="tab-users" aria-labelledby="h-users" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-users">User Accounts</h2>
+            <p class="panel-sub">Create accounts, assign roles and offices, reset passwords and deactivate accounts. No email is sent: share passwords through a private channel.</p>
+            <div class="toolbar">
+                <input type="search" id="user-search" placeholder="Search username, name, ID or office" aria-label="Search accounts" maxlength="80" autocomplete="off">
+                <select id="user-role-filter" aria-label="Filter by role">
+                    <option value="">All roles</option>
+                    <option value="student">Student</option>
+                    <option value="staff">Office staff</option>
+                    <option value="admin">Admin</option>
+                    <option value="unassigned">Needs role</option>
+                </select>
+                <select id="user-status-filter" aria-label="Filter by status">
+                    <option value="">Any status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <button class="btn" id="new-user" type="button">New account</button>
+            </div>
+            <div class="table-wrap grow">
+                <table>
+                    <thead><tr><th>Username</th><th>Role</th><th>Name / office</th><th>Student ID</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="users-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="tab" id="tab-reports" aria-labelledby="h-reports" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-reports">Clearance Reports</h2>
+            <p class="panel-sub">Preview and export the clearance report. Student numbers are masked in every format.</p>
+            <div class="export-row">
+                <button class="btn" type="button" data-export="csv">Download CSV</button>
+                <button class="btn" type="button" data-export="json">Download JSON</button>
+                <button class="btn" type="button" data-export="xml">Download XML</button>
+            </div>
+            <div class="table-wrap grow">
+                <table>
+                    <thead><tr><th>Student</th><th>Program</th><th>Overall</th></tr></thead>
+                    <tbody id="report-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- AUDIT LOG -->
+    <section class="tab" id="tab-audit" aria-labelledby="h-audit" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-audit">Audit Log</h2>
+            <p class="panel-sub">Account changes, clearance actions, imports and slip activity: who, what and when.</p>
+            <div class="toolbar">
+                <input type="search" id="audit-search" placeholder="Search actor, action, student or details" aria-label="Search audit log" maxlength="80" autocomplete="off">
+                <button class="btn btn-outline" id="audit-refresh" type="button">Refresh</button>
+            </div>
+            <div class="table-wrap grow">
+                <table>
+                    <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+                    <tbody id="audit-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- VERIFY SLIP -->
+    <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-verify">Verify Slip</h2>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
+            <div class="verify-layout">
+                <form id="verify-form" class="verify-form">
+                    <label for="slip-code-input">Signed short code</label>
+                    <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
+                </form>
+                <div class="result-card" id="verify-result" aria-live="polite">
+                    <h3>Verification result</h3>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
+                    <dl id="verify-list" hidden></dl>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API REFERENCE -->
+    <section class="tab" id="tab-api" aria-labelledby="h-api" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-api">API Reference</h2>
+            <p class="panel-sub">Live Hub REST API. Request and response examples are in the API specification in the project documentation.</p>
+            <div class="toolbar">
+                <input type="search" id="api-search" placeholder="Filter by path, method or role" aria-label="Filter API reference" maxlength="60" autocomplete="off">
+            </div>
+            <div class="table-wrap grow">
+                <table>
+                    <thead><tr><th>Method</th><th>Path</th><th>Purpose</th><th>Role</th><th>Status codes</th></tr></thead>
+                    <tbody id="api-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+</main>
+</div>
+
+<!-- Student card: what every office says -->
+<dialog id="student-dialog" class="detail-dialog" aria-labelledby="sd-name">
+    <div class="detail-head">
+        <div>
+            <h2 id="sd-name">Student</h2>
+            <p class="panel-sub" id="sd-meta"></p>
+        </div>
+        <span id="sd-overall"></span>
+    </div>
+    <ul class="office-list" id="sd-offices"></ul>
+    <div class="dialog-actions">
+        <button class="btn btn-outline" id="sd-close" type="button">Close</button>
+    </div>
+</dialog>
+
+<!-- Create / edit account -->
+<dialog id="account-dialog" aria-labelledby="acc-title">
+    <form id="account-form" method="dialog" novalidate>
+        <h2 id="acc-title">New account</h2>
+        <p class="panel-sub" id="acc-sub"></p>
+        <label for="acc-username">Login email or username</label>
+        <input type="text" id="acc-username" minlength="3" maxlength="80" autocomplete="off" required>
+        <label for="acc-role">Role</label>
+        <select id="acc-role" required>
+            <option value="">Select a role</option>
+            <option value="student">Student</option>
+            <option value="staff">Office staff</option>
+            <option value="admin">Admin</option>
+        </select>
+        <div id="acc-student" hidden>
+            <label for="acc-student-number">Student record</label>
+            <select id="acc-student-number"></select>
+            <p class="muted" id="acc-student-help" hidden>No active Registrar records are loaded. Sync the Registrar masterlist in Imports first.</p>
+            <div id="acc-profile" hidden>
+                <label for="acc-full-name">Full name</label>
+                <input type="text" id="acc-full-name" maxlength="160" autocomplete="off">
+                <label for="acc-email">Email</label>
+                <input type="text" id="acc-email" maxlength="160" autocomplete="off">
+            </div>
+        </div>
+        <div id="acc-staff" hidden>
+            <label for="acc-office">Assigned office</label>
+            <select id="acc-office"></select>
+        </div>
+        <div id="acc-passwords">
+            <label for="acc-password">Initial password (at least 12 characters)</label>
+            <input type="password" id="acc-password" minlength="12" maxlength="256" autocomplete="new-password">
+            <label for="acc-password2">Confirm password</label>
+            <input type="password" id="acc-password2" minlength="12" maxlength="256" autocomplete="new-password">
+        </div>
+        <label class="check-row" id="acc-active-row" for="acc-active" hidden><input type="checkbox" id="acc-active"> Account is active</label>
+        <p class="msg error" id="acc-error" hidden></p>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="acc-cancel" type="button">Cancel</button>
+            <button class="btn" id="acc-save" type="submit">Save</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Set password -->
+<dialog id="password-dialog" aria-labelledby="pw-title">
+    <form id="password-form" method="dialog" novalidate>
+        <h2 id="pw-title">Set password</h2>
+        <p class="panel-sub" id="pw-sub"></p>
+        <label for="pw-new">New password (at least 12 characters)</label>
+        <input type="password" id="pw-new" minlength="12" maxlength="256" autocomplete="new-password" required>
+        <label for="pw-new2">Confirm password</label>
+        <input type="password" id="pw-new2" minlength="12" maxlength="256" autocomplete="new-password" required>
+        <p class="msg error" id="pw-error" hidden></p>
+        <div class="dialog-actions">
+            <button class="btn btn-outline" id="pw-cancel" type="button">Cancel</button>
+            <button class="btn" id="pw-save" type="submit">Set password</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="../../assets/js/tables.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/admin.js"></script>
+</body>
+</html>

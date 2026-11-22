@@ -1,11 +1,11 @@
 :root{
-    --lm-ink:#3E0911;
-    --lm-kelp:#383C23;
-    --lm-olive:#71774B;
-    --lm-pink:#85383E;
-    --lm-earth:#D7CAB7;
-    --lm-line:#cbbfab;
-    --lm-light:#FBF8F3;
+    --lm-ink:#12354F;
+    --lm-kelp:#0E2B42;
+    --lm-olive:#87CEFA;
+    --lm-pink:#FBFABA;
+    --lm-earth:#F4F4F2;
+    --lm-line:#BFD3E0;
+    --lm-light:#FFFFFF;
     --lm-ease:cubic-bezier(.22,1,.36,1);
 }
 .stage{
@@ -32,13 +32,13 @@ body.modal-open .stage{
     justify-content:center;
     align-items:flex-start;
     padding:5vh 1rem 1rem;
-    background:rgba(62,9,17,0);
+    background:rgba(18,53,79,0);
     visibility:hidden;
     pointer-events:none;
     transition:background .5s ease,visibility 0s linear .6s;
 }
 .lm.is-open{
-    background:rgba(62,9,17,.55);
+    background:rgba(18,53,79,.55);
     visibility:visible;
     pointer-events:auto;
     transition:background .5s ease,visibility 0s;
@@ -51,7 +51,7 @@ body.modal-open .stage{
     border-radius:20px;
     background:var(--lm-light);
     overflow:hidden;
-    box-shadow:0 24px 60px rgba(62,9,17,.35);
+    box-shadow:0 24px 60px rgba(18,53,79,.35);
     transform:translateY(-120%);
     opacity:0;
     transition:transform .6s var(--lm-ease),opacity .4s ease;
@@ -98,7 +98,7 @@ body.modal-open .stage{
 }
 .lm-sub{
     margin:0 0 1.5rem;
-    color:#5a3a3f;
+    color:#3D5F78;
     font-size:.95rem;
 }
 .lm-close{
@@ -141,7 +141,7 @@ body.modal-open .stage{
 .lm-field input:focus{
     outline:none;
     border-color:var(--lm-olive);
-    box-shadow:0 0 0 3px rgba(113,119,75,.25);
+    box-shadow:0 0 0 3px rgba(135,206,250,.25);
 }
 .lm-row{
     display:grid;
@@ -150,7 +150,7 @@ body.modal-open .stage{
 }
 .lm-hint{
     margin:-.4rem 0 .5rem;
-    color:#5a3a3f;
+    color:#3D5F78;
     font-size:.82rem;
 }
 .lm-message{
@@ -160,22 +160,24 @@ body.modal-open .stage{
     font-size:.9rem;
 }
 .lm-message.error{
-    color:var(--lm-pink);
+    color:var(--lm-ink);
+    font-weight:700;
 }
 .lm-submit{
     width:100%;
     padding:.8rem 1rem;
     border:0;
     border-radius:10px;
-    background:var(--lm-olive);
-    color:#fff;
+    background:linear-gradient(135deg,#87CEFA,#B5E8FF);
+    color:var(--lm-ink);
     font:inherit;
     font-weight:700;
     cursor:pointer;
     transition:background .2s,transform .15s var(--lm-ease);
 }
 .lm-submit:hover{
-    background:var(--lm-kelp);
+    background:var(--lm-ink);
+    color:#FEFFDF;
 }
 .lm-submit:active{
     transform:scale(.98);

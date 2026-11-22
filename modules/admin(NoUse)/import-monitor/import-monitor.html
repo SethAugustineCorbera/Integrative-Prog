@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Import monitor | DNSC e-Clearance Hub</title>
+<link rel="stylesheet" href="../../../assets/css/base.css">
+<link rel="stylesheet" href="../../../assets/css/layout.css">
+<link rel="stylesheet" href="../../../assets/css/components.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="main">
+<header class="topbar"><span id="role-label"></span><a class="btn btn-outline" href="../../../index.html#login">Log out</a></header>
+<section class="content">
+<h1>Import monitor</h1>
+<p class="muted">Signed import files and records that were rejected.</p>
+<form id="import-form" class="card">
+<div class="form-row"><label for="import-file">Library XML or Accounting CSV</label><input id="import-file" type="file" accept=".xml,.csv" required></div>
+<div class="form-row"><label for="import-manifest">Matching signed manifest JSON</label><input id="import-manifest" type="file" accept=".json,application/json" required></div>
+<button class="btn" type="submit">Verify and import</button>
+</form>
+<div class="actions"><button class="btn btn-outline" id="sync-registrar" type="button">Sync Registrar masterlist</button></div>
+<h2>Import files</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>File</th><th>Source</th><th>Manifest</th><th>Imported</th><th>Rejected</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<h2>Reject log</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Batch</th><th>Row</th><th>Reason</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+<script src="../../../assets/js/api.js"></script>
+<script src="../../../assets/js/common.js"></script>
+</body>
+</html>
