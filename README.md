@@ -1,26 +1,29 @@
 # DNSC e-Clearance Hub
 
-Python/Flask REST API, XAMPP MySQL persistence, and a mobile-friendly browser client for the IT312 Track A final project. The application connects a Registrar masterlist, signed Library XML and Accounting CSV exports, office actions, holiday data, student clearance views, masked reports, and signed clearance slips.
+Python/Flask REST API, local SQLite persistence, and a mobile-friendly browser client for the IT312 Track A final project. The application connects a Registrar masterlist, signed Library XML and Accounting CSV exports, office actions, holiday data, student clearance views, masked reports, and signed clearance slips.
 
 > **Final-project evidence reminder:** The software and documentation are in this repository. The required 30-person evaluation, official signed sheets, consented photos, completed rater masterlist, team details, and final compiled PDF must be completed by the team using real evidence. Do not fabricate these materials.
 >
-> **Database approval evidence:** This project retains XAMPP MySQL under the instructor-approved stack decision. Include the approval evidence with the final submission if required by the course.
+> **Database note:** The Hub uses a private SQLite database outside the Apache document root. Keep database and backup files private; do not commit them.
 
 ## 1. Prerequisites
 
-- Windows with XAMPP (Apache and MySQL/MariaDB) and phpMyAdmin.
+- Windows with Python 3.11 or newer. XAMPP Apache is needed only to serve the browser front end at `http://localhost/Integrative-Prog/`; XAMPP MySQL and phpMyAdmin are not required.
 - Python 3.11 or newer.
 - The bundled `IT312_Final_Project_Starter_Kit` contains a synthetic Registrar mock API and signed demo imports. Its roster contains fictional students for testing.
 - A browser. Nager.Date deadline calculation needs internet access on its first request for a year.
 
 ## 2. Install and start locally
 
-### A. Create the XAMPP database
+### A. Initialize SQLite (new installations only)
 
-1. Copy/keep this repository at `C:\xampp\htdocs\Integrative-Prog`.
-2. Open XAMPP Control Panel and start **MySQL**. Start **Apache** for the front end.
-3. Open `http://localhost/phpmyadmin`.
-4. Choose **Import**, select [database/schema.sql](database/schema.sql), and run it. The script creates the `dnsc_clearance_hub` database and its tables.
+The default database is `%USERPROFILE%\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3`, outside the Apache document root. For a new installation with no existing database, run:
+
+```powershell
+python python.py init-db
+```
+
+This command refuses to overwrite an existing database. Do not run it on a migrated installation.
 
 ### B. Install the Python API
 
@@ -30,10 +33,10 @@ Open PowerShell in the repository folder:
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
-Edit `.env`. For a normal local XAMPP installation, the sample MySQL host/port/user defaults may work; set `DB_PASSWORD` if the MySQL root account has a password. Generate three different secrets (run the command three times) and replace the placeholders:
+Edit `.env` to configure the application secrets. `DB_PATH` is optional; when blank, the API uses the default SQLite location above. Do not overwrite an existing `.env` or its secrets. Generate three different secrets (run the command three times) and replace the placeholders:
 
 ```powershell
 python -c "import secrets; print(secrets.token_urlsafe(48))"
@@ -72,7 +75,7 @@ The browser UI is served by XAMPP Apache; the API binds to `127.0.0.1:8000` by d
 
 Sign in as an administrator and open **Users** in the sidebar. This page lists accounts and lets an admin search/filter them, create student/staff/admin accounts, edit login IDs and roles, link students, assign a staff office, edit student contact details, activate/deactivate accounts, and set a new password. Student accounts must link to an existing active Registrar record; staff accounts need an office assignment. Passwords are never displayed or emailed. Share an initial or reset password through an approved private channel. Role/assignment changes, deactivation, and password resets end the affected account's active sessions. An administrator cannot demote/deactivate their own account, and the last active admin cannot be removed.
 
-The fresh-install [schema](database/schema.sql) includes account-management audit actions. Existing installations must run [migration 001](database/migrations/001_user_management_audit.sql) in phpMyAdmin before creating, editing, or resetting user accounts through this page.
+The runtime [SQLite schema](database/schema.sqlite.sql) includes account-management audit actions. The original MySQL schema and its SQL migration are retained for reference only; do not apply them to the SQLite database.
 
 ## 3. Detailed system flow
 
@@ -128,23 +131,9 @@ python python.py create-user --username hub.admin --role admin
 
 Passwords must be at least 12 characters. The database stores PBKDF2-HMAC-SHA256 salted hashes, not plaintext passwords. Do not reuse real credentials for the demo.
 
-If upgrading a database created from the earlier schema, back it up and check for multiple student accounts first:
-
-```sql
-SELECT student_id, COUNT(*) AS account_count
-FROM users
-WHERE student_id IS NOT NULL
-GROUP BY student_id
-HAVING COUNT(*) > 1;
-```
-
-If the query returns no rows and the old index `ix_users_student` exists, replace it once with the unique index required by registration:
-
-```sql
-ALTER TABLE users
-  DROP INDEX ix_users_student,
-  ADD UNIQUE KEY uq_users_student (student_id);
-```
+The SQLite schema enforces one account per linked student. Back up the SQLite
+file before any future schema migration; MySQL migration SQL is not compatible
+with the runtime database.
 
 ## 5. Registrar integration
 
@@ -177,9 +166,9 @@ an admin can create their Hub accounts through **Users**. These students and
 example IDs/names are fictional; use the official Registrar service and its
 authorized URL/key for real school data.
 
-## 6. XAMPP tables
+## 6. SQLite data tables
 
-`database/schema.sql` creates these tables:
+`database/schema.sqlite.sql` defines these tables:
 
 | Table | Use |
 |---|---|
@@ -194,11 +183,13 @@ authorized URL/key for real school data.
 | `clearance_slips` | Public code, signed payload, expiry, and revocation state. |
 | `holidays` | Cached Nager.Date holidays by date/country. |
 
-Use phpMyAdmin to inspect data. The application uses parameterized SQL and does not provide direct database access to the browser.
+Use a SQLite client to inspect the private database under
+`%USERPROFILE%\DNSC e-Clearance Hub\`. The application uses parameterized SQL
+and does not provide direct database access to the browser.
 
 ## 7. Scheduled automation (R1/R2)
 
-After configuring the Registrar key and confirming MySQL is running, register
+After configuring the Registrar key and confirming the SQLite database is available, register
 three daily Windows Task Scheduler jobs from PowerShell in the project folder:
 
 ```powershell
@@ -209,7 +200,7 @@ three daily Windows Task Scheduler jobs from PowerShell in the project folder:
 The times are local 24-hour times; set the import time after the offices' source
 exports arrive. Tasks run as the Windows account that registers them, so that
 account must be logged in at the scheduled times and be able to access the
-project, MySQL, and output folders. The registrar sync runs first, followed by
+project, SQLite database, and output folders. The registrar sync runs first, followed by
 imports and the daily HOLD summary. Run each command manually once before
 relying on its schedule, and verify
 `logs\imports.log`, `archive\`, and the dated CSV in `reports\`. Registration
@@ -225,7 +216,7 @@ Install dependencies as above, then run:
 python -m unittest discover -s tests -v
 ```
 
-The automated tests use a temporary SQLite database for test isolation; the application defaults to MySQL. Also perform a live XAMPP/MySQL smoke test using the checklist in [docs/test-report.md](docs/test-report.md). Record the real run output before submitting the final report.
+The automated tests use temporary SQLite databases for isolation. Perform the browser and API smoke checks in [docs/test-report.md](docs/test-report.md); these do not require MySQL.
 
 ## 9. Project documentation
 
@@ -235,7 +226,7 @@ The automated tests use a temporary SQLite database for test isolation; the appl
 - [API specification](docs/api-spec.md) — Hub routes, roles, request/response shapes, and errors.
 - [Data mapping and signed manifest contract](docs/data-mapping.md) — Registrar/CSV/XML fields, validation, and rejection behavior.
 - [Test report / Appendix G](docs/test-report.md) — individual automated cases plus the separate live-smoke evidence status.
-- [Front-end test checklist](docs/frontend-test-plan.md) — manual XAMPP/MySQL and browser checks, tracked separately from automated tests.
+- [Front-end test checklist](docs/frontend-test-plan.md) — manual browser and API checks, tracked separately from automated tests.
 - [Evaluation and final clearance checklist](docs/evaluation-readiness.md) — R18 rater process, rubric cross-check, milestones, and remaining evidence.
 - [Final documentation source](docs/final-documentation.md) — Chapters 1–5 and the required Appendix A–I assembly guide.
 
@@ -246,7 +237,7 @@ python.py                    Python CLI / server entry point
 hub.py                       Flask REST API, authentication, and database access
 integration_clients.py       Registrar and Nager.Date clients
 importer.py                  HMAC validation, XML/CSV mapping, automation
-database/schema.sql          XAMPP MySQL schema and office seed rows
+database/schema.sqlite.sql   SQLite schema and office seed rows
 assets/                      Shared browser styles, API client, PWA icon
 modules/                     Student, staff, admin, and login pages
 manifest.webmanifest         Installable PWA metadata

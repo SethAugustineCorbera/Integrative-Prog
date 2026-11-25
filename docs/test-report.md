@@ -6,16 +6,15 @@ Run the API and import/security tests from the repository root with:
 python -m unittest discover -s tests -v
 ```
 
-The suite uses a temporary SQLite database for isolation. The submitted
-application defaults to XAMPP MySQL; import `database/schema.sql` before
-presenting and perform the separate XAMPP/browser checks in
-[frontend-test-plan.md](./frontend-test-plan.md).
+The suite uses temporary SQLite databases for isolation. The application uses
+the migrated SQLite database outside Apache's document root. Run the separate
+API/browser checks in [frontend-test-plan.md](./frontend-test-plan.md).
 
 ## Latest automated run
 
 | Run date | Environment | Cases | Passed | Failed | Evidence |
 |---|---|---:|---:|---:|---|
-| 2026-11-24 | Project virtual environment, temporary SQLite test database | 87 | 87 | 0 | `python -m unittest discover -s tests -v`; exit code 0. |
+| 2026-11-25 | Project Python environment, temporary SQLite test database | 91 | 91 | 0 | `python -m unittest discover -s tests -v`; exit code 0. |
 
 The input/scenario is the named test and fixture in `tests/test_hub.py`.
 “Assertions passed” is the observed actual result: the test runner reported
@@ -132,23 +131,47 @@ individual test method contains the concrete fixture values and requests.
 | `test_admin_user_update_rejects_duplicate_username_and_self_deactivation` — duplicate login/self-deactivation | Both prohibited updates are rejected. | Assertions passed. | PASS |
 | `test_logout_invalidates_token` — logout followed by reuse of token | Session is invalidated and protected access is denied. | Assertions passed. | PASS |
 
-## Previously recorded XAMPP smoke evidence
+## SQLite migration and runtime verification (2026-11-25)
 
-The last recorded environment check reported HTTP 200 from the Hub API and
-bundled Registrar mock health endpoints; the synthetic roster sync returned 40
-records (39 active, 1 LOA/inactive), and the HOLD-summary command completed
-against XAMPP MySQL. The three Windows tasks were reported as Ready, but their
-scheduled execution had not yet been observed. A registration readiness
-request using mismatched synthetic details returned the expected mismatch and
-did not create an account. This evidence was not re-run with the 2026-11-19
-automated test run. Complete the manual browser registration/login, QR
-verification, task-execution, and MySQL smoke checks and attach dated output
-before final submission.
+The November 25 backup (`dnsc_clearance_hub-20261125-204832.sql`) was parsed as
+data, not executed as SQLite SQL. Counts and every stored column value were
+compared against the destination after loading:
 
-## Manual XAMPP/browser checklist
+| Table | Backup rows | SQLite rows |
+|---|---:|---:|
+| `offices` | 4 | 4 |
+| `students` | 43 | 43 |
+| `users` | 9 | 9 |
+| `auth_sessions` | 13 | 13 |
+| `clearance_records` | 55 | 55 |
+| `audit_logs` | 31 | 31 |
+| `import_batches` | 0 | 0 |
+| `import_rejections` | 0 | 0 |
+| `clearance_slips` | 12 | 12 |
+| `holidays` | 36 | 36 |
+
+The SQLite destination passed `PRAGMA integrity_check` (`ok`) and
+`PRAGMA foreign_key_check` (no rows). JSON fields, source/destination values,
+office seed rows, auto-increment next values, timestamp triggers, and foreign
+key enforcement were also checked. The backup SHA-256 remained
+`B347EB1EB1D8F3D507F29E8EF0B8EDBC6CBE88D87DB4F1F114747559A1FA05D6`.
+
+The Flask server was started against the migrated database and its health
+endpoint returned HTTP 200 with `database=connected`. An isolated copy of that
+database passed login, admin/staff/student role checks, signed CSV import,
+clearance HOLD/sign-off, audit event, and slip issue/verification smoke checks.
+The live SQLite database was not changed by those workflow checks.
+
+The prior MySQL-era smoke evidence remains historical only: the Registrar mock
+and scheduled jobs were previously exercised with the MySQL runtime. XAMPP
+MySQL was left running to avoid affecting other local services, so a stopped-
+MySQL test was not performed. The runtime has no MySQL/PyMySQL connection path.
+
+## Manual SQLite/browser checklist
 
 The separate browser checklist is maintained in
 [frontend-test-plan.md](./frontend-test-plan.md). It is not marked complete by
-the automated SQLite suite. Record the date, browser, test role, actual result,
-and evidence location for each manual check. Capture only synthetic data.
+the automated suite or API smoke checks. Record the date, browser, test role,
+actual result, and evidence location for each manual check. Capture only
+synthetic data.
 

@@ -8,8 +8,10 @@ import json
 import logging
 import os
 import re
+import sqlite3
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from hub import (
@@ -32,6 +34,46 @@ def _configure_logging() -> None:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
         encoding="utf-8",
     )
+
+
+def _init_db() -> None:
+    database_path = Path(app.config["DB_PATH"])
+    if not database_path.is_absolute():
+        database_path = Path(__file__).resolve().parent / database_path
+    if database_path.exists():
+        raise FileExistsError(
+            "Refusing to overwrite an existing SQLite database: " + str(database_path)
+        )
+    schema_path = Path(__file__).resolve().parent / "database" / "schema.sqlite.sql"
+    if not schema_path.is_file():
+        raise FileNotFoundError("SQLite schema file was not found: " + str(schema_path))
+
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=database_path.stem + ".init-",
+        suffix=".sqlite3",
+        dir=database_path.parent,
+    )
+    os.close(descriptor)
+    temporary_path = Path(temporary_name)
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(str(temporary_path))
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.executescript(schema_path.read_text(encoding="utf-8"))
+        integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+        foreign_key_violations = connection.execute("PRAGMA foreign_key_check").fetchall()
+        if integrity != "ok" or foreign_key_violations:
+            raise RuntimeError("New SQLite database failed its integrity checks.")
+        connection.close()
+        connection = None
+        temporary_path.rename(database_path)
+    except Exception:
+        if connection is not None:
+            connection.close()
+        temporary_path.unlink(missing_ok=True)
+        raise
+    print("Initialized SQLite database at " + str(database_path))
 
 
 def _tls_context() -> tuple[str, str] | None:
@@ -107,7 +149,7 @@ def _seed_demo() -> None:
         for office_code, (status, reason) in offices.items():
             office = _find_office(office_code)
             if office is None:
-                raise RuntimeError("Import database/schema.sql before seeding demo data.")
+                raise RuntimeError("Initialize the SQLite database before seeding demo data.")
             upsert_clearance(
                 student["id"], office["id"], status, reason, "demo-seed", None
             )
@@ -119,7 +161,7 @@ def _seed_demo() -> None:
         ("demo.admin", "admin", None, None),
     ]
     for username, role, student_number, office in demo_users:
-        if query_one("SELECT id FROM users WHERE username = %s", (username,)) is None:
+        if query_one("SELECT id FROM users WHERE username = ?", (username,)) is None:
             create_user(username, password, role, student_number, office)
     print("Synthetic demo records and accounts are ready.")
     print("Sign in as demo.student, demo.library, or demo.admin using DEMO_PASSWORD.")
@@ -162,7 +204,7 @@ def _sync_registrar() -> int:
     students = fetch_registrar_students(base_url, api_key)
     office = _find_office("registrar")
     if office is None:
-        raise RuntimeError("Registrar office is missing; import database/schema.sql.")
+        raise RuntimeError("Registrar office is missing; initialize the SQLite database.")
     for student in students:
         upsert_student(student)
         saved = _find_student(student["student_number"])
@@ -228,6 +270,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="DNSC e-Clearance Hub")
     commands = parser.add_subparsers(dest="command")
     commands.add_parser("serve", help="start the Flask REST API")
+    commands.add_parser("init-db", help="create a new SQLite database without overwriting an existing one")
     create = commands.add_parser("create-user", help="create a role-bound account")
     create.add_argument("--username", required=True)
     create.add_argument("--role", required=True, choices=["student", "staff", "admin"])
@@ -264,6 +307,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if command == "install-schedule":
         _install_schedule(args)
+        return 0
+    if command == "init-db":
+        _init_db()
         return 0
     with app.app_context():
         if command == "create-user":

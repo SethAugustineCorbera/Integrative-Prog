@@ -69,7 +69,7 @@ Authorization: Bearer <token>
 - Tokens are random, expire after eight hours, and are stored only as SHA-256 hashes.
 - Public registration creates student-role accounts only and requires an active student number/full-name match (extra whitespace in the name is ignored). Staff and admin accounts must be provisioned by an administrator. If the Registrar API key is missing or still a placeholder, registration explains that configuration is required. The roster check is not an independent identity-verification process.
 - Admin account-management operations are recorded in `audit_logs`; passwords and password hashes are never included in account-list or audit responses. Changing a role/assignment, deactivating an account, or resetting its password revokes its active sessions.
-- Account audit action values are added by `database/schema.sql` for new databases or `database/migrations/001_user_management_audit.sql` for an existing database. Apply the migration once before using the account-management endpoints on an older installation.
+- The runtime account audit actions and constraints are defined in `database/schema.sqlite.sql`. The original MySQL schema and migration script are not used by the SQLite runtime.
 - A staff account can only change records for its assigned office; admin is read-only for office queue views.
 - A slip's signed payload expires after 30 days. The public short code is a server-side lookup key; verification still validates the stored HMAC signature and expiry.
 - The slip response includes a locally generated SVG QR that encodes the signed token; it does not send student data or tokens to a third-party QR service.

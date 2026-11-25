@@ -1,11 +1,11 @@
-# Front-End and XAMPP Smoke-Test Plan
+# Front-End and SQLite Smoke-Test Plan
 
-This is a manual verification checklist for a presentation setup. The automated Python suite uses temporary SQLite and does not replace these XAMPP/MySQL and browser checks. Record the date, browser, test account roles, actual outcome, and any issue for each executed case.
+This is a manual verification checklist for a presentation setup. The automated Python suite uses temporary SQLite databases and does not replace these browser and API checks. Record the date, browser, test account roles, actual outcome, and any issue for each executed case.
 
 ## Setup
 
-1. Import [database/schema.sql](../database/schema.sql) in phpMyAdmin and configure the local `.env`.
-2. Start XAMPP MySQL and Apache, then start the Flask API with `python python.py serve`.
+1. Configure the local `.env`. For a new installation only, initialize the database with `python python.py init-db`; do not run this on the migrated database.
+2. Start XAMPP Apache if needed for the browser front end, then start the Flask API with `python python.py serve`.
 3. Confirm `http://localhost:8000/api/health` reports a connected database.
 4. Seed fictional accounts with `python python.py seed-demo`, using a unique local `DEMO_PASSWORD`.
 5. Open `http://localhost/Integrative-Prog/` in a browser and keep the API console available for errors.

@@ -24,7 +24,7 @@ The implementation is intended for synthetic/demo records until the school has a
 ```text
 Registrar mock REST API -- JSON --> Registrar client ----+
 Nager.Date public API ------ JSON --> Deadline client ----+--> Python Flask Hub API
-Library signed XML --------- file --> Python import script +--> XAMPP MySQL database
+Library signed XML --------- file --> Python import script +--> SQLite database
 Accounting signed CSV ----- file --> Python import script +--> audit / reject logs
 Student Affairs ----------- form --> Hub API ------------+
                                           |
@@ -34,7 +34,7 @@ Student Affairs ----------- form --> Hub API ------------+
                      +------ REST/JSON only; no DB access ------+
 ```
 
-The browser is served by XAMPP Apache. The Python Flask API runs locally on port 8000 and connects to the XAMPP MySQL service. MySQL is retained under the instructor-approved stack decision; include the approval evidence in the final submission if required. The front end calls only the API; it has no database credentials or direct SQL access. Files enter through the import command or authenticated admin upload. Completed or explicitly rejected files and manifests are archived; operational failures leave them in the drop folder for retry.
+The browser may be served by XAMPP Apache. The Python Flask API runs locally on port 8000 and connects to a SQLite database stored outside Apache's document root. XAMPP MySQL is not required. The front end calls only the API; it has no database credentials or direct SQL access. Files enter through the import command or authenticated admin upload. Completed or explicitly rejected files and manifests are archived; operational failures leave them in the drop folder for retry.
 
 Students may register an account only when their active student number and name match an existing Registrar record. This check is not independent identity verification; staff and admin accounts remain administrator-provisioned.
 

@@ -55,8 +55,8 @@ After all sheets are collected, calculate mean score per item for each rater gro
 - [ ] Confirm every R1–R17 implementation and test in the actual presentation environment.
 - [ ] Verify the registered Windows tasks run daily, including import/archive/log output and dated per-office HOLD summaries.
 - [ ] Confirm the Registrar mock API and Nager.Date service are reachable, or prepare the course-approved demo fallback.
-- [x] Run the automated suite: 87 cases passed on 2026-11-24; keep the run output in Appendix G.
-- [ ] Run and record the manual XAMPP/MySQL/browser checklist; automated SQLite tests are not a substitute.
+- [x] Run the automated suite: 91 cases passed on 2026-11-25; keep the run output in Appendix G.
+- [ ] Run and record the manual SQLite/API/browser checklist; automated tests are not a substitute.
 - [ ] Add actual project title, set, instructor, member names/roles, dates, and contribution/commit evidence.
 - [ ] Complete the required 30-person rating process and Appendix A–D using the official forms.
 - [ ] Prepare final PDF, backup demo video, original signed sheets, and any peer-evaluation forms required by the instructor.

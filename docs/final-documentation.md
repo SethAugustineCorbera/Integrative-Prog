@@ -27,7 +27,7 @@ Submission date: [complete]
 
 ## Abstract
 
-The DNSC e-Clearance Hub is an integration system intended to replace repeated paper-based clearance visits with one authenticated view of student obligations. The Python service consumes the Registrar masterlist and Philippine holiday API, and accepts signed Library XML and Accounting CSV exports. Data is normalized to a shared student/office clearance schema in XAMPP MySQL. Students may register only against an active Registrar roster record, then use a browser client to check office-by-office status and receive a verifiable signed QR slip and short code after all required offices clear them; roster matching is not independent identity verification. Assigned office staff can update their own office's clearance records, while administrators process imports, review audit events, and export reports with masked student numbers. Passwords are stored as salted PBKDF2 hashes; session tokens, role checks, parameterized SQL, manifest HMAC verification, replay detection, and signed slip expiry protect the integration. A mobile-friendly installable PWA and locally generated QR slip are the two selected emerging-technology components; clearance data is not cached offline. The shared status view reduces repeated student visits while allowing offices to keep their existing systems. Test evidence is in Appendix G. User evaluation, including signed sheets and consented photos, must be collected and compiled separately in Appendices A–D before final submission.
+The DNSC e-Clearance Hub is an integration system intended to replace repeated paper-based clearance visits with one authenticated view of student obligations. The Python service consumes the Registrar masterlist and Philippine holiday API, and accepts signed Library XML and Accounting CSV exports. Data is normalized to a shared student/office clearance schema in a local SQLite database stored outside Apache's document root. Students may register only against an active Registrar roster record, then use a browser client to check office-by-office status and receive a verifiable signed QR slip and short code after all required offices clear them; roster matching is not independent identity verification. Assigned office staff can update their own office's clearance records, while administrators process imports, review audit events, and export reports with masked student numbers. Passwords are stored as salted PBKDF2 hashes; session tokens, role checks, parameterized SQL, manifest HMAC verification, replay detection, and signed slip expiry protect the integration. A mobile-friendly installable PWA and locally generated QR slip are the two selected emerging-technology components; clearance data is not cached offline. The shared status view reduces repeated student visits while allowing offices to keep their existing systems. Test evidence is in Appendix G. User evaluation, including signed sheets and consented photos, must be collected and compiled separately in Appendices A–D before final submission.
 
 ## Chapter 1 — Introduction
 
@@ -45,7 +45,7 @@ Students currently visit multiple offices that keep separate records and data fo
 
 ### Scope and limitations
 
-The code includes a local Flask API, XAMPP MySQL schema, browser client, the bundled synthetic Registrar mock/starter files, Registrar and holiday API clients, signed file importer, report exports, audit history, and test suite. The official live Registrar service, team details, evidence that scheduled tasks executed successfully, and the 30-person evaluation are team responsibilities. The implementation uses XAMPP MySQL under the instructor-approved stack decision; attach the approval evidence if required. Use synthetic data unless the institution authorizes otherwise.
+The code includes a local Flask API, SQLite schema, browser client, the bundled synthetic Registrar mock/starter files, Registrar and holiday API clients, signed file importer, report exports, audit history, and test suite. The official live Registrar service, team details, evidence that scheduled tasks executed successfully, and the 30-person evaluation are team responsibilities. Use synthetic data unless the institution authorizes otherwise.
 
 ## Chapter 2 — Solution Design
 
@@ -57,13 +57,13 @@ See [solution-design.md](./solution-design.md) for the architecture, data flow, 
 - **External APIs:** Registrar paging/error handling and Nager.Date holiday calendar.
 - **Hub API/client:** Flask API documented in [api-spec.md](./api-spec.md); web screens use REST only.
 - **Data mapping:** CSV/XML field aliases and rejects are specified in [data-mapping.md](./data-mapping.md).
-- **Database:** XAMPP MySQL tables are created by `database/schema.sql`.
+- **Database:** SQLite tables are defined in `database/schema.sqlite.sql`; the runtime database is stored outside the web root.
 - **Emerging technology (R4):** mobile-friendly PWA plus a real, locally generated QR clearance slip encoding the signed token.
 - **Security:** PBKDF2, bearer sessions, role/office guards, parameterized SQL, environment secrets, HMAC files, signed slips, masking, and audit events.
 
 ## Chapter 4 — Testing and Evaluation
 
-The current automated evidence is 79 passing cases (the group minimum is 20), recorded with scenario, expected result, actual assertion outcome, and pass/fail in [test-report.md](./test-report.md). This suite uses temporary SQLite for isolation; run and record a separate XAMPP/MySQL browser smoke test before printing the final report.
+The automated evidence and SQLite migration checks are recorded in [test-report.md](./test-report.md). The suite uses temporary SQLite for isolation; run and record the separate SQLite/browser smoke checks before printing the final report.
 
 The actual 30-rater evaluation is not included in this repository. Complete Appendix A's statistical summary from real sheets, then insert the signed sheets, consented photos, and official masterlist in Appendices B–D. Do not fill ratings on behalf of participants.
 
@@ -78,7 +78,6 @@ The system provides an integration path from independent source systems to a sin
 - IT312 Final Project Rating Sheet.
 - Nager.Date Public Holidays API: <https://date.nager.at/>.
 - Flask documentation: <https://flask.palletsprojects.com/>.
-- PyMySQL documentation: <https://pymysql.readthedocs.io/>.
 
 ## Appendices
 

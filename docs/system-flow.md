@@ -1,13 +1,14 @@
 # Basic System Flow
 
 This guide explains the main user and data flows in the DNSC e-Clearance Hub.
-The browser UI is served by XAMPP Apache; the Python Flask API validates requests
-and reads or writes the XAMPP MySQL database. The browser never connects directly
-to MySQL.
+The browser UI may be served by XAMPP Apache; the Python Flask API validates
+requests and reads or writes the local SQLite database. The database is stored
+outside Apache's document root, and the browser never connects directly to it.
 
 ## 1. Start the system
 
-1. Start **Apache** and **MySQL** in the XAMPP Control Panel.
+1. Start **Apache** in the XAMPP Control Panel if serving the browser front end
+   through XAMPP. MySQL is not required.
 2. From the project folder, start the API in PowerShell:
 
    ```powershell
@@ -102,7 +103,7 @@ are blocked. Do not enter fabricated records as official students.
 
 ## 7. Database and security boundaries
 
-- MySQL is the source of truth for users, student records, clearance decisions,
+- SQLite is the source of truth for users, student records, clearance decisions,
   active sessions, and audit events.
 - Passwords are stored as salted PBKDF2 hashes. The browser never receives a
   password hash.

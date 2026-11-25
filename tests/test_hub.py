@@ -29,100 +29,14 @@ PASSWORD = "LocalTestPassword123!"
 TEST_HMAC = "test-hmac-secret-that-is-long-enough-123456"
 TEST_SLIP = "test-slip-secret-that-is-long-enough-123456"
 TEST_PASSWORD_HASH = hub.hash_password(PASSWORD)
+REAL_GET_DB = hub.get_db
 
 
-SQLITE_SCHEMA = """
-CREATE TABLE offices (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL UNIQUE,
-    required_for_clearance INTEGER NOT NULL
-);
-CREATE TABLE students (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_number TEXT NOT NULL UNIQUE,
-    full_name TEXT NOT NULL,
-    program TEXT NOT NULL,
-    year_level INTEGER NOT NULL,
-    email TEXT,
-    active INTEGER NOT NULL DEFAULT 1
-);
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL,
-    student_id INTEGER UNIQUE,
-    office_id INTEGER,
-    active INTEGER NOT NULL DEFAULT 1
-);
-CREATE TABLE auth_sessions (
-    token_hash TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    expires_at TEXT NOT NULL
-);
-CREATE TABLE clearance_records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_id INTEGER NOT NULL,
-    office_id INTEGER NOT NULL,
-    status TEXT NOT NULL,
-    reason TEXT NOT NULL,
-    source TEXT NOT NULL,
-    updated_by INTEGER,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(student_id, office_id)
-);
-CREATE TABLE audit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    actor_user_id INTEGER,
-    action TEXT NOT NULL,
-    student_id INTEGER,
-    office_id INTEGER,
-    reason TEXT,
-    details_json TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE import_batches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    file_name TEXT NOT NULL,
-    source TEXT NOT NULL,
-    file_sha256 TEXT,
-    nonce TEXT UNIQUE,
-    manifest_verified INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL,
-    imported_count INTEGER NOT NULL DEFAULT 0,
-    rejected_count INTEGER NOT NULL DEFAULT 0,
-    created_by INTEGER,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE import_rejections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    batch_id INTEGER NOT NULL,
-    row_reference TEXT NOT NULL,
-    reason TEXT NOT NULL,
-    record_json TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE clearance_slips (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    public_code TEXT NOT NULL UNIQUE,
-    token_hash TEXT NOT NULL UNIQUE,
-    payload_json TEXT NOT NULL,
-    signature TEXT NOT NULL,
-    student_id INTEGER NOT NULL,
-    issued_at TEXT NOT NULL,
-    expires_at TEXT NOT NULL,
-    revoked_at TEXT
-);
-CREATE TABLE holidays (
-    holiday_date TEXT NOT NULL,
-    local_name TEXT NOT NULL,
-    english_name TEXT NOT NULL,
-    country_code TEXT NOT NULL,
-    fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (holiday_date, country_code)
-);
-"""
+SQLITE_SCHEMA = (
+    Path(__file__).resolve().parents[1]
+    .joinpath("database", "schema.sqlite.sql")
+    .read_text(encoding="utf-8")
+)
 
 
 class HubTestCase(unittest.TestCase):
@@ -131,19 +45,13 @@ class HubTestCase(unittest.TestCase):
         self.db_path = Path(self.temp_dir.name) / "hub-test.sqlite3"
         self.connection = sqlite3.connect(self.db_path)
         self.connection.row_factory = sqlite3.Row
+        self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.executescript(SQLITE_SCHEMA)
-        self.connection.executemany(
-            "INSERT INTO offices (code, name, required_for_clearance) VALUES (?, ?, 1)",
-            [
-                ("registrar", "Registrar"),
-                ("library", "Library"),
-                ("accounting", "Accounting / Cashier"),
-                ("student-affairs", "Student Affairs"),
-            ],
+        self.assertEqual(
+            self.connection.execute("PRAGMA foreign_keys").fetchone()[0], 1
         )
         hub.app.config.update(
             TESTING=True,
-            DB_MODE="sqlite",
             DB_PATH=str(self.db_path),
             HMAC_SECRET=TEST_HMAC,
             SLIP_SIGNING_KEY=TEST_SLIP,
@@ -182,10 +90,10 @@ class HubTestCase(unittest.TestCase):
                 }
             )
             student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = %s", ("2023-0001-14",)
+                "SELECT id FROM students WHERE student_number = ?", ("2023-0001-14",)
             )
             held_student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = %s", ("2023-0002-14",)
+                "SELECT id FROM students WHERE student_number = ?", ("2023-0002-14",)
             )
             offices = hub.query_all("SELECT id, code FROM offices")
             for office in offices:
@@ -210,6 +118,78 @@ class HubTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         return response.get_json()["token"]
+
+
+class SqliteConnectionTests(HubTestCase):
+    def test_get_db_enables_foreign_keys_for_each_connection(self) -> None:
+        with hub.app.app_context():
+            connection = REAL_GET_DB()
+            self.assertEqual(
+                connection.execute("PRAGMA foreign_keys").fetchone()[0], 1
+            )
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "INSERT INTO auth_sessions (token_hash, user_id, expires_at) "
+                    "VALUES (?, ?, ?)",
+                    ("a" * 64, -1, "2099-01-01 00:00:00"),
+                )
+
+    def test_auth_session_token_hash_cannot_be_null(self) -> None:
+        cursor = self.connection.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            ("schema.test", TEST_PASSWORD_HASH, "admin"),
+        )
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.connection.execute(
+                "INSERT INTO auth_sessions (token_hash, user_id, expires_at) "
+                "VALUES (NULL, ?, ?)",
+                (cursor.lastrowid, "2099-01-01 00:00:00"),
+            )
+
+    def test_case_insensitive_office_uniqueness_is_preserved(self) -> None:
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.connection.execute(
+                "INSERT INTO offices (code, name) VALUES (?, ?)",
+                ("REGISTRAR", "Duplicate code test"),
+            )
+
+    def test_student_and_clearance_updates_refresh_timestamps(self) -> None:
+        sentinel = "2000-01-01 00:00:00"
+        student = self.connection.execute(
+            "SELECT id FROM students ORDER BY id LIMIT 1"
+        ).fetchone()
+        clearance = self.connection.execute(
+            "SELECT id FROM clearance_records ORDER BY id LIMIT 1"
+        ).fetchone()
+        self.connection.execute(
+            "UPDATE students SET updated_at = ? WHERE id = ?",
+            (sentinel, student["id"]),
+        )
+        self.connection.execute(
+            "UPDATE students SET full_name = full_name || ' ' WHERE id = ?",
+            (student["id"],),
+        )
+        self.assertNotEqual(
+            self.connection.execute(
+                "SELECT updated_at FROM students WHERE id = ?", (student["id"],)
+            ).fetchone()[0],
+            sentinel,
+        )
+        self.connection.execute(
+            "UPDATE clearance_records SET updated_at = ? WHERE id = ?",
+            (sentinel, clearance["id"]),
+        )
+        self.connection.execute(
+            "UPDATE clearance_records SET reason = reason || ' ' WHERE id = ?",
+            (clearance["id"],),
+        )
+        self.assertNotEqual(
+            self.connection.execute(
+                "SELECT updated_at FROM clearance_records WHERE id = ?",
+                (clearance["id"],),
+            ).fetchone()[0],
+            sentinel,
+        )
 
 
 class PasswordTests(HubTestCase):
@@ -583,36 +563,36 @@ class ApiTests(HubTestCase):
         super().setUp()
         with hub.app.app_context():
             student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = %s", ("2023-0001-14",)
+                "SELECT id FROM students WHERE student_number = ?", ("2023-0001-14",)
             )
             held_student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = %s", ("2023-0002-14",)
+                "SELECT id FROM students WHERE student_number = ?", ("2023-0002-14",)
             )
             library = hub.query_one(
-                "SELECT id FROM offices WHERE code = %s", ("library",)
+                "SELECT id FROM offices WHERE code = ?", ("library",)
             )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role, student_id) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO users (username, password_hash, role, student_id) VALUES (?, ?, ?, ?)",
                 ("test.student", TEST_PASSWORD_HASH, "student", student["id"]),
             )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role, student_id) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO users (username, password_hash, role, student_id) VALUES (?, ?, ?, ?)",
                 ("held.student", TEST_PASSWORD_HASH, "student", held_student["id"]),
             )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role, office_id) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO users (username, password_hash, role, office_id) VALUES (?, ?, ?, ?)",
                 ("test.library", TEST_PASSWORD_HASH, "staff", library["id"]),
             )
             registrar = hub.query_one(
-                "SELECT id FROM offices WHERE code = %s", ("registrar",)
+                "SELECT id FROM offices WHERE code = ?", ("registrar",)
             )
             if registrar is not None:
                 hub.execute(
-                    "INSERT INTO users (username, password_hash, role, office_id) VALUES (%s, %s, %s, %s)",
+                    "INSERT INTO users (username, password_hash, role, office_id) VALUES (?, ?, ?, ?)",
                     ("test.registrar", TEST_PASSWORD_HASH, "staff", registrar["id"]),
                 )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
                 ("test.admin", TEST_PASSWORD_HASH, "admin"),
             )
             hub.commit()
@@ -829,10 +809,10 @@ class ApiTests(HubTestCase):
         token = self.login()
         with hub.app.app_context():
             user = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.student",)
+                "SELECT id FROM users WHERE username = ?", ("test.student",)
             )
             hub.execute(
-                "UPDATE auth_sessions SET expires_at = %s WHERE user_id = %s",
+                "UPDATE auth_sessions SET expires_at = ? WHERE user_id = ?",
                 ("2000-01-01 00:00:00", user["id"]),
             )
             hub.commit()
@@ -974,7 +954,7 @@ class ApiTests(HubTestCase):
         ).get_json()
         with hub.app.app_context():
             hub.execute(
-                "UPDATE clearance_slips SET expires_at = %s WHERE public_code = %s",
+                "UPDATE clearance_slips SET expires_at = ? WHERE public_code = ?",
                 ("2000-01-01 00:00:00", slip["public_code"]),
             )
             hub.commit()
@@ -1060,7 +1040,7 @@ class ApiTests(HubTestCase):
         token = self.login("test.admin")
         with hub.app.app_context():
             hub.execute(
-                "INSERT INTO audit_logs (action, details_json) VALUES (%s, %s)",
+                "INSERT INTO audit_logs (action, details_json) VALUES (?, ?)",
                 (
                     "IMPORT",
                     json.dumps(
@@ -1171,7 +1151,7 @@ class ApiTests(HubTestCase):
         self.assertNotIn("password", created["details"])
         with hub.app.app_context():
             action = hub.query_one(
-                "SELECT action FROM audit_logs WHERE action = %s",
+                "SELECT action FROM audit_logs WHERE action = ?",
                 ("USER_CREATED",),
             )
         self.assertEqual(action["action"], "USER_CREATED")
@@ -1261,7 +1241,7 @@ class ApiTests(HubTestCase):
         target_token = self.login("test.library")
         with hub.app.app_context():
             target = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.library",)
+                "SELECT id FROM users WHERE username = ?", ("test.library",)
             )
         response = self.client.post(
             "/api/admin/users/{}/password".format(target["id"]),
@@ -1291,7 +1271,7 @@ class ApiTests(HubTestCase):
         self.assertEqual(new_login.status_code, 200)
         with hub.app.app_context():
             audit = hub.query_one(
-                "SELECT details_json FROM audit_logs WHERE action = %s",
+                "SELECT details_json FROM audit_logs WHERE action = ?",
                 ("PASSWORD_RESET",),
             )
         self.assertNotIn("ResetStaffPassword123!", audit["details_json"])
@@ -1301,7 +1281,7 @@ class ApiTests(HubTestCase):
         student_token = self.login("test.student")
         with hub.app.app_context():
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.student",)
+                "SELECT id FROM users WHERE username = ?", ("test.student",)
             )
         response = self.client.put(
             "/api/admin/users/{}".format(account["id"]),
@@ -1333,11 +1313,11 @@ class ApiTests(HubTestCase):
         admin_token = self.login("test.admin")
         with hub.app.app_context():
             library = hub.query_one(
-                "SELECT id FROM offices WHERE code = %s", ("library",)
+                "SELECT id FROM offices WHERE code = ?", ("library",)
             )
             hub.execute(
                 """INSERT INTO users (username, password_hash, role, office_id)
-                   VALUES (%s, %s, %s, %s)""",
+                   VALUES (?, ?, ?, ?)""",
                 (
                     "legacy.staff",
                     TEST_PASSWORD_HASH,
@@ -1347,7 +1327,7 @@ class ApiTests(HubTestCase):
             )
             hub.commit()
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("legacy.staff",)
+                "SELECT id FROM users WHERE username = ?", ("legacy.staff",)
             )
         response = self.client.put(
             "/api/admin/users/{}".format(account["id"]),
@@ -1374,7 +1354,7 @@ class ApiTests(HubTestCase):
         token = self.login("test.admin")
         with hub.app.app_context():
             admin = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.admin",)
+                "SELECT id FROM users WHERE username = ?", ("test.admin",)
             )
         response = self.client.put(
             "/api/admin/users/{}".format(admin["id"]),
@@ -1393,11 +1373,11 @@ class ApiTests(HubTestCase):
         headers = {"Authorization": "Bearer " + token}
         with hub.app.app_context():
             student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = %s",
+                "SELECT id FROM students WHERE student_number = ?",
                 ("2023-0001-14",),
             )
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.student",)
+                "SELECT id FROM users WHERE username = ?", ("test.student",)
             )
         response = self.client.put(
             "/api/admin/users/" + str(account["id"]),
@@ -1412,11 +1392,11 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         with hub.app.app_context():
             saved_user = hub.query_one(
-                "SELECT username, active FROM users WHERE id = %s",
+                "SELECT username, active FROM users WHERE id = ?",
                 (account["id"],),
             )
             saved_student = hub.query_one(
-                "SELECT full_name, email FROM students WHERE id = %s",
+                "SELECT full_name, email FROM students WHERE id = ?",
                 (student["id"],),
             )
         self.assertEqual(saved_user, {"username": "alex.rivera", "active": 0})
@@ -1432,7 +1412,7 @@ class ApiTests(HubTestCase):
         token = self.login("test.admin")
         with hub.app.app_context():
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.library",)
+                "SELECT id FROM users WHERE username = ?", ("test.library",)
             )
         response = self.client.put(
             "/api/admin/users/" + str(account["id"]),
@@ -1447,7 +1427,7 @@ class ApiTests(HubTestCase):
         with hub.app.app_context():
             saved = hub.query_one(
                 """SELECT o.code AS office_code FROM users AS u
-                   JOIN offices AS o ON o.id = u.office_id WHERE u.id = %s""",
+                   JOIN offices AS o ON o.id = u.office_id WHERE u.id = ?""",
                 (account["id"],),
             )
         self.assertEqual(saved["office_code"], "accounting")
@@ -1457,10 +1437,10 @@ class ApiTests(HubTestCase):
         headers = {"Authorization": "Bearer " + token}
         with hub.app.app_context():
             student = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.student",)
+                "SELECT id FROM users WHERE username = ?", ("test.student",)
             )
             admin = hub.query_one(
-                "SELECT id FROM users WHERE username = %s", ("test.admin",)
+                "SELECT id FROM users WHERE username = ?", ("test.admin",)
             )
         duplicate = self.client.put(
             "/api/admin/users/" + str(student["id"]),

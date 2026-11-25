@@ -24,6 +24,13 @@ from werkzeug.exceptions import HTTPException
 
 
 ROOT = Path(__file__).resolve().parent
+if os.name == "nt":
+    USER_DATA_ROOT = Path(os.getenv("USERPROFILE") or Path.home())
+else:
+    USER_DATA_ROOT = Path(os.getenv("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+DEFAULT_DB_PATH = (
+    USER_DATA_ROOT / "DNSC e-Clearance Hub" / "dnsc_clearance_hub.sqlite3"
+)
 
 
 def load_environment_file() -> None:
@@ -44,13 +51,7 @@ load_environment_file()
 app = Flask(__name__)
 app.config.update(
     SECRET_KEY=os.getenv("FLASK_SECRET_KEY", ""),
-    DB_MODE=os.getenv("DB_MODE", "mysql").lower(),
-    DB_HOST=os.getenv("DB_HOST", "127.0.0.1"),
-    DB_PORT=int(os.getenv("DB_PORT", "3306")),
-    DB_NAME=os.getenv("DB_NAME", "dnsc_clearance_hub"),
-    DB_USER=os.getenv("DB_USER", "root"),
-    DB_PASSWORD=os.getenv("DB_PASSWORD", ""),
-    DB_PATH=os.getenv("DB_PATH", str(ROOT / "test.sqlite3")),
+    DB_PATH=os.getenv("DB_PATH") or str(DEFAULT_DB_PATH),
     HMAC_SECRET=os.getenv("HUB_HMAC_SECRET", ""),
     SLIP_SIGNING_KEY=os.getenv("HUB_SLIP_SIGNING_KEY", ""),
     REGISTRAR_API_URL=os.getenv("REGISTRAR_API_URL", ""),
@@ -77,26 +78,20 @@ STUDENT_NUMBER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{1,39}$")
 
 def get_db() -> Any:
     if "db" not in g:
-        if app.config["DB_MODE"] == "sqlite":
-            connection = sqlite3.connect(app.config["DB_PATH"])
-            connection.row_factory = sqlite3.Row
-            g.db = connection
-        elif app.config["DB_MODE"] == "mysql":
-            import pymysql
-
-            g.db = pymysql.connect(
-                host=app.config["DB_HOST"],
-                port=app.config["DB_PORT"],
-                user=app.config["DB_USER"],
-                password=app.config["DB_PASSWORD"],
-                database=app.config["DB_NAME"],
-                charset="utf8mb4",
-                cursorclass=pymysql.cursors.DictCursor,
-                connect_timeout=5,
-                autocommit=False,
+        database_path = Path(app.config["DB_PATH"])
+        if not database_path.is_absolute():
+            database_path = ROOT / database_path
+        if not database_path.is_file():
+            raise FileNotFoundError(
+                "Configured SQLite database does not exist: " + str(database_path)
             )
-        else:
-            raise RuntimeError("DB_MODE must be mysql or sqlite.")
+        connection = sqlite3.connect(str(database_path), timeout=5)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        if connection.execute("PRAGMA foreign_keys").fetchone()[0] != 1:
+            connection.close()
+            raise RuntimeError("SQLite foreign-key enforcement could not be enabled.")
+        g.db = connection
     return g.db
 
 
@@ -107,14 +102,10 @@ def close_db(_error: BaseException | None = None) -> None:
         connection.close()
 
 
-def _sql(statement: str) -> str:
-    return statement.replace("%s", "?") if app.config["DB_MODE"] == "sqlite" else statement
-
-
 def query_one(statement: str, values: tuple[Any, ...] = ()) -> dict[str, Any] | None:
     cursor = get_db().cursor()
     try:
-        cursor.execute(_sql(statement), values)
+        cursor.execute(statement, values)
         row = cursor.fetchone()
         return dict(row) if row is not None else None
     finally:
@@ -124,7 +115,7 @@ def query_one(statement: str, values: tuple[Any, ...] = ()) -> dict[str, Any] | 
 def query_all(statement: str, values: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
     cursor = get_db().cursor()
     try:
-        cursor.execute(_sql(statement), values)
+        cursor.execute(statement, values)
         return [dict(row) for row in cursor.fetchall()]
     finally:
         cursor.close()
@@ -133,7 +124,7 @@ def query_all(statement: str, values: tuple[Any, ...] = ()) -> list[dict[str, An
 def execute(statement: str, values: tuple[Any, ...] = ()) -> int:
     cursor = get_db().cursor()
     try:
-        cursor.execute(_sql(statement), values)
+        cursor.execute(statement, values)
         return int(cursor.lastrowid or 0)
     finally:
         cursor.close()
@@ -246,7 +237,7 @@ def _authenticated_user() -> dict[str, Any] | None:
            JOIN users AS u ON u.id = a.user_id
            LEFT JOIN students AS s ON s.id = u.student_id
            LEFT JOIN offices AS o ON o.id = u.office_id
-           WHERE a.token_hash = %s AND a.expires_at > %s AND u.active = 1""",
+           WHERE a.token_hash = ? AND a.expires_at > ? AND u.active = 1""",
         (_token_digest(token), expires),
     )
 
@@ -272,7 +263,7 @@ def _find_office(code_or_name: str) -> dict[str, Any] | None:
     return query_one(
         """SELECT id, code, name, required_for_clearance
            FROM offices
-           WHERE LOWER(code) = LOWER(%s) OR LOWER(name) = LOWER(%s)
+           WHERE LOWER(code) = LOWER(?) OR LOWER(name) = LOWER(?)
            LIMIT 1""",
         (code_or_name, code_or_name),
     )
@@ -283,47 +274,29 @@ def _find_student(student_number: str) -> dict[str, Any] | None:
         return None
     return query_one(
         "SELECT id, student_number, full_name, program, year_level, email, active "
-        "FROM students WHERE student_number = %s",
+        "FROM students WHERE student_number = ?",
         (student_number,),
     )
 
 
 def upsert_student(student: dict[str, Any]) -> None:
-    if app.config["DB_MODE"] == "sqlite":
-        execute(
-            """INSERT INTO students
-               (student_number, full_name, program, year_level, email, active)
-               VALUES (%s, %s, %s, %s, %s, %s)
-               ON CONFLICT(student_number) DO UPDATE SET
-               full_name=excluded.full_name, program=excluded.program,
-               year_level=excluded.year_level, email=excluded.email,
-               active=excluded.active""",
-            (
-                student["student_number"],
-                student["full_name"],
-                student["program"],
-                student["year_level"],
-                student.get("email"),
-                student.get("active", 1),
-            ),
-        )
-    else:
-        execute(
-            """INSERT INTO students
-               (student_number, full_name, program, year_level, email, active)
-               VALUES (%s, %s, %s, %s, %s, %s)
-               ON DUPLICATE KEY UPDATE full_name=VALUES(full_name),
-               program=VALUES(program), year_level=VALUES(year_level),
-               email=VALUES(email), active=VALUES(active)""",
-            (
-                student["student_number"],
-                student["full_name"],
-                student["program"],
-                student["year_level"],
-                student.get("email"),
-                student.get("active", 1),
-            ),
-        )
+    execute(
+        """INSERT INTO students
+           (student_number, full_name, program, year_level, email, active)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(student_number) DO UPDATE SET
+           full_name=excluded.full_name, program=excluded.program,
+           year_level=excluded.year_level, email=excluded.email,
+           active=excluded.active""",
+        (
+            student["student_number"],
+            student["full_name"],
+            student["program"],
+            student["year_level"],
+            student.get("email"),
+            student.get("active", 1),
+        ),
+    )
 
 
 def upsert_clearance(
@@ -334,27 +307,16 @@ def upsert_clearance(
     source: str,
     updated_by: int | None,
 ) -> None:
-    if app.config["DB_MODE"] == "sqlite":
-        execute(
-            """INSERT INTO clearance_records
-               (student_id, office_id, status, reason, source, updated_by)
-               VALUES (%s, %s, %s, %s, %s, %s)
-               ON CONFLICT(student_id, office_id) DO UPDATE SET
-               status=excluded.status, reason=excluded.reason,
-               source=excluded.source, updated_by=excluded.updated_by,
-               updated_at=CURRENT_TIMESTAMP""",
-            (student_id, office_id, status, reason, source, updated_by),
-        )
-    else:
-        execute(
-            """INSERT INTO clearance_records
-               (student_id, office_id, status, reason, source, updated_by)
-               VALUES (%s, %s, %s, %s, %s, %s)
-               ON DUPLICATE KEY UPDATE status=VALUES(status),
-               reason=VALUES(reason), source=VALUES(source),
-               updated_by=VALUES(updated_by), updated_at=CURRENT_TIMESTAMP""",
-            (student_id, office_id, status, reason, source, updated_by),
-        )
+    execute(
+        """INSERT INTO clearance_records
+           (student_id, office_id, status, reason, source, updated_by)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(student_id, office_id) DO UPDATE SET
+           status=excluded.status, reason=excluded.reason,
+           source=excluded.source, updated_by=excluded.updated_by,
+           updated_at=CURRENT_TIMESTAMP""",
+        (student_id, office_id, status, reason, source, updated_by),
+    )
 
 
 def clearance_for_student(student: dict[str, Any]) -> dict[str, Any]:
@@ -363,7 +325,7 @@ def clearance_for_student(student: dict[str, Any]) -> dict[str, Any]:
                   c.status, c.reason, c.updated_at
            FROM offices AS o
            LEFT JOIN clearance_records AS c
-             ON c.office_id = o.id AND c.student_id = %s
+             ON c.office_id = o.id AND c.student_id = ?
            ORDER BY o.id""",
         (student["id"],),
     )
@@ -427,7 +389,7 @@ def _insert_audit(
     execute(
         """INSERT INTO audit_logs
            (actor_user_id, action, student_id, office_id, reason, details_json)
-           VALUES (%s, %s, %s, %s, %s, %s)""",
+           VALUES (?, ?, ?, ?, ?, ?)""",
         (
             user["id"] if user else None,
             action,
@@ -476,7 +438,7 @@ def login() -> Any:
            FROM users AS u
            LEFT JOIN students AS s ON s.id = u.student_id
            LEFT JOIN offices AS o ON o.id = u.office_id
-           WHERE u.username = %s AND u.active = 1""",
+           WHERE u.username = ? AND u.active = 1""",
         (username,),
     )
     if user is None or not verify_password(password, user["password_hash"]):
@@ -488,7 +450,7 @@ def login() -> Any:
     token = secrets.token_urlsafe(32)
     expiry = (datetime.now(timezone.utc) + timedelta(hours=SESSION_HOURS)).replace(tzinfo=None)
     execute(
-        "INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES (%s, %s, %s)",
+        "INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)",
         (_token_digest(token), user["id"], expiry.strftime("%Y-%m-%d %H:%M:%S")),
     )
     commit()
@@ -571,7 +533,7 @@ def register_student() -> Any:
             "student_not_verified",
         )
     existing = query_one(
-        "SELECT id FROM users WHERE username = %s OR student_id = %s LIMIT 1",
+        "SELECT id FROM users WHERE username = ? OR student_id = ? LIMIT 1",
         (username, student["id"]),
     )
     if existing is not None:
@@ -580,11 +542,9 @@ def register_student() -> Any:
             409,
             "account_exists",
         )
-    import pymysql
-
     try:
         create_user(username, password, "student", student_number=student_number)
-    except (sqlite3.IntegrityError, pymysql.err.IntegrityError):
+    except sqlite3.IntegrityError:
         rollback()
         return _error(
             "An account already exists for that username or student record.",
@@ -604,7 +564,7 @@ def who_am_i() -> Any:
 @require_roles()
 def logout() -> Any:
     token = request.headers.get("Authorization", "")[7:].strip()
-    execute("DELETE FROM auth_sessions WHERE token_hash = %s", (_token_digest(token),))
+    execute("DELETE FROM auth_sessions WHERE token_hash = ?", (_token_digest(token),))
     commit()
     return jsonify({"message": "Logged out."})
 
@@ -614,7 +574,7 @@ def logout() -> Any:
 def my_clearance() -> Any:
     student = query_one(
         "SELECT id, student_number, full_name, program, year_level, active "
-        "FROM students WHERE id = %s",
+        "FROM students WHERE id = ?",
         (g.user["student_id"],),
     )
     if student is None:
@@ -644,11 +604,11 @@ def office_students(office_name: str) -> Any:
                     c.updated_at
              FROM students AS s
              LEFT JOIN clearance_records AS c
-               ON c.student_id = s.id AND c.office_id = %s
+               ON c.student_id = s.id AND c.office_id = ?
              WHERE s.active = 1"""
     values: tuple[Any, ...] = (office["id"],)
     if status:
-        sql += " AND COALESCE(c.status, 'HOLD') = %s"
+        sql += " AND COALESCE(c.status, 'HOLD') = ?"
         values += (status,)
     sql += " ORDER BY s.student_number"
     return jsonify(
@@ -726,53 +686,32 @@ def deadline() -> Any:
     holiday_map: dict[date, str] = {}
     try:
         for year in years:
-            if app.config["DB_MODE"] == "sqlite":
-                cached = query_all(
-                    """SELECT holiday_date, local_name FROM holidays
-                       WHERE country_code = %s AND substr(holiday_date, 1, 4) = %s""",
-                    (country, str(year)),
-                )
-            else:
-                cached = query_all(
-                    """SELECT holiday_date, local_name FROM holidays
-                       WHERE country_code = %s AND YEAR(holiday_date) = %s""",
-                    (country, year),
-                )
+            year_start = f"{year:04d}-01-01"
+            next_year_start = f"{year + 1:04d}-01-01"
+            cached = query_all(
+                """SELECT holiday_date, local_name FROM holidays
+                   WHERE country_code = ? AND holiday_date >= ? AND holiday_date < ?""",
+                (country, year_start, next_year_start),
+            )
             if not cached:
                 holidays = fetch_public_holidays(year, country)
                 for holiday in holidays:
-                    if app.config["DB_MODE"] == "sqlite":
-                        execute(
-                            """INSERT INTO holidays
-                               (holiday_date, local_name, english_name, country_code)
-                               VALUES (%s, %s, %s, %s)
-                               ON CONFLICT(holiday_date, country_code) DO UPDATE SET
-                               local_name=excluded.local_name, english_name=excluded.english_name,
-                               fetched_at=CURRENT_TIMESTAMP""",
-                            (holiday["date"], holiday["local_name"], holiday["name"], country),
-                        )
-                    else:
-                        execute(
-                            """INSERT INTO holidays
-                               (holiday_date, local_name, english_name, country_code)
-                               VALUES (%s, %s, %s, %s)
-                               ON DUPLICATE KEY UPDATE local_name=VALUES(local_name),
-                               english_name=VALUES(english_name), fetched_at=CURRENT_TIMESTAMP""",
-                            (holiday["date"], holiday["local_name"], holiday["name"], country),
-                        )
+                    execute(
+                        """INSERT INTO holidays
+                           (holiday_date, local_name, english_name, country_code)
+                           VALUES (?, ?, ?, ?)
+                           ON CONFLICT(holiday_date, country_code) DO UPDATE SET
+                           local_name=excluded.local_name,
+                           english_name=excluded.english_name,
+                           fetched_at=CURRENT_TIMESTAMP""",
+                        (holiday["date"], holiday["local_name"], holiday["name"], country),
+                    )
                 commit()
-                if app.config["DB_MODE"] == "sqlite":
-                    cached = query_all(
-                        """SELECT holiday_date, local_name FROM holidays
-                           WHERE country_code = %s AND substr(holiday_date, 1, 4) = %s""",
-                        (country, str(year)),
-                    )
-                else:
-                    cached = query_all(
-                        """SELECT holiday_date, local_name FROM holidays
-                           WHERE country_code = %s AND YEAR(holiday_date) = %s""",
-                        (country, year),
-                    )
+                cached = query_all(
+                    """SELECT holiday_date, local_name FROM holidays
+                       WHERE country_code = ? AND holiday_date >= ? AND holiday_date < ?""",
+                    (country, year_start, next_year_start),
+                )
             for holiday in cached:
                 holiday_date = holiday["holiday_date"]
                 if isinstance(holiday_date, str):
@@ -875,7 +814,7 @@ def _slip_qr_svg(token: str) -> str:
 def my_slip() -> Any:
     student = query_one(
         "SELECT id, student_number, full_name, program, year_level, active "
-        "FROM students WHERE id = %s",
+        "FROM students WHERE id = ?",
         (g.user["student_id"],),
     )
     if student is None:
@@ -896,7 +835,7 @@ def my_slip() -> Any:
     execute(
         """INSERT INTO clearance_slips
            (public_code, token_hash, payload_json, signature, student_id, issued_at, expires_at)
-           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (
             public_code,
             _token_digest(token),
@@ -968,7 +907,7 @@ def verify_slip() -> Any:
         slip = query_one(
             """SELECT c.*, s.student_number, s.full_name, s.program
                FROM clearance_slips AS c JOIN students AS s ON s.id = c.student_id
-               WHERE c.token_hash = %s""",
+               WHERE c.token_hash = ?""",
             (_token_digest(token),),
         )
     else:
@@ -977,7 +916,7 @@ def verify_slip() -> Any:
         slip = query_one(
             """SELECT c.*, s.student_number, s.full_name, s.program
                FROM clearance_slips AS c JOIN students AS s ON s.id = c.student_id
-               WHERE c.public_code = %s""",
+               WHERE c.public_code = ?""",
             (code.strip().upper(),),
         )
     if slip is None or not _verify_slip_signature(str(slip["payload_json"]), slip["signature"]):
@@ -1208,12 +1147,10 @@ def create_admin_user() -> Any:
             return _error("Select a valid office for this staff account.", 400, "invalid_office")
 
     duplicate = query_one(
-        "SELECT id FROM users WHERE LOWER(username) = LOWER(%s)", (username,)
+        "SELECT id FROM users WHERE LOWER(username) = LOWER(?)", (username,)
     )
     if duplicate is not None:
         return _error("That login ID is already in use.", 409, "username_exists")
-
-    import pymysql
 
     try:
         _insert_audit(
@@ -1230,7 +1167,7 @@ def create_admin_user() -> Any:
     except ValueError as error:
         rollback()
         return _error(str(error), 400, "invalid_account")
-    except (sqlite3.IntegrityError, pymysql.err.IntegrityError):
+    except sqlite3.IntegrityError:
         rollback()
         return _error("The login ID or student account is already in use.", 409, "account_exists")
     return jsonify({"id": user_id, "message": "User account created."}), 201
@@ -1241,7 +1178,7 @@ def create_admin_user() -> Any:
 def update_admin_user(user_id: int) -> Any:
     user = query_one(
         """SELECT id, username, role, student_id, office_id, active
-           FROM users WHERE id = %s""",
+           FROM users WHERE id = ?""",
         (user_id,),
     )
     if user is None:
@@ -1284,7 +1221,7 @@ def update_admin_user(user_id: int) -> Any:
             "last_active_admin",
         )
     duplicate = query_one(
-        "SELECT id FROM users WHERE LOWER(username) = LOWER(%s) AND id <> %s",
+        "SELECT id FROM users WHERE LOWER(username) = LOWER(?) AND id <> ?",
         (username, user_id),
     )
     if duplicate is not None:
@@ -1296,7 +1233,7 @@ def update_admin_user(user_id: int) -> Any:
         student_number = _required_text(body, "student_number", 40)
         if student_number is None and user["role"] == "student":
             current_student = query_one(
-                "SELECT student_number FROM students WHERE id = %s",
+                "SELECT student_number FROM students WHERE id = ?",
                 (user["student_id"],),
             ) if user["student_id"] is not None else None
             student_number = current_student["student_number"] if current_student else None
@@ -1308,7 +1245,7 @@ def update_admin_user(user_id: int) -> Any:
                 "invalid_student",
             )
         linked_account = query_one(
-            "SELECT id FROM users WHERE student_id = %s AND id <> %s",
+            "SELECT id FROM users WHERE student_id = ? AND id <> ?",
             (student["id"], user_id),
         )
         if linked_account is not None:
@@ -1332,11 +1269,11 @@ def update_admin_user(user_id: int) -> Any:
         office_code = _required_text(body, "office_code", 40)
         if office_code is None and user["role"] == "staff":
             current_office = query_one(
-                "SELECT code FROM offices WHERE id = %s", (user["office_id"],)
+                "SELECT code FROM offices WHERE id = ?", (user["office_id"],)
             ) if user["office_id"] is not None else None
             office_code = current_office["code"] if current_office else None
         office = query_one(
-            "SELECT id FROM offices WHERE code = %s",
+            "SELECT id FROM offices WHERE code = ?",
             (office_code,),
         ) if office_code else None
         if office is None:
@@ -1344,12 +1281,10 @@ def update_admin_user(user_id: int) -> Any:
         office_id = office["id"]
     role_changed = role != user["role"]
     assignment_changed = student_id != user["student_id"] or office_id != user["office_id"]
-    import pymysql
-
     try:
         if student_profile is not None:
             execute(
-                "UPDATE students SET full_name = %s, email = %s WHERE id = %s",
+                "UPDATE students SET full_name = ?, email = ? WHERE id = ?",
                 student_profile,
             )
         _insert_audit(
@@ -1366,14 +1301,14 @@ def update_admin_user(user_id: int) -> Any:
         )
         execute(
             """UPDATE users
-               SET username = %s, role = %s, student_id = %s, office_id = %s, active = %s
-               WHERE id = %s""",
+               SET username = ?, role = ?, student_id = ?, office_id = ?, active = ?
+               WHERE id = ?""",
             (username, role, student_id, office_id, int(body["active"]), user_id),
         )
         if role_changed or assignment_changed or not body["active"]:
-            execute("DELETE FROM auth_sessions WHERE user_id = %s", (user_id,))
+            execute("DELETE FROM auth_sessions WHERE user_id = ?", (user_id,))
         commit()
-    except (sqlite3.IntegrityError, pymysql.err.IntegrityError):
+    except sqlite3.IntegrityError:
         rollback()
         return _error("The login ID or selected account assignment is already in use.", 409, "account_conflict")
     return jsonify(
@@ -1394,7 +1329,7 @@ def reset_admin_user_password(user_id: int) -> Any:
     if not 12 <= len(password) <= 256:
         return _error("Password must be between 12 and 256 characters.", 400, "invalid_password")
     user = query_one(
-        "SELECT id, username, role FROM users WHERE id = %s",
+        "SELECT id, username, role FROM users WHERE id = ?",
         (user_id,),
     )
     if user is None:
@@ -1408,10 +1343,10 @@ def reset_admin_user_password(user_id: int) -> Any:
         },
     )
     execute(
-        "UPDATE users SET password_hash = %s WHERE id = %s",
+        "UPDATE users SET password_hash = ? WHERE id = ?",
         (hash_password(password), user_id),
     )
-    execute("DELETE FROM auth_sessions WHERE user_id = %s", (user_id,))
+    execute("DELETE FROM auth_sessions WHERE user_id = ?", (user_id,))
     commit()
     return jsonify(
         {
@@ -1438,30 +1373,17 @@ def create_user(
         raise ValueError("student accounts must use an existing student number")
     if role == "staff" and office is None:
         raise ValueError("staff accounts must use an existing office")
-    if app.config["DB_MODE"] == "sqlite":
-        user_id = execute(
-            """INSERT INTO users (username, password_hash, role, student_id, office_id)
-               VALUES (%s, %s, %s, %s, %s)""",
-            (
-                username,
-                hash_password(password),
-                role,
-                student["id"] if student else None,
-                office["id"] if office else None,
-            ),
-        )
-    else:
-        user_id = execute(
-            """INSERT INTO users (username, password_hash, role, student_id, office_id)
-               VALUES (%s, %s, %s, %s, %s)""",
-            (
-                username,
-                hash_password(password),
-                role,
-                student["id"] if student else None,
-                office["id"] if office else None,
-            ),
-        )
+    user_id = execute(
+        """INSERT INTO users (username, password_hash, role, student_id, office_id)
+           VALUES (?, ?, ?, ?, ?)""",
+        (
+            username,
+            hash_password(password),
+            role,
+            student["id"] if student else None,
+            office["id"] if office else None,
+        ),
+    )
     commit()
     return user_id
 

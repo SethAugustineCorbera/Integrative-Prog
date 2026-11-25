@@ -2,7 +2,7 @@
 
 ## Before using the Hub
 
-The operator must start XAMPP MySQL, start the Python API, and sign in with an account created for the correct role. The browser never connects directly to the database.
+The operator must start the Python API and sign in with an account created for the correct role. Start XAMPP Apache only if serving the browser front end through XAMPP. The Hub stores its SQLite database outside Apache's document root; the browser never connects directly to the database.
 
 ## Student account says the Registrar record is missing?
 
@@ -54,21 +54,23 @@ records.
    This entry is fictional and for testing only. Restart the mock after
    editing, then sync again. For official data, use the
    school's approved Registrar process; do not insert a made-up record into
-   the Hub MySQL database.
+   the Hub SQLite database.
 3. **Configure the Hub connection locally.** In the project folder, make a
-   local `.env` file by copying `.env.example` if one does not already exist:
+   local `.env` file by copying `.env.example` only if one does not already
+   exist:
 
    ```powershell
-   Copy-Item .env.example .env
+   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
    notepad .env
    ```
 
    For the bundled demo, set `REGISTRAR_API_URL` to
    `http://127.0.0.1:8001/api/v1` and `REGISTRAR_API_KEY` to a private local
    development key. For an official service, use its assigned URL/key instead.
-   Keep all other existing secret and database settings. Save `.env`; do not
-   commit it or share the key. If `.env` already exists, edit it instead of
-   overwriting it.
+   Keep existing
+   secrets unchanged; set `DB_PATH` only if you need a non-default SQLite
+   location. Save `.env`; do not commit it or share the key. If `.env` already
+   exists, edit it instead of overwriting it.
 4. **Start the mock API for the bundled demo.** In one PowerShell window, load
    the key from `.env` and run the mock:
 

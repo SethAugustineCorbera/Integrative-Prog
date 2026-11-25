@@ -220,7 +220,7 @@ def _batch_result(
         """INSERT INTO import_batches
            (file_name, source, file_sha256, nonce, manifest_verified, status,
             imported_count, rejected_count, created_by)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             file_name[:255],
             source[:40],
@@ -238,7 +238,7 @@ def _batch_result(
 def _rejection(batch_id: int, row_reference: str, reason: str) -> None:
     execute(
         """INSERT INTO import_rejections (batch_id, row_reference, reason)
-           VALUES (%s, %s, %s)""",
+           VALUES (?, ?, ?)""",
         (batch_id, row_reference[:120], reason[:500]),
     )
 
@@ -301,13 +301,13 @@ def process_bytes(
     reason = verify_manifest(manifest, file_name, file_bytes, secret)
     if reason:
         return _reject_file(file_name, file_bytes, source, reason, actor_id)
-    if query_one("SELECT id FROM import_batches WHERE nonce = %s", (manifest["nonce"],)):
+    if query_one("SELECT id FROM import_batches WHERE nonce = ?", (manifest["nonce"],)):
         return _reject_file(file_name, file_bytes, source, "Manifest nonce has already been processed.", actor_id)
     try:
         rows = _xml_records(file_bytes) if source == "library" else _csv_records(file_bytes)
     except ValueError as error:
         return _reject_file(file_name, file_bytes, source, str(error), actor_id)
-    office = query_one("SELECT id FROM offices WHERE code = %s", (source,))
+    office = query_one("SELECT id FROM offices WHERE code = ?", (source,))
     if office is None:
         return _reject_file(file_name, file_bytes, source, "Source office is not configured.", actor_id)
 
@@ -318,7 +318,7 @@ def process_bytes(
         try:
             result = _map_record(source, row, row_number)
             student = query_one(
-                "SELECT id FROM students WHERE student_number = %s",
+                "SELECT id FROM students WHERE student_number = ?",
                 (result["student_number"],),
             )
             if student is None:

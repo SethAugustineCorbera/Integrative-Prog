@@ -1,4 +1,4 @@
-/* The front end talks to the Hub API only; it never connects to MySQL (R8). */
+/* The front end talks to the Hub API only; it never connects directly to the database (R8). */
 const HUB_API_BASE = "http://127.0.0.1:8000/api";
 
 async function hubRequest(method, path, body) {
