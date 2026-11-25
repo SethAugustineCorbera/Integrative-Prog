@@ -2596,3 +2596,122 @@ ModuleNotFoundError: No module named 'qrcode'
 2026-11-22 20:48:47,135 INFO werkzeug 127.0.0.1 - - [22/Nov/2026 20:48:47] "GET /api/reports/clearance?format=json HTTP/1.1" 200 -
 2026-11-22 20:48:48,279 INFO werkzeug 127.0.0.1 - - [22/Nov/2026 20:48:48] "OPTIONS /api/auth/logout HTTP/1.1" 200 -
 2026-11-22 20:48:48,300 INFO werkzeug 127.0.0.1 - - [22/Nov/2026 20:48:48] "POST /api/auth/logout HTTP/1.1" 200 -
+2026-11-23 23:00:07,614 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8000
+2026-11-23 23:00:07,614 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-11-23 23:00:36,931 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:36] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-23 23:00:37,760 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:37] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-23 23:00:37,828 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:37] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-23 23:00:38,047 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:38] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-23 23:00:38,059 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:38] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-23 23:00:38,064 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:38] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-23 23:00:38,542 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:38] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-23 23:00:38,775 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:38] "GET /api/slips/me HTTP/1.1" 200 -
+2026-11-23 23:00:50,664 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:50] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-23 23:00:51,133 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-23 23:00:51,210 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-23 23:00:51,431 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-23 23:00:51,438 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-23 23:00:51,440 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-23 23:00:51,823 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-23 23:00:51,894 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:00:51] "GET /api/slips/me HTTP/1.1" 200 -
+2026-11-23 23:01:14,792 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:14] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-23 23:01:15,256 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:15] "POST /api/auth/login HTTP/1.1" 200 -
+2026-11-23 23:01:15,334 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:15] "OPTIONS /api/auth/me HTTP/1.1" 200 -
+2026-11-23 23:01:15,557 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:15] "GET /api/auth/me HTTP/1.1" 200 -
+2026-11-23 23:01:15,563 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:15] "OPTIONS /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-23 23:01:15,566 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:15] "OPTIONS /api/slips/me HTTP/1.1" 200 -
+2026-11-23 23:01:15,946 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:15] "GET /api/students/me/clearance HTTP/1.1" 200 -
+2026-11-23 23:01:16,006 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:16] "GET /api/slips/me HTTP/1.1" 200 -
+2026-11-23 23:01:29,371 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:29] "OPTIONS /api/deadline HTTP/1.1" 200 -
+2026-11-23 23:01:29,688 INFO werkzeug 127.0.0.1 - - [23/Nov/2026 23:01:29] "GET /api/deadline HTTP/1.1" 200 -
+2026-11-25 20:05:36,620 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8000
+2026-11-25 20:05:36,621 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-11-25 20:05:48,638 INFO werkzeug 127.0.0.1 - - [25/Nov/2026 20:05:48] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-25 20:05:53,026 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\pymysql\connections.py", line 691, in connect
+    sock = socket.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\socket.py", line 851, in create_connection
+    raise exceptions[0]
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\socket.py", line 836, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 473, in login
+    user = query_one(
+           ^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 115, in query_one
+    cursor = get_db().cursor()
+             ^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 87, in get_db
+    g.db = pymysql.connect(
+           ^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\pymysql\connections.py", line 378, in __init__
+    self.connect()
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\pymysql\connections.py", line 754, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'localhost' ([WinError 10061] No connection could be made because the target machine actively refused it)")
+2026-11-25 20:05:53,035 INFO werkzeug 127.0.0.1 - - [25/Nov/2026 20:05:53] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-25 20:09:30,869 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8000
+2026-11-25 20:09:30,869 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-11-25 20:09:53,732 INFO werkzeug 127.0.0.1 - - [25/Nov/2026 20:09:53] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-25 20:09:58,187 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\pymysql\connections.py", line 691, in connect
+    sock = socket.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\socket.py", line 851, in create_connection
+    raise exceptions[0]
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\socket.py", line 836, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 473, in login
+    user = query_one(
+           ^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 115, in query_one
+    cursor = get_db().cursor()
+             ^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\hub.py", line 87, in get_db
+    g.db = pymysql.connect(
+           ^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\pymysql\connections.py", line 378, in __init__
+    self.connect()
+  File "C:\xampp\htdocs\Integrative-Prog\.venv\Lib\site-packages\pymysql\connections.py", line 754, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'localhost' ([WinError 10061] No connection could be made because the target machine actively refused it)")
+2026-11-25 20:09:58,194 INFO werkzeug 127.0.0.1 - - [25/Nov/2026 20:09:58] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -

@@ -15,7 +15,7 @@ presenting and perform the separate XAMPP/browser checks in
 
 | Run date | Environment | Cases | Passed | Failed | Evidence |
 |---|---|---:|---:|---:|---|
-| 2026-11-19 | Project virtual environment, temporary SQLite test database | 79 | 79 | 0 | `python -m unittest discover -s tests -v`; exit code 0. Python compilation, JavaScript syntax check, and `git diff --check` also passed. |
+| 2026-11-24 | Project virtual environment, temporary SQLite test database | 87 | 87 | 0 | `python -m unittest discover -s tests -v`; exit code 0. |
 
 The input/scenario is the named test and fixture in `tests/test_hub.py`.
 “Assertions passed” is the observed actual result: the test runner reported
@@ -34,6 +34,10 @@ individual test method contains the concrete fixture values and requests.
 | `test_malformed_password_hash_is_rejected` — malformed stored hash | Verification fails safely. | Assertions passed. | PASS |
 | `test_schedule_installer_registers_daily_jobs_in_order` — valid daily task times | Registrar, importer, and summary tasks are registered in order. | Assertions passed. | PASS |
 | `test_schedule_installer_rejects_invalid_time_before_creating_tasks` — invalid schedule time | Validation fails before any task is created. | Assertions passed. | PASS |
+| `test_tls_is_disabled_when_certificates_are_not_configured` — no TLS paths | Local HTTP mode remains available. | Assertions passed. | PASS |
+| `test_tls_accepts_existing_certificate_and_key` — existing cert/key paths | TLS configuration returns both paths. | Assertions passed. | PASS |
+| `test_tls_requires_both_certificate_and_key` — only one TLS path | Configuration fails with a clear error. | Assertions passed. | PASS |
+| `test_tls_rejects_missing_certificate_files` — missing cert/key files | Configuration fails instead of starting with invalid paths. | Assertions passed. | PASS |
 
 ### Signed files and data mapping
 

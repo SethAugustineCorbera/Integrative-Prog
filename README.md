@@ -41,6 +41,8 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 Use the outputs for `FLASK_SECRET_KEY`, `HUB_HMAC_SECRET`, and `HUB_SLIP_SIGNING_KEY`. Do not commit `.env` or paste real secrets into this README.
 
+For a deployed HTTPS installation, set `HUB_SSL_CERT` and `HUB_SSL_KEY` in `.env` to the certificate and private-key files for the deployment hostname. The server must receive both paths or it will not start. The development XAMPP presentation may use loopback HTTP, but never expose real student data through that setup. A production deployment should normally terminate TLS with a managed HTTPS reverse proxy or host certificate instead of relying on Flask's development server.
+
 ### C. Add local demo records and accounts
 
 For a fictional local presentation only, set `DEMO_PASSWORD` in `.env` to a unique password of at least 12 characters. Then run:

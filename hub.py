@@ -1491,8 +1491,18 @@ def validate_runtime_secrets() -> None:
 
 if __name__ == "__main__":
     validate_runtime_secrets()
+    cert = os.getenv("HUB_SSL_CERT", "").strip()
+    key = os.getenv("HUB_SSL_KEY", "").strip()
+    ssl_context = None
+    if cert or key:
+        if not cert or not key:
+            raise RuntimeError("HUB_SSL_CERT and HUB_SSL_KEY must both be configured.")
+        if not Path(cert).is_file() or not Path(key).is_file():
+            raise RuntimeError("Configured HTTPS certificate or key file does not exist.")
+        ssl_context = (cert, key)
     app.run(
         host=os.getenv("HUB_HOST", "127.0.0.1"),
         port=int(os.getenv("HUB_PORT", "8000")),
         debug=os.getenv("HUB_DEBUG", "false").lower() == "true",
+        ssl_context=ssl_context,
     )

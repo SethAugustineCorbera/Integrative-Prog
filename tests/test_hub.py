@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sqlite3
 import tempfile
 import unittest
@@ -224,6 +225,39 @@ class PasswordTests(HubTestCase):
 
     def test_malformed_password_hash_is_rejected(self) -> None:
         self.assertFalse(hub.verify_password(PASSWORD, "bad$hash"))
+
+
+class DeploymentTlsTests(unittest.TestCase):
+    def test_tls_is_disabled_when_certificates_are_not_configured(self) -> None:
+        with patch.dict(os.environ, {"HUB_SSL_CERT": "", "HUB_SSL_KEY": ""}, clear=False):
+            self.assertIsNone(hub_cli._tls_context())
+
+    def test_tls_accepts_existing_certificate_and_key(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cert = Path(directory) / "server.crt"
+            key = Path(directory) / "server.key"
+            cert.write_text("test", encoding="utf-8")
+            key.write_text("test", encoding="utf-8")
+            with patch.dict(
+                os.environ,
+                {"HUB_SSL_CERT": str(cert), "HUB_SSL_KEY": str(key)},
+                clear=False,
+            ):
+                self.assertEqual(hub_cli._tls_context(), (str(cert), str(key)))
+
+    def test_tls_requires_both_certificate_and_key(self) -> None:
+        with patch.dict(os.environ, {"HUB_SSL_CERT": "server.crt", "HUB_SSL_KEY": ""}, clear=False):
+            with self.assertRaisesRegex(ValueError, "must both be configured"):
+                hub_cli._tls_context()
+
+    def test_tls_rejects_missing_certificate_files(self) -> None:
+        with patch.dict(
+            os.environ,
+            {"HUB_SSL_CERT": "missing.crt", "HUB_SSL_KEY": "missing.key"},
+            clear=False,
+        ):
+            with self.assertRaisesRegex(ValueError, "does not exist"):
+                hub_cli._tls_context()
 
 
 class ScheduleTests(unittest.TestCase):

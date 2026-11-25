@@ -26,7 +26,7 @@ The group scope—not the optional individual scope—is used for this project:
 | R7–R8 API/client | At least eight endpoints and web views for each role | API spec lists 20+ routes; student, staff, and admin pages use the Hub API. Demonstrate role views. |
 | R9–R10 data/formats | XML/CSV imports with reject log; CSV/JSON/XML reports | Import mapping and report exports are implemented and covered by tests. |
 | R11–R16 security/exchange | Allowlists, salted hashes/RBAC, parameterized SQL, HMAC/replay protection, signed slips, masking, audit | Implementation and automated security cases exist; review with synthetic data and include final API/security test evidence. |
-| R17 testing | At least 20 cases, including mapping, API, and security evidence | Latest automated run: 79/79 passed. Complete the manual XAMPP/browser checklist and include dated evidence. |
+| R17 testing | At least 20 cases, including mapping, API, and security evidence | Latest automated run: 87/87 passed on 2026-11-24. Complete the manual XAMPP/browser checklist and include dated evidence. |
 | R18 evaluation | 30 outside raters with required group distribution, signed sheets, and consented photos | Not complete in code; collect real evidence and analyze results. |
 
 Course checkpoint targets: Week 15 design presentation; Week 16 progress demo
@@ -55,7 +55,7 @@ After all sheets are collected, calculate mean score per item for each rater gro
 - [ ] Confirm every R1–R17 implementation and test in the actual presentation environment.
 - [ ] Verify the registered Windows tasks run daily, including import/archive/log output and dated per-office HOLD summaries.
 - [ ] Confirm the Registrar mock API and Nager.Date service are reachable, or prepare the course-approved demo fallback.
-- [x] Run the automated suite: 79 cases passed on 2026-11-19; keep the run output in Appendix G.
+- [x] Run the automated suite: 87 cases passed on 2026-11-24; keep the run output in Appendix G.
 - [ ] Run and record the manual XAMPP/MySQL/browser checklist; automated SQLite tests are not a substitute.
 - [ ] Add actual project title, set, instructor, member names/roles, dates, and contribution/commit evidence.
 - [ ] Complete the required 30-person rating process and Appendix A–D using the official forms.

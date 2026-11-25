@@ -34,6 +34,18 @@ def _configure_logging() -> None:
     )
 
 
+def _tls_context() -> tuple[str, str] | None:
+    cert = os.getenv("HUB_SSL_CERT", "").strip()
+    key = os.getenv("HUB_SSL_KEY", "").strip()
+    if not cert and not key:
+        return None
+    if not cert or not key:
+        raise ValueError("HUB_SSL_CERT and HUB_SSL_KEY must both be configured.")
+    if not Path(cert).is_file() or not Path(key).is_file():
+        raise ValueError("Configured HTTPS certificate or key file does not exist.")
+    return cert, key
+
+
 def _seed_demo() -> None:
     password = os.getenv("DEMO_PASSWORD", "")
     if len(password) < 12:
@@ -247,6 +259,7 @@ def main(argv: list[str] | None = None) -> int:
             host=os.getenv("HUB_HOST", "127.0.0.1"),
             port=int(os.getenv("HUB_PORT", "8000")),
             debug=os.getenv("HUB_DEBUG", "false").lower() == "true",
+            ssl_context=_tls_context(),
         )
         return 0
     if command == "install-schedule":
