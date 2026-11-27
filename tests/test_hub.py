@@ -891,12 +891,57 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "HOLD")
 
-    def test_student_on_hold_cannot_request_slip(self) -> None:
+    def test_student_on_hold_can_request_qr_with_current_progress(self) -> None:
         token = self.login("held.student")
         response = self.client.get(
             "/api/slips/me", headers={"Authorization": "Bearer " + token}
         )
-        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.status_code, 200)
+        slip = response.get_json()
+        self.assertTrue(slip["qr_svg"].startswith("<svg"))
+        self.assertEqual(slip["status"], "HOLD")
+        self.assertEqual(slip["progress"], {"cleared": 3, "total": 4, "percent": 75})
+        self.assertEqual(
+            {office["office_code"]: office["status"] for office in slip["offices"]}["library"],
+            "HOLD",
+        )
+
+        staff_token = self.login("test.library")
+        verified = self.client.post(
+            "/api/slips/verify",
+            json={"token": slip["signed_token"]},
+            headers={"Authorization": "Bearer " + staff_token},
+        ).get_json()
+        self.assertTrue(verified["verified"])
+        self.assertEqual(verified["overall"], "HOLD")
+        self.assertEqual(verified["progress"], slip["progress"])
+        self.assertEqual(
+            {office["office_code"]: office["status"] for office in verified["offices"]}["library"],
+            "HOLD",
+        )
+        self.client.post(
+            "/api/clearance/2023-0002-14/library/signoff",
+            json={"reason": "Returned all borrowed books."},
+            headers={"Authorization": "Bearer " + staff_token},
+        )
+        updated = self.client.post(
+            "/api/slips/verify",
+            json={"token": slip["signed_token"]},
+            headers={"Authorization": "Bearer " + staff_token},
+        ).get_json()
+        self.assertTrue(updated["verified"])
+        self.assertEqual(updated["overall"], "CLEARED")
+        self.assertEqual(updated["progress"], {"cleared": 4, "total": 4, "percent": 100})
+
+    def test_qr_tokens_are_unique_to_each_student(self) -> None:
+        student_slip = self.client.get(
+            "/api/slips/me", headers={"Authorization": "Bearer " + self.login()}
+        ).get_json()
+        held_slip = self.client.get(
+            "/api/slips/me", headers={"Authorization": "Bearer " + self.login("held.student")}
+        ).get_json()
+        self.assertNotEqual(student_slip["signed_token"], held_slip["signed_token"])
+        self.assertNotEqual(student_slip["public_code"], held_slip["public_code"])
 
     def test_cleared_student_can_issue_and_verify_short_code(self) -> None:
         token = self.login()

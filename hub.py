@@ -340,6 +340,7 @@ def clearance_for_student(student: dict[str, Any]) -> dict[str, Any]:
             {
                 "office": office["name"],
                 "office_code": office["code"],
+                "required": bool(office["required_for_clearance"]),
                 "status": status,
                 "reason": reason,
                 "updated_at": office["updated_at"],
@@ -354,6 +355,19 @@ def clearance_for_student(student: dict[str, Any]) -> dict[str, Any]:
         },
         "overall": "CLEARED" if all_cleared and offices else "HOLD",
         "offices": office_results,
+    }
+
+
+def _clearance_progress(status: dict[str, Any]) -> dict[str, int]:
+    required_offices = [
+        office for office in status["offices"] if office["required"]
+    ]
+    cleared = sum(office["status"] == "CLEARED" for office in required_offices)
+    total = len(required_offices)
+    return {
+        "cleared": cleared,
+        "total": total,
+        "percent": round(cleared / total * 100) if total else 0,
     }
 
 
@@ -820,8 +834,7 @@ def my_slip() -> Any:
     if student is None:
         return _error("Student record was not found.", 404, "student_not_found")
     status = clearance_for_student(student)
-    if status["overall"] != "CLEARED":
-        return _error("A clearance slip is available only after every required office clears the student.", 409, "not_cleared")
+    progress = _clearance_progress(status)
     now = datetime.now(timezone.utc)
     expires = now + timedelta(days=30)
     payload = {
@@ -856,6 +869,8 @@ def my_slip() -> Any:
                 "program": student["program"],
             },
             "status": status["overall"],
+            "offices": status["offices"],
+            "progress": progress,
             "public_code": public_code,
             "signed_token": token,
             "qr_svg": _slip_qr_svg(token),
@@ -948,6 +963,17 @@ def verify_slip() -> Any:
                 "student_number": mask_student_number(slip["student_number"]),
             },
             "overall": clearance["overall"],
+            "offices": [
+                {
+                    "office": office["office"],
+                    "office_code": office["office_code"],
+                    "required": office["required"],
+                    "status": office["status"],
+                    "updated_at": office["updated_at"],
+                }
+                for office in clearance["offices"]
+            ],
+            "progress": _clearance_progress(clearance),
             "expires_at": expiry.isoformat(),
         }
     )

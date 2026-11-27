@@ -85,7 +85,7 @@ The runtime [SQLite schema](database/schema.sqlite.sql) includes account-managem
 2. The API identifies the linked student record; users cannot select a role in the browser.
 3. **Clearance status** loads one record per required office. Missing office review is shown as HOLD, not silently treated as cleared.
 4. Visit the office named in each HOLD reason and wait for an authorized staff update.
-5. Once every required office is CLEARED, open **Clearance slip**. The Hub issues an expiring HMAC-signed token, displays its locally generated QR code, and provides a short code for manual verification. A held student receives HTTP 409 instead.
+5. Open **Clearance slip** at any point to display your unique, expiring QR code and short code. Staff verification shows your current status at each office and your overall progress; the QR stays useful as offices clear you.
 6. Use **Deadline** to see the configured number of working days and the weekend/Philippine holidays skipped.
 7. **Log out** invalidates the server-side session.
 

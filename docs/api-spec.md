@@ -15,8 +15,8 @@ Base URL: `http://127.0.0.1:8000/api` for local XAMPP development. All protected
 | `POST /clearance/{student_number}/{office}/hold` | Assigned staff | `{"reason":"Outstanding item"}` | `200 {"status":"HOLD",...}` | `400`, `401`, `403`, `404` |
 | `GET /deadline` | Any signed-in user | — | `200 {"start_date":"...","deadline":"...","working_days":15,"skipped_days":[...]}` | `401`, `502` holiday API issue |
 | `GET /reports/clearance?format=csv\|json\|xml` | Admin | `format` defaults to JSON | `200` with requested content type and masked identifiers | `400` unknown format, `403` |
-| `GET /slips/me` | Cleared student | — | `200 {"public_code":"ECH-...","signed_token":"...","qr_svg":"<svg...>",...}`; QR encodes the signed token | `401`, `409` student not fully cleared |
-| `POST /slips/verify` | Staff/Admin | `{"code":"ECH-..."}` or `{"token":"..."}` | `200 {"verified":true,"student":{...},"overall":"CLEARED",...}` | `400` malformed input; `200 {"verified":false,...}` unknown/invalid/expired code |
+| `GET /slips/me` | Student | — | `200` with a unique signed QR token, current office statuses and required-office progress; the QR encodes the signed token for any clearance stage | `401`, `404` student record missing |
+| `POST /slips/verify` | Staff/Admin | `{"code":"ECH-..."}` or `{"token":"..."}` | `200` with signature result, current overall status, office-by-office status and required-office progress | `400` malformed input; `200 {"verified":false,...}` unknown/invalid/expired code |
 | `GET /audit` | Admin | — | `200 {"entries":[...]}` with actor, action, target, safe details and reason | `401`, `403` |
 | `GET /imports` | Admin | — | `200 {"batches":[...],"rejections":[...]}` | `401`, `403` |
 | `POST /admin/import` | Admin | `multipart/form-data`: `file` (XML/CSV), `manifest` (JSON sidecar) | `200` import counts/status | `400` rejected/invalid file, `401`, `403` |

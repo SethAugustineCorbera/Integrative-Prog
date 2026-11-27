@@ -275,7 +275,15 @@ async function drawSlip() {
     /* Overall result */
     y += 60;
     ctx.fillStyle = INK; ctx.font = font(30, 700);
-    ctx.fillText("Overall result: CLEARED", M, y);
+    ctx.fillText("Overall result: " + slipData.status, M, y);
+    y += 45;
+    ctx.font = font(26, 600);
+    ctx.fillText(
+        "Progress: " + slipData.progress.cleared + " of " + slipData.progress.total
+            + " required offices cleared (" + slipData.progress.percent + "%)",
+        M,
+        y
+    );
 
     /* QR + code */
     y += 50;
@@ -293,7 +301,7 @@ async function drawSlip() {
     ctx.fillText(slipData.public_code, W / 2, y);
     ctx.fillStyle = MUTED; ctx.font = font(24, 400);
     y += 50;
-    wrapText(ctx, "Present this signed QR code or short code to the Registrar. It expires " + new Date(slipData.expires_at).toLocaleString() + ".", W - 2 * M - 80).forEach(function (line) { ctx.fillText(line, W / 2, y); y += 36; });
+    wrapText(ctx, "Show this signed QR code or short code to office staff. Verification shows your latest status. It expires " + new Date(slipData.expires_at).toLocaleString() + ".", W - 2 * M - 80).forEach(function (line) { ctx.fillText(line, W / 2, y); y += 36; });
     ctx.fillStyle = SKY; ctx.fillRect(0, H - 90, W, 6);
     ctx.fillStyle = MUTED; ctx.font = font(22, 400);
     ctx.fillText("Generated " + new Date().toLocaleString() + " by the DNSC e-Clearance Hub", W / 2, H - 40);
@@ -371,7 +379,9 @@ async function loadSlip() {
         code.hidden = false;
         slipData = data;
         document.getElementById("slip-download").hidden = false;
-        note.textContent = "Show the QR code or signed short code to office staff. It expires "
+        note.textContent = "Current progress: " + data.progress.cleared + " of "
+            + data.progress.total + " required offices cleared (" + data.progress.percent
+            + "%). Staff verification shows your latest progress. The QR expires "
             + new Date(data.expires_at).toLocaleString() + ".";
     } catch (error) {
         if (error.status === 401) throw error;
@@ -379,7 +389,6 @@ async function loadSlip() {
         code.hidden = true;
         slipData = null;
         document.getElementById("slip-download").hidden = true;
-        // 409 = still on HOLD: not an error in the page, just no slip yet.
         note.textContent = error.status === 409
             ? "Your slip is not available yet. " + error.message
             : error.message;

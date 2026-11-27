@@ -483,15 +483,26 @@ async function loadVerifyForm() {
                 ["Signature", result.verified ? "VERIFIED" : "NOT VERIFIED"],
                 ["Student", result.student ? result.student.full_name + " (" + result.student.student_number + ")" : ""],
                 ["Overall status", result.overall || ""],
+                ["Clearance progress", result.progress
+                    ? result.progress.cleared + " of " + result.progress.total + " required offices cleared (" + result.progress.percent + "%)"
+                    : ""],
                 ["Result", result.reason || "Valid signed clearance slip."]
             ];
             rows.forEach(function (item) {
                 const row = body.insertRow();
                 cell(row, item[0]);
-                if (item[0] === "Signature") statusCell(row, item[1]);
+                if (item[0] === "Signature" || item[0] === "Overall status") statusCell(row, item[1]);
                 else cell(row, item[1]);
             });
-            showMessage(result.verified ? "Slip signature is valid." : result.reason, !result.verified);
+            (result.offices || []).forEach(function (office) {
+                const row = body.insertRow();
+                cell(row, office.office);
+                statusCell(row, office.status);
+            });
+            showMessage(
+                result.verified ? "Signed student QR is valid. Clearance progress is shown below." : result.reason,
+                !result.verified
+            );
         } catch (error) {
             showMessage(error.message, true);
         }
