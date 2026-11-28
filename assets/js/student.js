@@ -231,14 +231,14 @@ async function drawSlip() {
     const canvas = document.createElement("canvas");
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
-    const INK = "#12354F", SKY = "#87CEFA", SKY2 = "#B5E8FF", BUTTER = "#FBFABA", MUTED = "#3D5F78", LINE = "#D3DEE6";
+    const INK = "#1F6B47", SKY = "#A9D6BD", SKY2 = "#D6EBDF", BUTTER = "#F8DAD6", MUTED = "#5A6B61", LINE = "#DCE5DF";
     const font = function (size, weight) { return (weight || 400) + " " + size + "px Inter, 'Segoe UI', Arial, sans-serif"; };
     ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, W, H);
     const band = ctx.createLinearGradient(0, 0, W, 0);
-    band.addColorStop(0, "#0E2B42"); band.addColorStop(1, "#1B4B70");
+    band.addColorStop(0, "#17553A"); band.addColorStop(1, "#2A7F58");
     ctx.fillStyle = band; ctx.fillRect(0, 0, W, 220);
     ctx.fillStyle = SKY; ctx.fillRect(0, 220, W, 10);
-    ctx.fillStyle = "#F4F4F2"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#F7F9F8"; ctx.textBaseline = "alphabetic";
     ctx.font = font(30, 600); ctx.fillText("DNSC e-Clearance Hub", M, 95);
     ctx.font = font(62, 800); ctx.fillText("Clearance Slip", M, 168);
 
@@ -258,7 +258,7 @@ async function drawSlip() {
     ctx.fillText("OFFICE", M + 20, y + 41); ctx.fillText("STATUS", 620, y + 41); ctx.fillText("DATE", 880, y + 41);
     y += 64;
     officeRows.forEach(function (row, index) {
-        ctx.fillStyle = index % 2 ? "#F4F4F2" : "#FFFFFF"; ctx.fillRect(M, y, W - 2 * M, 72);
+        ctx.fillStyle = index % 2 ? "#F7F9F8" : "#FFFFFF"; ctx.fillRect(M, y, W - 2 * M, 72);
         ctx.fillStyle = INK; ctx.font = font(28, 600); ctx.fillText(row.office, M + 20, y + 46);
         const cleared = row.status === "CLEARED";
         ctx.fillStyle = cleared ? SKY : BUTTER;
@@ -275,15 +275,7 @@ async function drawSlip() {
     /* Overall result */
     y += 60;
     ctx.fillStyle = INK; ctx.font = font(30, 700);
-    ctx.fillText("Overall result: " + slipData.status, M, y);
-    y += 45;
-    ctx.font = font(26, 600);
-    ctx.fillText(
-        "Progress: " + slipData.progress.cleared + " of " + slipData.progress.total
-            + " required offices cleared (" + slipData.progress.percent + "%)",
-        M,
-        y
-    );
+    ctx.fillText("Overall result: CLEARED", M, y);
 
     /* QR + code */
     y += 50;
@@ -301,7 +293,7 @@ async function drawSlip() {
     ctx.fillText(slipData.public_code, W / 2, y);
     ctx.fillStyle = MUTED; ctx.font = font(24, 400);
     y += 50;
-    wrapText(ctx, "Show this signed QR code or short code to office staff. Verification shows your latest status. It expires " + new Date(slipData.expires_at).toLocaleString() + ".", W - 2 * M - 80).forEach(function (line) { ctx.fillText(line, W / 2, y); y += 36; });
+    wrapText(ctx, "Present this signed QR code or short code to the Registrar. It expires " + new Date(slipData.expires_at).toLocaleString() + ".", W - 2 * M - 80).forEach(function (line) { ctx.fillText(line, W / 2, y); y += 36; });
     ctx.fillStyle = SKY; ctx.fillRect(0, H - 90, W, 6);
     ctx.fillStyle = MUTED; ctx.font = font(22, 400);
     ctx.fillText("Generated " + new Date().toLocaleString() + " by the DNSC e-Clearance Hub", W / 2, H - 40);
@@ -370,7 +362,7 @@ async function loadSlip() {
         if (qr.dataset.imageUrl) URL.revokeObjectURL(qr.dataset.imageUrl);
         const imageUrl = URL.createObjectURL(new Blob([data.qr_svg], { type: "image/svg+xml" }));
         const image = document.createElement("img");
-        image.alt = "QR code containing the signed clearance short code";
+        image.alt = "QR code containing the signed clearance token";
         image.src = imageUrl;
         qr.dataset.imageUrl = imageUrl;
         qr.replaceChildren(image);
@@ -379,9 +371,7 @@ async function loadSlip() {
         code.hidden = false;
         slipData = data;
         document.getElementById("slip-download").hidden = false;
-        note.textContent = "The QR and printed short code are the same signed value. This unique code stays the same until it expires. Current progress: " + data.progress.cleared + " of "
-            + data.progress.total + " required offices cleared (" + data.progress.percent
-            + "%). Staff verification shows your latest progress. It expires "
+        note.textContent = "Show the QR code or signed short code to office staff. It expires "
             + new Date(data.expires_at).toLocaleString() + ".";
     } catch (error) {
         if (error.status === 401) throw error;
@@ -389,6 +379,7 @@ async function loadSlip() {
         code.hidden = true;
         slipData = null;
         document.getElementById("slip-download").hidden = true;
+        // 409 = still on HOLD: not an error in the page, just no slip yet.
         note.textContent = error.status === 409
             ? "Your slip is not available yet. " + error.message
             : error.message;

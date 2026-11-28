@@ -10,7 +10,6 @@ const menuToggle = document.getElementById("menu-toggle");
 const dialog = document.getElementById("reason-dialog");
 let office = null;      // { code, name }
 let students = [];      // full queue for this office
-let officeReady = false;
 
 function showMessage(text, isError) {
     messageBox.textContent = text;
@@ -218,7 +217,7 @@ async function loadOthers() {
 
 const PROFILES = {
     library: {
-        columns: [["Student ID", "number"], ["Signed short code", "short_code"], ["Name", "name"], ["Unreturned books", "check:0"], ["Fines", "check:1"], ["Status", "status"]],
+        columns: [["Student ID", "number"], ["Name", "name"], ["Unreturned books", "check:0"], ["Fines", "check:1"], ["Status", "status"]],
         holdCard: "With issues", clearCard: "Clear", detail: "library", library: true,
         filterHold: "Has unreturned books or fines", filterClear: "Clear",
         override: "I confirmed at the desk that these books and fines are settled.",
@@ -261,14 +260,13 @@ const PROFILES = {
         }
     },
     registrar: {
-        columns: [["Student ID", "number"], ["Signed short code", "short_code"], ["Name", "name"], ["Program", "program"], ["Standing", "status"], ["Missing sign-offs", "missing"]],
+        columns: [["Student ID", "number"], ["Name", "name"], ["Program", "program"], ["Standing", "status"], ["Missing sign-offs", "missing"]],
         holdCard: "Not in good standing", clearCard: "In good standing", totalCard: "On masterlist", detail: "registrar", others: true,
         filterHold: "Not in good standing", filterClear: "In good standing",
         override: "I confirmed this student's enrollment record at the Registrar.",
         clearReason: "Enrolled and signed off by every office.",
         analyse: function (item) {
-            const active = Number(item.active) === 1;
-            const standing = { label: "Masterlist standing", ok: active, detail: active ? "Enrolled and active on the official masterlist" : item.reason, short: active ? "Active" : "Inactive" };
+            const standing = { label: "Masterlist standing", ok: item.status === "CLEARED", detail: item.status === "CLEARED" ? "Enrolled and active on the official masterlist" : item.reason, short: item.status === "CLEARED" ? "Active" : "Inactive" };
             const checks = [standing];
             if (!othersOk) {
                 checks.push({ label: "Other offices", ok: false, hard: true, detail: "Their sign-offs could not be read. Reload the page." });
@@ -314,7 +312,6 @@ function manualHold(item) {
     return item.status === "HOLD" && String(item.reason || "").trim() !== PENDING_REASON;
 }
 PROFILES.library.relevant = function (item) {
-    if (item.status === "CLEARED") return false;
     const state = libraryOf(item);
     return state.books.length > 0 || finesDue(state) > 0 || manualHold(item);
 };
@@ -355,15 +352,8 @@ function setupHead() {
     });
     document.getElementById("filter-hold").textContent = PROFILE.filterHold;
     document.getElementById("filter-clear").textContent = PROFILE.filterClear;
-    const firstCardLabel = document.getElementById("card-a-label");
-    const secondCardLabel = document.getElementById("card-b-label");
-    if (firstCardLabel) firstCardLabel.textContent = PROFILE.totalCard || PROFILE.holdCard;
-    if (secondCardLabel) secondCardLabel.textContent = PROFILE.totalCard ? PROFILE.holdCard : PROFILE.clearCard;
-    if (OFFICE === "library") {
-        const clearedFilter = document.getElementById("filter-clear");
-        clearedFilter.hidden = true;
-        clearedFilter.disabled = true;
-    }
+    document.getElementById("card-a-label").textContent = PROFILE.totalCard || PROFILE.holdCard;
+    document.getElementById("card-b-label").textContent = PROFILE.totalCard ? PROFILE.holdCard : PROFILE.clearCard;
 }
 
 function renderQueue() {
@@ -396,7 +386,6 @@ function renderQueue() {
         PROFILE.columns.forEach(function (column) {
             const kind = column[1];
             if (kind === "number") addCell(row, item.student_number);
-            else if (kind === "short_code") addCell(row, item.signed_short_code || "Not issued");
             else if (kind === "name") addCell(row, item.full_name);
             else if (kind === "program") addCell(row, item.program);
             else if (kind === "missing") addCell(row, !othersOk ? "\u2014" : missingOffices(item).join(", ") || "None");
@@ -424,7 +413,7 @@ function renderQueue() {
             paid.textContent = "Fee paid";
             paid.disabled = !state.fines.length;
             paid.addEventListener("click", function () { openLibPicker("fine", item); });
-            actions.append(returned, paid, signOffButton(item));
+            actions.append(returned, paid);
         } else if (PROFILE.affairs) {
             const state = affairsOf(item);
             const returned = document.createElement("button");
@@ -439,7 +428,7 @@ function renderQueue() {
             paid.textContent = "Membership paid";
             paid.disabled = !state.orgs.some(function (org) { return !org.paid; });
             paid.addEventListener("click", function () { openPicker("org", item); });
-            actions.append(returned, paid, signOffButton(item));
+            actions.append(returned, paid);
         } else {
             const signOff = document.createElement("button");
             signOff.type = "button";
@@ -457,32 +446,17 @@ function renderQueue() {
     if (!rows.length) emptyRow(body, PROFILE.columns.length + 1, shown().length ? "No matching students." : (PROFILE.emptyText || "No students in this office yet."));
 }
 
-function signOffButton(item) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "btn btn-sm";
-    button.textContent = item.status === "CLEARED" ? "Signed off" : "Sign off";
-    button.disabled = item.status === "CLEARED" || failing(item).length > 0;
-    button.addEventListener("click", function () { askReason("signoff", item); });
-    return button;
-}
-
 function renderHolds() {
-    const body = document.getElementById("hold-body");
-    if (!body) return;
     const list = shown();
     const holds = list.filter(function (item) { return item.status === "HOLD"; });
     const cards = PROFILE.cards ? PROFILE.cards(list)
         : PROFILE.totalCard ? [[PROFILE.totalCard, list.length], [PROFILE.holdCard, holds.length]]
         : [[PROFILE.holdCard, holds.length], [PROFILE.clearCard, list.length - holds.length]];
-    const firstCardLabel = document.getElementById("card-a-label");
-    const firstCount = document.getElementById("count-hold");
-    const secondCardLabel = document.getElementById("card-b-label");
-    const secondCount = document.getElementById("count-cleared");
-    if (firstCardLabel) firstCardLabel.textContent = cards[0][0];
-    if (firstCount) firstCount.textContent = cards[0][1];
-    if (secondCardLabel) secondCardLabel.textContent = cards[1][0];
-    if (secondCount) secondCount.textContent = cards[1][1];
+    document.getElementById("card-a-label").textContent = cards[0][0];
+    document.getElementById("count-hold").textContent = cards[0][1];
+    document.getElementById("card-b-label").textContent = cards[1][0];
+    document.getElementById("count-cleared").textContent = cards[1][1];
+    const body = document.getElementById("hold-body");
     body.replaceChildren();
     holds.forEach(function (item) {
         const row = body.insertRow();
@@ -495,87 +469,129 @@ function renderHolds() {
         addCell(row, item.reason);
     });
     if (!holds.length) emptyRow(body, 2, "Nothing outstanding.");
+    renderSummary(list, holds);
+    renderMaster();
 }
 
-/* New students remain on HOLD until an authorized staff member confirms sign-off. */
+function pct(part, whole) {
+    return whole ? Math.round(part * 100 / whole) : 0;
+}
+
+/* Summary tab: signed-off vs not-signed-off percentages, per-office progress, first few open cases */
+function renderSummary(list, holds) {
+    const total = list.length;
+    const signed = total - holds.length;
+    const ok = pct(signed, total);
+    document.getElementById("count-total").textContent = total;
+    document.getElementById("count-total").parentNode.hidden = Boolean(PROFILE.totalCard);
+    document.getElementById("sum-pct").textContent = total ? ok + "%" : "\u2013";
+    document.getElementById("sum-ok-pct").textContent = total ? ok + "%" : "\u2013";
+    document.getElementById("sum-no-pct").textContent = total ? (100 - ok) + "%" : "\u2013";
+    document.getElementById("sum-ok-n").textContent = signed + (signed === 1 ? " student" : " students");
+    document.getElementById("sum-no-n").textContent = holds.length + (holds.length === 1 ? " student" : " students");
+    document.getElementById("sum-donut").style.setProperty("--p", total ? ok : 0);
+    document.getElementById("sum-bar-ok").style.width = (total ? ok : 0) + "%";
+    const attn = document.getElementById("attn-body");
+    attn.replaceChildren();
+    holds.slice(0, 5).forEach(function (item) {
+        const row = attn.insertRow();
+        const who = row.insertCell();
+        who.textContent = item.full_name;
+        const number = document.createElement("div");
+        number.className = "muted";
+        number.textContent = item.student_number;
+        who.appendChild(number);
+        addCell(row, item.reason);
+    });
+    if (!holds.length) emptyRow(attn, 2, total ? "Every student is signed off." : "No students yet.");
+    const box = document.getElementById("sum-offices");
+    if (PROFILE.others && othersOk) {
+        const holder = document.getElementById("sum-offices-list");
+        holder.replaceChildren();
+        OTHER_OFFICES.forEach(function (entry) {
+            let done = 0;
+            list.forEach(function (item) {
+                const record = (others[item.student_number] || {})[entry[0]];
+                if (record && record.status === "CLEARED") done += 1;
+            });
+            const share = pct(done, total);
+            const row = document.createElement("div");
+            row.className = "off-row";
+            const name = document.createElement("span");
+            name.textContent = entry[1];
+            const bar = document.createElement("div");
+            bar.className = "sum-bar";
+            const fill = document.createElement("i");
+            fill.style.width = share + "%";
+            bar.appendChild(fill);
+            const value = document.createElement("b");
+            value.textContent = share + "% (" + done + "/" + total + ")";
+            row.append(name, bar, value);
+            holder.appendChild(row);
+        });
+        box.hidden = false;
+    }
+}
+
+/* Registrar masterlist: every enrolled student, nothing about clearance */
+function renderMaster() {
+    const body = document.getElementById("master-body");
+    if (!body) return;
+    const term = document.getElementById("master-search").value.trim().toLowerCase();
+    const rows = students.filter(function (item) {
+        return !term || (item.student_number + " " + item.full_name + " " + (item.program || "")).toLowerCase().indexOf(term) !== -1;
+    });
+    body.replaceChildren();
+    rows.forEach(function (item) {
+        const row = body.insertRow();
+        addCell(row, item.student_number);
+        addCell(row, item.full_name);
+        addCell(row, item.program || "");
+    });
+    if (!rows.length) emptyRow(body, 3, students.length ? "No matching students." : "No students enrolled yet.");
+    document.getElementById("master-count").textContent = rows.length + " of " + students.length + " enrolled";
+}
+
+/* A student the office has not reviewed yet ("Awaiting office review.") who has no obligations here
+   is signed off automatically. Real HOLDs and Registrar standing are never touched. */
 const PENDING_REASON = "Awaiting office review.";
+let autoRunning = false;
+
+async function autoSignOff() {
+    if (autoRunning || PROFILE.others) return 0;
+    autoRunning = true;
+    let done = 0;
+    try {
+        const waiting = students.filter(function (item) {
+            return item.status === "HOLD" && String(item.reason || "").trim() === PENDING_REASON
+                && PROFILE.analyse(item).every(function (check) { return check.ok; });
+        });
+        for (const item of waiting) {
+            await HubApi.signOff(item.student_number, office.code, "Automatically signed off: " + PROFILE.clearReason);
+            done += 1;
+        }
+    } catch (error) {
+        if (error.status === 401) throw error;
+        showMessage("Automatic sign-off stopped: " + (error.message || "unknown error"), true);
+    } finally {
+        autoRunning = false;
+    }
+    return done;
+}
 
 async function loadQueue() {
-    const result = await HubApi.officeQueue(office.code, "");
+    let result = await HubApi.officeQueue(office.code, "");
     students = result.students;
+    const signed = await autoSignOff();
+    if (signed) {
+        result = await HubApi.officeQueue(office.code, "");
+        students = result.students;
+        showMessage(signed + " student" + (signed === 1 ? "" : "s") + " with no obligations signed off automatically.", false);
+    }
     if (PROFILE.others) await loadOthers();
     fillSignNames();
-    fillBookStudentIds();
     renderQueue();
     renderHolds();
-    if (officeReady) {
-        const activeTab = location.hash.replace("#", "") || "queue";
-        if (activeTab === "open-signoffs") renderOpenSignoffs();
-        if (activeTab === "open-obligations") loadOpenObligations();
-    }
-}
-
-function renderOpenSignoffs() {
-    const body = document.getElementById("open-signoffs-body");
-    if (!body) return;
-    body.replaceChildren();
-    if (!othersOk) {
-        emptyRow(body, 4, "Unable to load current office sign-offs. Try refreshing.");
-        return;
-    }
-    let count = 0;
-    function addPendingRow(student, officeName, reason) {
-        const row = body.insertRow();
-        addCell(row, student.student_number);
-        addCell(row, student.full_name);
-        addCell(row, officeName);
-        addCell(row, reason);
-        count += 1;
-    }
-    students.forEach(function (student) {
-        if (student.status !== "CLEARED") {
-            addPendingRow(student, "Registrar", student.reason || PENDING_REASON);
-        }
-        OTHER_OFFICES.forEach(function (entry) {
-            const record = (others[student.student_number] || {})[entry[0]];
-            if (!record || record.status !== "CLEARED") {
-                addPendingRow(student, entry[1], officeIssue(entry[0], record));
-            }
-        });
-    });
-    if (!count) emptyRow(body, 4, "No open sign-offs.");
-    const updated = document.getElementById("open-signoffs-updated");
-    if (updated) updated.textContent = "Updated " + new Date().toLocaleTimeString();
-}
-
-async function loadOpenSignoffs() {
-    if (OFFICE !== "registrar") return;
-    try {
-        await loadQueue();
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-async function loadOpenObligations() {
-    if (OFFICE !== "student-affairs" || !office) return;
-    try {
-        const result = await HubApi.officeQueue(office.code, "HOLD");
-        const body = document.getElementById("open-obligations-body");
-        body.replaceChildren();
-        const rows = result.students;
-        rows.forEach(function (student) {
-            const row = body.insertRow();
-            addCell(row, student.student_number);
-            addCell(row, student.full_name);
-            addCell(row, student.reason);
-        });
-        if (!rows.length) emptyRow(body, 3, "No open obligations.");
-        document.getElementById("open-obligations-updated").textContent =
-            "Updated " + new Date().toLocaleTimeString();
-    } catch (error) {
-        handleError(error);
-    }
 }
 
 /* ---------- Sign off / HOLD dialog, with the office's check list ---------- */
@@ -668,6 +684,7 @@ document.getElementById("reason-form").addEventListener("submit", async function
 });
 
 document.getElementById("queue-search").addEventListener("input", renderQueue);
+if (document.getElementById("master-search")) document.getElementById("master-search").addEventListener("input", renderMaster);
 document.getElementById("queue-filter").addEventListener("change", renderQueue);
 
 /* ---------- Accounting: fee breakdown card ---------- */
@@ -728,123 +745,38 @@ function showResult(pairs) {
     });
     list.hidden = false;
     document.getElementById("verify-empty").hidden = true;
-    const oldAction = document.getElementById("continue-signing");
-    if (oldAction) oldAction.remove();
 }
 
 document.getElementById("verify-form").addEventListener("submit", async function (event) {
     event.preventDefault();
-    const scanInput = document.getElementById("scan-input");
-    const scanValue = scanInput.value.trim();
-    let studentNumber = "";
-    let code = "";
-    let token = "";
-    if (scanValue) {
-        if (/^[A-Za-z0-9_-]+\.[a-fA-F0-9]{64}$/.test(scanValue)) token = scanValue;
-        else if (/^ECH-[A-Z0-9]{6,12}$/i.test(scanValue)) code = scanValue;
-        else studentNumber = scanValue;
-    } else {
-        studentNumber = document.getElementById("student-number-input").value.trim();
-        code = document.getElementById("slip-code-input").value.trim();
-        token = document.getElementById("slip-token-input").value.trim();
-    }
-    const oldAction = document.getElementById("continue-signing");
-    if (oldAction) oldAction.remove();
-    document.getElementById("verify-list").replaceChildren();
-    document.getElementById("verify-list").hidden = true;
-    document.getElementById("verify-empty").hidden = false;
-    if ([studentNumber, code, token].filter(Boolean).length !== 1) {
-        showMessage("Enter exactly one student ID, signed short code, or signed token.", true);
+    const code = document.getElementById("slip-code-input").value.trim();
+    const token = document.getElementById("slip-token-input").value.trim();
+    if (!code && !token) {
+        showMessage("Enter a short code or a signed token.", true);
         return;
     }
     const button = document.getElementById("verify-btn");
     button.disabled = true;
     showMessage("", false);
-    let completed = false;
     try {
-        let verifiedSlipValue = "";
-        let verifiedStudentNumber = "";
-        if (studentNumber) {
-            const result = scanValue
-                ? await HubApi.scanStudentOrCard(studentNumber)
-                : await HubApi.studentClearance(studentNumber);
-            const pairs = [
-                ["Lookup", result.match_type === "registered_card"
-                    ? "Registered card matched; this shows current status, not a signed QR slip."
-                    : "Current clearance status only; this does not verify a signed slip."],
-                ["Student", result.student.full_name + " (" + result.student.student_number + ")"]
-            ];
-            if (result.scope === "all_offices") {
-                pairs.push(["Overall", badge(result.overall)]);
-                result.offices.forEach(function (item) {
-                    pairs.push([item.office, badge(item.status)]);
-                    pairs.push([item.office + " reason", item.reason]);
-                });
-            } else {
-                pairs.push([result.office.office, badge(result.office.status)]);
-                pairs.push(["Reason", result.office.reason]);
-            }
-            showResult(pairs);
-            addContinueSigning(result.student.student_number, "");
-            completed = true;
+        const result = await HubApi.verifySlip(token ? { token: token } : { code: code });
+        const pairs = [["Signature", badge(result.verified ? "VERIFIED" : "NOT VERIFIED")]];
+        if (result.verified) {
+            pairs.push(["Student", result.student.full_name + " (" + result.student.student_number + ")"]);
+            pairs.push(["Overall", badge(result.overall)]);
+            if (result.expires_at) pairs.push(["Expires", new Date(result.expires_at).toLocaleString()]);
+            pairs.push(["Result", "Valid signed clearance slip."]);
         } else {
-            const result = await HubApi.verifySlip(token ? { token: token } : { code: code });
-            const pairs = [["Signature", badge(result.verified ? "VERIFIED" : "NOT VERIFIED")]];
-            if (result.verified) {
-                pairs.push(["Student", result.student.full_name + " (" + result.student.student_number + ")"]);
-                const clearance = await HubApi.studentClearance(result.student.student_number);
-                if (clearance.scope === "all_offices") {
-                    pairs.push(["Overall", badge(clearance.overall)]);
-                    clearance.offices.forEach(function (item) {
-                        pairs.push([item.office, badge(item.status)]);
-                        pairs.push([item.office + " reason", item.reason]);
-                    });
-                } else {
-                    pairs.push([clearance.office.office, badge(clearance.office.status)]);
-                    pairs.push(["Reason", clearance.office.reason]);
-                }
-                if (result.expires_at) pairs.push(["Expires", new Date(result.expires_at).toLocaleString()]);
-                pairs.push(["Result", "Valid signed clearance slip."]);
-                verifiedSlipValue = token || code;
-                verifiedStudentNumber = result.student.student_number;
-            } else {
-                pairs.push(["Result", result.reason || "Slip could not be verified."]);
-            }
-            showResult(pairs);
-            if (verifiedSlipValue) addContinueSigning(verifiedStudentNumber, verifiedSlipValue);
-            completed = result.verified;
+            pairs.push(["Result", result.reason || "Slip could not be verified."]);
         }
+        showResult(pairs);
     } catch (error) {
         if (error.status === 401) goToLogin();
         else showMessage(error.message, true);
     } finally {
         button.disabled = false;
-        if (completed) {
-            scanInput.value = "";
-            document.getElementById("student-number-input").value = "";
-            document.getElementById("slip-code-input").value = "";
-            document.getElementById("slip-token-input").value = "";
-            scanInput.focus();
-        }
     }
 });
-
-function addContinueSigning(studentNumber, slipValue) {
-    const signForm = document.getElementById("sign-form");
-    if (!signForm) return;
-    const continueButton = document.createElement("button");
-    continueButton.type = "button";
-    continueButton.id = "continue-signing";
-    continueButton.className = "btn";
-    continueButton.textContent = "Continue to clearance signing";
-    continueButton.addEventListener("click", function () {
-        document.getElementById("sign-name").value = studentNumber;
-        document.getElementById("sign-code").value = slipValue;
-        location.hash = "#sign";
-        signForm.requestSubmit();
-    });
-    document.getElementById("verify-result").appendChild(continueButton);
-}
 
 /* ---------- Registrar: report export (masked IDs) ---------- */
 function reportError(error) {
@@ -906,12 +838,8 @@ async function saveAffairs(number, state) {
     if (reason.length > 255) throw new Error("Too many items for one student record. Mark something returned or paid first.");
     const outstanding = state.equipment.length > 0 || state.orgs.some(function (org) { return !org.paid; }) || state.other.length > 0;
     if (outstanding) await HubApi.placeHold(number, office.code, reason);
-    else await HubApi.placeHold(number, office.code, PENDING_REASON);
+    else await HubApi.signOff(number, office.code, reason || "No organization or equipment obligations.");
     await loadQueue();
-    if (!outstanding) {
-        const item = students.filter(function (entry) { return entry.student_number === number; })[0];
-        if (item) askReason("signoff", item);
-    }
 }
 
 function fillList(list, entries, emptyText) {
@@ -1101,14 +1029,9 @@ function libStateFor(number) {
 async function saveLibrary(number, state) {
     const reason = encodeLibrary(state);
     if (reason.length > 255) throw new Error("Too many items for one student record. Mark a book returned or a fine paid first.");
-    const outstanding = state.books.length > 0 || state.fines.length > 0 || state.other.length > 0;
-    if (outstanding) await HubApi.placeHold(number, office.code, reason);
-    else await HubApi.placeHold(number, office.code, PENDING_REASON);
+    if (state.books.length || state.fines.length || state.other.length) await HubApi.placeHold(number, office.code, reason);
+    else await HubApi.signOff(number, office.code, "No unreturned books or fines.");
     await loadQueue();
-    if (!outstanding) {
-        const item = students.filter(function (entry) { return entry.student_number === number; })[0];
-        if (item) askReason("signoff", item);
-    }
 }
 
 function openLibrary(item) {
@@ -1331,23 +1254,9 @@ function fillSignNames() {
     if (!list) return;
     list.replaceChildren();
     students.forEach(function (item) {
-        [[item.student_number, item.full_name], [item.full_name, item.student_number]].forEach(function (entry) {
-            const option = document.createElement("option");
-            option.value = entry[0];
-            option.label = entry[1];
-            list.appendChild(option);
-        });
-    });
-}
-
-function fillBookStudentIds() {
-    const list = document.getElementById("book-students");
-    if (!list) return;
-    list.replaceChildren();
-    students.forEach(function (item) {
         const option = document.createElement("option");
-        option.value = item.student_number;
-        option.label = item.full_name;
+        option.value = item.full_name;
+        option.label = item.student_number;
         list.appendChild(option);
     });
 }
@@ -1357,21 +1266,19 @@ async function renderSign(item, codeText) {
     const checks = PROFILE.analyse(item);
     let note = "No slip code entered. Checked against the office records only.";
     if (codeText) {
-        const isToken = codeText.indexOf(".") !== -1;
-        const isCode = /^ECH-[A-Z0-9]{6,12}$/i.test(codeText);
-        if (!isToken && !isCode) {
-            checks.push({ label: "Signed slip", ok: false, detail: "Enter a valid signed short code (ECH-...) or legacy token." });
+        if (!/^ECH-[A-Z0-9]{6,12}$/i.test(codeText)) {
+            checks.push({ label: "Slip code", ok: false, detail: "The code format is not valid (expected ECH- followed by letters and numbers)." });
             note = "";
         } else {
             try {
-                const slip = await HubApi.verifySlip(isToken ? { token: codeText } : { code: codeText.toUpperCase() });
-                if (!slip.verified) checks.push({ label: "Signed slip", ok: false, detail: slip.reason || "The slip could not be verified." });
-                else if (slip.student.student_number !== item.student_number) checks.push({ label: "Signed slip", ok: false, detail: "This slip belongs to " + slip.student.full_name + " (" + slip.student.student_number + "), not " + item.full_name + " (" + item.student_number + ")." });
-                else checks.push({ label: "Signed slip", ok: true, detail: "Valid slip for " + slip.student.full_name + "." });
+                const slip = await HubApi.verifySlip({ code: codeText.toUpperCase() });
+                if (!slip.verified) checks.push({ label: "Slip code", ok: false, detail: slip.reason || "The slip could not be verified." });
+                else if (slip.student.full_name.trim().toLowerCase() !== item.full_name.trim().toLowerCase()) checks.push({ label: "Slip code", ok: false, detail: "This slip belongs to " + slip.student.full_name + ", not " + item.full_name + "." });
+                else checks.push({ label: "Slip code", ok: true, detail: "Valid slip for " + slip.student.full_name + "." });
                 note = "";
             } catch (error) {
                 if (error.status === 401) throw error;
-                checks.push({ label: "Signed slip", ok: false, detail: error.message || "The slip could not be checked." });
+                checks.push({ label: "Slip code", ok: false, detail: error.message || "The slip could not be checked." });
                 note = "";
             }
         }
@@ -1447,7 +1354,7 @@ const TABS = Array.prototype.map.call(document.querySelectorAll(".nav-link"), fu
 const opened = {};
 
 function showTab(name) {
-    if (TABS.indexOf(name) === -1) name = "queue";
+    if (TABS.indexOf(name) === -1) name = "summary";
     TABS.forEach(function (tab) { document.getElementById("tab-" + tab).hidden = tab !== name; });
     document.querySelectorAll(".nav-link").forEach(function (link) {
         const active = link.dataset.tab === name;
@@ -1459,8 +1366,6 @@ function showTab(name) {
     menuToggle.classList.remove("open");
     menuToggle.setAttribute("aria-expanded", "false");
     showMessage("", false);
-    if (officeReady && name === "open-signoffs") loadOpenSignoffs();
-    if (officeReady && name === "open-obligations") loadOpenObligations();
     if (name === "reports" && !opened.reports) {
         opened.reports = true;
         loadReport();
@@ -1468,13 +1373,6 @@ function showTab(name) {
 }
 
 window.addEventListener("hashchange", function () { showTab(location.hash.replace("#", "")); });
-
-window.setInterval(function () {
-    if (!officeReady || document.visibilityState !== "visible") return;
-    const activeTab = location.hash.replace("#", "");
-    if (activeTab === "open-signoffs") loadOpenSignoffs();
-    else if (activeTab === "open-obligations") loadOpenObligations();
-}, 30000);
 
 menuToggle.addEventListener("click", function () {
     const open = navigation.classList.toggle("show");
@@ -1516,10 +1414,6 @@ document.getElementById("logout-btn").addEventListener("click", async function (
         document.getElementById("office-sub").textContent = document.body.dataset.source || "";
         setupHead();
         await loadQueue(); // also signs off students with no obligations and reads the other offices (Registrar)
-        officeReady = true;
-        const activeTab = location.hash.replace("#", "");
-        if (activeTab === "open-signoffs") renderOpenSignoffs();
-        else if (activeTab === "open-obligations") loadOpenObligations();
     } catch (error) {
         handleError(error);
     }
