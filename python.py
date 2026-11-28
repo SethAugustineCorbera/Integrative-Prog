@@ -269,7 +269,7 @@ def _install_schedule(args: argparse.Namespace) -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="DNSC e-Clearance Hub")
     commands = parser.add_subparsers(dest="command")
-    commands.add_parser("serve", help="start the Flask REST API")
+    commands.add_parser("serve", help="start the Hub website and REST API")
     commands.add_parser("init-db", help="create a new SQLite database without overwriting an existing one")
     create = commands.add_parser("create-user", help="create a role-bound account")
     create.add_argument("--username", required=True)

@@ -1,0 +1,304 @@
+PHONE SETUP: USE YOUR PHONE AS A QR / STUDENT-ID SCANNER
+========================================================
+
+This guide is for a Windows PC running the DNSC e-Clearance Hub and a phone
+running Android or iPhone. Follow it from top to bottom. You do not need to
+write code or change the SQLite database.
+
+WHAT WE ARE SETTING UP
+----------------------
+
+The phone camera reads a QR code or barcode. A companion app sends the scanned
+characters over your local Wi-Fi to a small Windows receiver. The receiver
+types those characters into the box you clicked in the Hub, just like a
+keyboard scanner.
+
+The Hub does not pair the phone itself. There is no separate scanner device ID
+to register in the Hub. In Admin, the scan box is at:
+
+    Admin page > left menu > Scan / Verify
+    > "Phone scanner input: QR or Student ID"
+
+The Student ID must already exist in the Hub's synchronized Registrar roster.
+Scanning an ID performs a status lookup. It does not create a student account.
+To create a Hub login for a student, use Admin > Users. A student needs a Hub
+login to open their own unique signed QR slip.
+
+If you are asking how to add a student's ID/account before scanning:
+  1. In Admin, open Imports and run "Sync Registrar masterlist".
+  2. Open Users and create a Student account linked to that student's ID.
+  3. Give the login details to the student privately. The student signs in and
+     opens "Clearance slip" to display their own signed QR.
+An ID lookup only needs the ID to exist in the synced roster; a Hub login is
+needed only for student sign-in and displaying a signed QR.
+
+IMPORTANT PRIVACY NOTE
+----------------------
+
+Barcode to PC is a separate product, not part of this Hub. Its publisher says
+scans are sent over Wi-Fi on the local network and offers keyboard emulation.
+Use it with real student information only if your school permits it. Download
+it only from the official links below. Do not send student IDs, QR short codes,
+signed tokens, passwords, or database files to an unapproved app or website.
+
+WHAT TO DOWNLOAD
+----------------
+
+Install BOTH pieces: one program on the Windows computer and one app on the
+phone. They are companion parts of the same scanner.
+
+1. Windows computer receiver:
+   Official download page:
+   https://barcodetopc.com/download/
+
+   On that page, choose Windows and download the Windows server/receiver.
+
+2. Android phone app (Google Play):
+   https://play.google.com/store/apps/details?id=com.barcodetopc
+
+3. iPhone app (Apple App Store):
+   https://apps.apple.com/app/id1180168368
+
+4. Official instructions for sending scans into a text field:
+   https://docs.barcodetopc.com/keyboard-emulation/
+
+Do not install an APK from a random download site. If the official download
+page or your phone's app store says the app is unavailable for your device,
+stop there and ask your school/IT support for an approved alternative.
+
+PART 1 - GET THE HUB READY ON THE COMPUTER
+------------------------------------------
+
+1. Turn on the Windows computer and connect it to your normal, private Wi-Fi.
+   Do not use a public hotspot. A guest Wi-Fi network may block devices from
+   seeing each other.
+
+2. XAMPP is not needed. This project uses SQLite, and the Python Hub serves
+   the website and API together. Do not start MySQL or phpMyAdmin for this app.
+
+3. Start the Hub API in PowerShell:
+
+       Set-Location C:\xampp\htdocs\Integrative-Prog
+       .\.venv\Scripts\python.exe python.py serve
+
+   Leave this PowerShell window open. If the Hub API was already running
+   before you updated the project, press Ctrl+C in that old PowerShell window,
+   then run the command above once. Do not start a second copy.
+
+4. On the same computer, open a browser and go to:
+
+       http://127.0.0.1:8000/
+
+   If this page was already open, press Ctrl+F5 to load the updated page and
+   request a fresh QR image from the restarted API. Previously downloaded QR
+   slips still work as legacy signed-token slips; a refreshed slip now encodes
+   the printed ECH short code.
+
+5. Sign in with an administrator account. The scanner field is inside the
+   Admin page; the phone app does not replace Hub sign-in.
+
+PART 2 - INSTALL THE WINDOWS RECEIVER
+-------------------------------------
+
+1. On the computer, open the official download page:
+
+       https://barcodetopc.com/download/
+
+2. Select Windows. Check that the address bar still says
+   "barcodetopc.com" before downloading.
+
+3. Run the downloaded installer. Follow the installer screens and leave the
+   default choices unless your school IT staff tells you otherwise.
+
+4. When installation finishes, open the Windows Start menu, type
+   "Barcode to PC", and open its server/receiver program.
+
+5. If Windows asks whether to allow the receiver through Firewall, allow it
+   only on Private networks. Do not turn Windows Firewall off, and do not
+   allow this program on Public networks.
+
+6. Look at the receiver window. Keep it open. It may show a pairing QR code
+   or a device-connection screen. This QR belongs to the Barcode to PC app;
+   it is NOT a student's clearance QR.
+
+7. Open the receiver's Settings and make sure "Enable Keyboard Emulation" is
+   turned on. The app documentation says this is normally enabled by default.
+
+PART 3 - INSTALL AND PAIR YOUR PHONE
+------------------------------------
+
+1. Keep the phone connected to the SAME private Wi-Fi as the Windows PC.
+   Do not use mobile data for this setup. If your phone has both Wi-Fi and
+   mobile data on, leave Wi-Fi connected.
+
+2. On Android, open the Google Play link above, find "Barcode to PC", and tap
+   Install. On iPhone, open the App Store link above and tap Get. Use the
+   official store link, not an APK website.
+
+3. Open the phone app. When it asks to use the camera, allow camera access.
+   The camera is needed to read the QR or barcode.
+
+4. Follow the app's connection screen:
+   - If the Windows receiver displays a connection QR, use the phone app's
+     connect/pair option to scan THAT receiver QR.
+   - If the phone app lists computers found on Wi-Fi, select the Windows PC's
+     receiver from the list.
+   - If it asks for a code, enter the code shown in the Windows receiver.
+
+   The receiver's connection QR/code only pairs the devices. It does not
+   register a student and does not sign anyone off.
+
+5. Wait until the phone app and Windows receiver both show that they are
+   connected/paired. Keep both apps open while scanning.
+
+6. If they cannot find each other, check that both devices use the same
+   private Wi-Fi name. Guest Wi-Fi and some school networks block device-to-
+   device traffic. Do not change router settings or open internet ports;
+   ask your school IT person to help with the local network instead.
+
+PART 4 - TEST THE PHONE-TO-PC CONNECTION SAFELY
+-----------------------------------------------
+
+Do this test before using student records:
+
+1. On Windows, open Notepad.
+2. Click once in the blank Notepad page so the blinking cursor is visible.
+3. On the phone, open Barcode to PC and scan a harmless barcode on an object
+   (for example, a product package). Do not use a real student's QR for this
+   test.
+4. The barcode characters should appear in Notepad. That proves the phone
+   app is sending text to the active computer window.
+
+If nothing appears, go to the Troubleshooting section below. Do not continue
+until the harmless test works.
+
+PART 5 - FIND THE SCAN BOX IN THE ADMIN PAGE
+--------------------------------------------
+
+1. Return to the browser on the PC and sign in as Admin.
+2. In the left menu, click "Scan / Verify".
+3. At the top of the form, find the field labeled:
+
+       Phone scanner input: QR or Student ID
+
+   This is the box that receives a phone scan. Click inside it. You should
+   see the text cursor blinking in the box.
+
+4. In the phone app, scan either:
+   - the student's QR from their Hub Clearance slip (it sends the same
+     `ECH-...` short code printed beneath the QR); or
+   - a barcode/QR that contains the student's exact Student ID.
+
+5. Look at the PC box. The scan text should appear there. Click "Verify or
+   look up" on the PC to submit the scan.
+
+6. A Student ID scan looks up the current status from the Registrar roster;
+   it is not itself a signed slip. A signed Hub QR sends the same short code
+   printed on the slip and verifies the signed slip, then shows current status.
+   If the ID is not in the roster, ask the Admin to use Imports > Sync
+   Registrar masterlist, then try the ID again.
+
+There are also separate manual fields below the scanner box:
+   - Manual Student ID lookup
+   - Signed short code
+   - Signed token
+
+Use these if the phone is unavailable or if you need to type/paste a value.
+Enter only one value at a time.
+
+PART 6 - HOW AN OFFICE STAFF MEMBER SIGNS OFF
+---------------------------------------------
+
+An Admin can verify or look up status, but Admin cannot sign a student off.
+Only a staff account assigned to the correct office can do that.
+
+1. Sign out of Admin if necessary. Sign in using the staff account assigned
+   to the office checking the student (Library, Accounting, Student Affairs,
+   or Registrar).
+2. In that office page, click "Verify Slip".
+3. Click the field labeled "Scan QR or Student ID".
+4. Use the phone app to scan the student's signed Hub QR or their Student ID.
+5. On the PC, click "Verify or look up" if needed.
+6. Read the status and reason shown for the office. If the scan was a signed
+   QR, choose "Continue to clearance signing".
+7. Review every office check shown on the PC. If an obligation remains,
+   resolve it or leave the student on HOLD.
+8. Only after an authorized staff member confirms there are no obligations,
+   click "Sign off now" and confirm/save the action.
+
+Scanning a QR or Student ID NEVER signs the student off by itself. Each
+sign-off is an explicit staff action and is recorded in the audit log.
+
+TROUBLESHOOTING - SIMPLE CHECKS
+-------------------------------
+
+PROBLEM: I cannot find the scanner field.
+
+FIX: On the Admin page, click the left-menu item "Scan / Verify". The first
+box is named "Phone scanner input: QR or Student ID". It is not in the Users
+tab. The Users tab is for creating Hub login accounts.
+
+PROBLEM: The phone scan does not appear in the browser.
+
+FIX:
+  1. Click the scan field on the PC again so the cursor is blinking in it.
+  2. Check that the Barcode to PC Windows receiver is still open.
+  3. Check that the phone app says connected/paired.
+  4. Check that both devices are on the same private Wi-Fi.
+  5. Try scanning a harmless package barcode into Notepad again.
+  6. In Windows receiver Settings, check "Enable Keyboard Emulation".
+  7. If Windows Firewall asked, allow the receiver on Private networks only.
+
+PROBLEM: The scan text appears in another program or the wrong box.
+
+FIX: Click the correct Hub scan field on the PC and check that its blinking
+cursor is visible before scanning again. The phone types into whichever
+computer window is active.
+
+PROBLEM: The scan text appears but no result is shown.
+
+FIX: This is expected. The phone receiver types text; click the PC's
+"Verify or look up" button to make the Hub perform the lookup.
+
+PROBLEM: Admin says the Student ID was not found.
+
+FIX: Check the ID characters carefully. It must match the exact ID in the
+Registrar roster. Ask the Admin to synchronize the official roster using
+"Imports" > "Sync Registrar masterlist", then scan again. A student Hub
+account is not required for an ID status lookup, but it IS required for the
+student to log in and display a signed Hub QR.
+
+PROBLEM: The QR is rejected or expired.
+
+FIX: Ask the student to sign in to their Hub student account, open
+"Clearance slip", and display the current QR again. Make sure the scanner is
+reading the student's Hub slip, not the Barcode to PC connection QR. If the
+Hub server code was just updated, restart it and refresh the browser page.
+
+PROBLEM: The phone cannot pair with the computer.
+
+FIX: Confirm both are on the same non-guest Wi-Fi, reopen the Windows
+receiver, and use the receiver's current pairing instructions/code. Do not
+use a public Wi-Fi network. If the school network blocks device discovery,
+ask IT to approve a private local connection; do not disable the firewall.
+
+FINAL CHECKLIST
+---------------
+
+[ ] The Hub API is running in its PowerShell window.
+[ ] The Hub API is running in its PowerShell window.
+[ ] The Windows Barcode to PC receiver is open.
+[ ] The phone and PC are paired on the same private Wi-Fi.
+[ ] Keyboard Emulation is enabled in the Windows receiver.
+[ ] A harmless barcode successfully appeared in Notepad.
+[ ] The PC is signed in to the correct Hub role.
+[ ] The cursor is inside the Hub's "Phone scanner input" field before scanning.
+[ ] A staff member, not the scan itself, confirms each office sign-off.
+
+OFFICIAL APP REFERENCES
+-----------------------
+
+Barcode to PC downloads: https://barcodetopc.com/download/
+Android app: https://play.google.com/store/apps/details?id=com.barcodetopc
+iPhone app: https://apps.apple.com/app/id1180168368
+Keyboard emulation help: https://docs.barcodetopc.com/keyboard-emulation/

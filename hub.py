@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Callable
 from xml.etree import ElementTree
 
-from flask import Flask, Response, g, jsonify, request
+from flask import Flask, Response, abort, g, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException
 
 
@@ -91,6 +91,25 @@ def get_db() -> Any:
         if connection.execute("PRAGMA foreign_keys").fetchone()[0] != 1:
             connection.close()
             raise RuntimeError("SQLite foreign-key enforcement could not be enabled.")
+        if connection.execute(
+            """SELECT 1 FROM sqlite_master
+               WHERE type = 'table' AND name = 'student_cards'"""
+        ).fetchone() is None:
+            connection.execute(
+                """CREATE TABLE IF NOT EXISTS student_cards (
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       card_id TEXT NOT NULL COLLATE NOCASE UNIQUE
+                           CHECK (length(card_id) BETWEEN 1 AND 128),
+                       student_id INTEGER NOT NULL UNIQUE,
+                       registered_by INTEGER,
+                       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       CONSTRAINT fk_student_cards_student FOREIGN KEY (student_id)
+                           REFERENCES students (id) ON DELETE CASCADE,
+                       CONSTRAINT fk_student_cards_user FOREIGN KEY (registered_by)
+                           REFERENCES users (id) ON DELETE SET NULL
+                   )"""
+            )
         g.db = connection
     return g.db
 
@@ -392,6 +411,13 @@ def _encode_slip(payload: dict[str, Any]) -> tuple[str, str, str]:
     return token, payload_json, signature
 
 
+def _slip_token_from_record(payload_json: str, signature: str) -> str:
+    payload = json.loads(payload_json)
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    payload_part = base64.urlsafe_b64encode(canonical.encode("utf-8")).rstrip(b"=").decode()
+    return payload_part + "." + signature
+
+
 def _insert_audit(
     action: str,
     student_id: int | None = None,
@@ -424,6 +450,44 @@ def set_cors_headers(response: Response) -> Response:
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, OPTIONS"
     return response
+
+
+FRONTEND_ROOT_FILES = {
+    "index.html",
+    "manifest.webmanifest",
+    "phone_setup.txt",
+    "service-worker.js",
+}
+FRONTEND_DIRECTORIES = {"assets", "modules"}
+FRONTEND_EXTENSIONS = {
+    ".css",
+    ".html",
+    ".ico",
+    ".jpeg",
+    ".jpg",
+    ".js",
+    ".png",
+    ".svg",
+    ".webp",
+    ".woff",
+    ".woff2",
+}
+
+
+@app.get("/")
+def frontend_home() -> Any:
+    return send_from_directory(ROOT, "index.html")
+
+
+@app.get("/<path:asset_path>")
+def frontend_asset(asset_path: str) -> Any:
+    first_segment = asset_path.partition("/")[0]
+    if asset_path in FRONTEND_ROOT_FILES or (
+        first_segment in FRONTEND_DIRECTORIES
+        and Path(asset_path).suffix.lower() in FRONTEND_EXTENSIONS
+    ):
+        return send_from_directory(ROOT, asset_path)
+    abort(404)
 
 
 @app.errorhandler(HTTPException)
@@ -596,6 +660,171 @@ def my_clearance() -> Any:
     return jsonify(clearance_for_student(student))
 
 
+@app.get("/api/students/clearance")
+@require_roles("staff", "admin")
+def student_clearance_lookup() -> Any:
+    if set(request.args.keys()) != {"student_number"} or len(
+        request.args.getlist("student_number")
+    ) != 1:
+        return _error(
+            "Provide exactly one student_number query parameter.",
+            400,
+            "invalid_query",
+        )
+    student_number = request.args.get("student_number", "").strip()
+    if not STUDENT_NUMBER_PATTERN.fullmatch(student_number):
+        return _error("Student ID format is invalid.", 400, "invalid_student_number")
+    student = _find_student(student_number)
+    if student is None:
+        return _error(
+            "Student ID was not found. Use the exact ID from the Registrar masterlist.",
+            404,
+            "student_not_found",
+        )
+
+    return _clearance_lookup_response(student)
+
+
+def _clearance_lookup_response(
+    student: dict[str, Any], match_type: str | None = None
+) -> Any:
+    clearance = clearance_for_student(student)
+    result: dict[str, Any]
+    if g.user["role"] == "staff" and g.user.get("office_code") != "registrar":
+        office = next(
+            (
+                item
+                for item in clearance["offices"]
+                if item["office_code"] == g.user.get("office_code")
+            ),
+            None,
+        )
+        if office is None:
+            return _error("Assigned office was not found.", 404, "office_not_found")
+        result = {
+            "student": clearance["student"],
+            "scope": "assigned_office",
+            "office": office,
+        }
+    else:
+        result = {
+            "student": clearance["student"],
+            "scope": "all_offices",
+            "overall": clearance["overall"],
+            "offices": clearance["offices"],
+        }
+    if match_type:
+        result["match_type"] = match_type
+    return jsonify(result)
+
+
+@app.post("/api/cards/register")
+@require_roles("admin")
+def register_student_card() -> Any:
+    body = _json_body({"card_id", "student_number"})
+    if body is None:
+        return _error(
+            "Send a JSON object with card_id and student_number only.",
+            400,
+            "invalid_body",
+        )
+    card_id = _required_text(body, "card_id", 128)
+    student_number = _required_text(body, "student_number", 40)
+    if card_id is None or not re.fullmatch(
+        r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}", card_id
+    ):
+        return _error("Card ID format is invalid.", 400, "invalid_card_id")
+    if student_number is None or not STUDENT_NUMBER_PATTERN.fullmatch(
+        student_number
+    ):
+        return _error(
+            "Student ID format is invalid.", 400, "invalid_student_number"
+        )
+    student = _find_student(student_number)
+    if student is None:
+        return _error(
+            "Student ID was not found in the Registrar masterlist.",
+            404,
+            "student_not_found",
+        )
+    if not student["active"]:
+        return _error(
+            "A card cannot be registered to an inactive student.",
+            409,
+            "student_inactive",
+        )
+    card_owner = query_one(
+        "SELECT student_id FROM student_cards WHERE card_id = ?",
+        (card_id,),
+    )
+    if card_owner is not None and card_owner["student_id"] != student["id"]:
+        return _error(
+            "This card is already registered to another student.",
+            409,
+            "card_already_registered",
+        )
+    current_card = query_one(
+        "SELECT card_id FROM student_cards WHERE student_id = ?",
+        (student["id"],),
+    )
+    execute(
+        """INSERT INTO student_cards (card_id, student_id, registered_by)
+           VALUES (?, ?, ?)
+           ON CONFLICT(student_id) DO UPDATE SET
+               card_id = excluded.card_id,
+               registered_by = excluded.registered_by,
+               updated_at = CURRENT_TIMESTAMP""",
+        (card_id, student["id"], g.user["id"]),
+    )
+    commit()
+    return (
+        jsonify(
+            {
+                "message": "Student card registered.",
+                "replaced_previous_card": current_card is not None
+                and current_card["card_id"].casefold() != card_id.casefold(),
+                "student": {
+                    "student_number": student["student_number"],
+                    "full_name": student["full_name"],
+                },
+            }
+        ),
+        200 if current_card is not None else 201,
+    )
+
+
+@app.post("/api/cards/verify")
+@require_roles("staff", "admin")
+def verify_student_card() -> Any:
+    body = _json_body({"card_id"})
+    if body is None:
+        return _error(
+            "Send a JSON object containing card_id only.", 400, "invalid_body"
+        )
+    card_id = _required_text(body, "card_id", 128)
+    if card_id is None or not re.fullmatch(
+        r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}", card_id
+    ):
+        return _error("Card ID format is invalid.", 400, "invalid_card_id")
+    student = query_one(
+        """SELECT s.id, s.student_number, s.full_name, s.program,
+                  s.year_level, s.active
+           FROM student_cards AS c
+           JOIN students AS s ON s.id = c.student_id
+           WHERE c.card_id = ?""",
+        (card_id,),
+    )
+    if student is None:
+        return _error("This card is not registered.", 404, "card_not_found")
+    if not student["active"]:
+        return _error(
+            "This card belongs to an inactive student.",
+            409,
+            "student_inactive",
+        )
+    return _clearance_lookup_response(student, "registered_card")
+
+
 @app.get("/api/offices/<office_name>/students")
 @require_roles("staff", "admin")
 def office_students(office_name: str) -> Any:
@@ -612,14 +841,25 @@ def office_students(office_name: str) -> Any:
     status = request.args.get("status", "").upper()
     if status and status not in {"HOLD", "CLEARED"}:
         return _error("status must be HOLD or CLEARED.", 400, "invalid_status")
-    sql = """SELECT s.student_number, s.full_name, s.program,
+    signed_code = (
+        """(SELECT slip.public_code
+            FROM clearance_slips AS slip
+            WHERE slip.student_id = s.id
+              AND slip.revoked_at IS NULL
+              AND slip.expires_at > CURRENT_TIMESTAMP
+            ORDER BY slip.issued_at DESC
+            LIMIT 1)"""
+        if office["code"] in {"registrar", "library"}
+        else "NULL"
+    )
+    sql = """SELECT s.student_number, s.full_name, s.program, s.active,
                     COALESCE(c.status, 'HOLD') AS status,
                     COALESCE(c.reason, 'Awaiting office review.') AS reason,
-                    c.updated_at
+                    c.updated_at, {signed_code} AS signed_short_code
              FROM students AS s
              LEFT JOIN clearance_records AS c
                ON c.student_id = s.id AND c.office_id = ?
-             WHERE s.active = 1"""
+             WHERE s.active = 1""".format(signed_code=signed_code)
     values: tuple[Any, ...] = (office["id"],)
     if status:
         sql += " AND COALESCE(c.status, 'HOLD') = ?"
@@ -638,8 +878,14 @@ def _change_clearance(
 ) -> Any:
     student = _find_student(student_number)
     office = _find_office(office_name)
-    if student is None or office is None:
-        return _error("Student or office was not found.", 404, "record_not_found")
+    if student is None:
+        return _error(
+            "Student ID was not found. Use the exact ID from the Registrar masterlist.",
+            404,
+            "student_not_found",
+        )
+    if office is None:
+        return _error("Office was not found.", 404, "office_not_found")
     if g.user["role"] != "staff" or g.user["office_id"] != office["id"]:
         return _error("Only staff assigned to this office can update its clearance.", 403, "office_forbidden")
     upsert_clearance(
@@ -809,7 +1055,7 @@ def clearance_report() -> Any:
     )
 
 
-def _slip_qr_svg(token: str) -> str:
+def _slip_qr_svg(short_code: str) -> str:
     import qrcode
     from qrcode.image.svg import SvgPathImage
 
@@ -818,7 +1064,7 @@ def _slip_qr_svg(token: str) -> str:
         border=4,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
     )
-    qr.add_data(token)
+    qr.add_data(short_code)
     qr.make(fit=True)
     return qr.make_image(image_factory=SvgPathImage).to_string().decode("utf-8")
 
@@ -836,31 +1082,65 @@ def my_slip() -> Any:
     status = clearance_for_student(student)
     progress = _clearance_progress(status)
     now = datetime.now(timezone.utc)
-    expires = now + timedelta(days=30)
-    payload = {
-        "student_id": student["id"],
-        "issued_at": int(now.timestamp()),
-        "expires_at": int(expires.timestamp()),
-        "jti": uuid.uuid4().hex,
-    }
-    token, payload_json, signature = _encode_slip(payload)
-    public_code = "ECH-" + secrets.token_urlsafe(6).replace("-", "").replace("_", "").upper()
-    execute(
-        """INSERT INTO clearance_slips
-           (public_code, token_hash, payload_json, signature, student_id, issued_at, expires_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (
-            public_code,
-            _token_digest(token),
-            payload_json,
-            signature,
-            student["id"],
-            now.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S"),
-            expires.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S"),
-        ),
+    now_db = now.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
+    existing = query_one(
+        """SELECT public_code, token_hash, payload_json, signature, issued_at, expires_at
+           FROM clearance_slips
+           WHERE student_id = ? AND revoked_at IS NULL AND expires_at > ?
+           ORDER BY issued_at DESC LIMIT 1""",
+        (student["id"], now_db),
     )
-    _insert_audit("SLIP_ISSUED", student["id"], details={"code": public_code})
-    commit()
+    if (
+        existing is not None
+        and _verify_slip_signature(
+            str(existing["payload_json"]), str(existing["signature"])
+        )
+        and hmac.compare_digest(
+            str(existing["token_hash"]),
+            _token_digest(
+                _slip_token_from_record(
+                    str(existing["payload_json"]), str(existing["signature"])
+                )
+            ),
+        )
+    ):
+        public_code = str(existing["public_code"])
+        payload_json = str(existing["payload_json"])
+        signature = str(existing["signature"])
+        token = _slip_token_from_record(payload_json, signature)
+        issued = datetime.fromisoformat(str(existing["issued_at"]))
+        expires = datetime.fromisoformat(str(existing["expires_at"]))
+        if issued.tzinfo is None:
+            issued = issued.replace(tzinfo=timezone.utc)
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+    else:
+        expires = now + timedelta(days=30)
+        payload = {
+            "student_id": student["id"],
+            "issued_at": int(now.timestamp()),
+            "expires_at": int(expires.timestamp()),
+            "jti": uuid.uuid4().hex,
+        }
+        token, payload_json, signature = _encode_slip(payload)
+        public_code = "ECH-" + secrets.token_urlsafe(6).replace("-", "").replace("_", "").upper()
+        issued = now
+        execute(
+            """INSERT INTO clearance_slips
+               (public_code, token_hash, payload_json, signature, student_id, issued_at, expires_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                public_code,
+                _token_digest(token),
+                payload_json,
+                signature,
+                student["id"],
+                now_db,
+                expires.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S"),
+            ),
+        )
+        _insert_audit("SLIP_ISSUED", student["id"], details={"code": public_code})
+        commit()
     return jsonify(
         {
             "student": {
@@ -873,8 +1153,8 @@ def my_slip() -> Any:
             "progress": progress,
             "public_code": public_code,
             "signed_token": token,
-            "qr_svg": _slip_qr_svg(token),
-            "issued_at": now.isoformat(),
+            "qr_svg": _slip_qr_svg(public_code),
+            "issued_at": issued.isoformat(),
             "expires_at": expires.isoformat(),
         }
     )
@@ -960,7 +1240,7 @@ def verify_slip() -> Any:
             "public_code": slip["public_code"],
             "student": {
                 "full_name": slip["full_name"],
-                "student_number": mask_student_number(slip["student_number"]),
+                "student_number": slip["student_number"],
             },
             "overall": clearance["overall"],
             "offices": [
@@ -1069,8 +1349,23 @@ def sync_registrar() -> Any:
             upsert_student(student)
             saved_student = _find_student(student["student_number"])
             if saved_student is not None:
-                status = "CLEARED" if student["active"] else "HOLD"
-                reason = "Active in Registrar masterlist." if student["active"] else "Inactive or on leave in Registrar masterlist."
+                existing_clearance = query_one(
+                    """SELECT source FROM clearance_records
+                       WHERE student_id = ? AND office_id = ?""",
+                    (saved_student["id"], registrar_office["id"]),
+                )
+                if (
+                    student["active"]
+                    and existing_clearance is not None
+                    and existing_clearance["source"] == "staff"
+                ):
+                    continue
+                status = "HOLD"
+                reason = (
+                    "Active in Registrar masterlist; awaiting manual review."
+                    if student["active"]
+                    else "Inactive or on leave in Registrar masterlist."
+                )
                 upsert_clearance(
                     saved_student["id"],
                     registrar_office["id"],

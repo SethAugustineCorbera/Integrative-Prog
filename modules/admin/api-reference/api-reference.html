@@ -31,7 +31,7 @@
 <tr><td>POST</td><td>/clearance/{student_number}/{office}/hold</td><td>Put a student on hold with a reason</td><td>Assigned staff</td><td>200, 400, 403, 404</td></tr>
 <tr><td>GET</td><td>/deadline</td><td>Computed clearance deadline</td><td>Authenticated</td><td>200, 401</td></tr>
 <tr><td>GET</td><td>/reports/clearance?format=csv|json|xml</td><td>Export clearance data with masked IDs</td><td>Admin</td><td>200, 400, 403</td></tr>
-<tr><td>GET</td><td>/slips/me</td><td>Get own signed slip token and QR data</td><td>Student</td><td>200, 401</td></tr>
+<tr><td>GET</td><td>/slips/me</td><td>Get own signed slip QR and short code</td><td>Student</td><td>200, 401</td></tr>
 <tr><td>POST</td><td>/slips/verify</td><td>Verify a signed slip token or short code</td><td>Staff, Admin</td><td>200, 400, 401</td></tr>
 <tr><td>GET</td><td>/audit</td><td>View sign-off and hold history</td><td>Admin</td><td>200, 403</td></tr>
 <tr><td>GET</td><td>/imports</td><td>View imports and reject log</td><td>Admin</td><td>200, 403</td></tr>

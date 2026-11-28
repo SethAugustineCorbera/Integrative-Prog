@@ -28,6 +28,7 @@
 
     <nav class="navigation" id="main-navigation" aria-label="Student Affairs sections">
         <a href="#queue" class="nav-link active" data-tab="queue">Obligations</a>
+        <a href="#open-obligations" class="nav-link" data-tab="open-obligations">Open Obligations</a>
         <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
         <a href="#sign" class="nav-link" data-tab="sign">Clearance Signing</a>
         <a href="#lend" class="nav-link" data-tab="lend">Lend &amp; Orgs</a>
@@ -48,38 +49,36 @@
             <h1 id="office-title">Student Affairs</h1>
             <p class="lead" id="office-sub">Entered by staff in the Hub</p>
         </div>
-        <div class="panel split split-queue">
-            <div class="split-main">
-                <h2>Student Obligations</h2>
-                <p class="panel-sub">Organization memberships and borrowed equipment per student.</p>
-                <div class="toolbar">
-                    <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
-                    <select id="queue-filter" aria-label="Filter by status">
-                        <option value="">All</option>
-                        <option value="HOLD" id="filter-hold">On HOLD</option>
-                        <option value="CLEARED" id="filter-clear">Cleared</option>
-                    </select>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr id="queue-head"></tr></thead>
-                        <tbody id="queue-body"></tbody>
-                    </table>
-                </div>
+        <div class="panel panel-full">
+            <h2>Student Obligations</h2>
+            <p class="panel-sub">Review and manage organization memberships and borrowed equipment.</p>
+            <div class="toolbar">
+                <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
+                <select id="queue-filter" aria-label="Filter by status">
+                    <option value="">All</option>
+                    <option value="HOLD" id="filter-hold">On HOLD</option>
+                    <option value="CLEARED" id="filter-clear">Cleared</option>
+                </select>
             </div>
-            <div class="split-side">
-                <h2>Open Obligations</h2>
-                <p class="panel-sub">Students with something still outstanding.</p>
-                <div class="cards">
-                    <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
-                    <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Student</th><th>Reason</th></tr></thead>
-                        <tbody id="hold-body"></tbody>
-                    </table>
-                </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr id="queue-head"></tr></thead>
+                    <tbody id="queue-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="tab" id="tab-open-obligations" aria-labelledby="h-open-obligations" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-open-obligations">Open Obligations</h2>
+            <p class="panel-sub">Students with outstanding organization or equipment requirements and their current reasons. This list refreshes automatically every 30 seconds.</p>
+            <p class="muted" id="open-obligations-updated" aria-live="polite"></p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Student ID</th><th>Student</th><th>Open reason</th></tr></thead>
+                    <tbody id="open-obligations-body"></tbody>
+                </table>
             </div>
         </div>
     </section>
@@ -88,18 +87,22 @@
     <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
         <div class="panel panel-full">
             <h2 id="h-verify">Verify Slip</h2>
-            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
+            <p class="panel-sub">Scan a signed QR or short code to verify a slip. Registered cards and Student IDs show current status, not a signed slip. Review this office's obligations; sign-off always requires staff confirmation.</p>
             <div class="verify-layout">
                 <form id="verify-form" class="verify-form">
+                    <label for="scan-input">Scan QR, registered card, or Student ID</label>
+                    <input type="text" id="scan-input" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Focus here, then scan">
+                    <label for="student-number-input">Student ID (status lookup)</label>
+                    <input type="text" id="student-number-input" maxlength="40" autocomplete="off" placeholder="Use the exact ID from the Registrar masterlist">
                     <label for="slip-code-input">Signed short code</label>
                     <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
-                    <label for="slip-token-input">Or signed token</label>
-                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
-                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
+                    <label for="slip-token-input">Or signed token (legacy)</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste a signed token if one was provided">
+                    <button class="btn" id="verify-btn" type="submit">Verify or look up</button>
                 </form>
                 <div class="result-card" id="verify-result" aria-live="polite">
                     <h3>Verification result</h3>
-                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
+                    <div class="result-empty" id="verify-empty">Enter one student ID, signed code, or token.</div>
                     <dl id="verify-list" hidden></dl>
                 </div>
             </div>
@@ -117,8 +120,8 @@
                     <label for="sign-name">Student name</label>
                     <input type="text" id="sign-name" list="sign-names" maxlength="160" autocomplete="off" placeholder="Full name or student ID" required>
                     <datalist id="sign-names"></datalist>
-                    <label for="sign-code">Slip code</label>
-                    <input type="text" id="sign-code" maxlength="16" autocomplete="off" placeholder="ECH-XXXXXX (optional)">
+                    <label for="sign-code">Signed short code or legacy token</label>
+                    <input type="text" id="sign-code" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ECH-XXXXXX or scan the signed QR (optional)">
                     <button class="btn" id="sign-check" type="submit">Check clearance</button>
                 </form>
                 <div class="form-card" id="sign-result" aria-live="polite">

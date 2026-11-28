@@ -428,6 +428,7 @@ td.empty{text-align:center;color:#3D5F78}
 .result-card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.5rem 1rem;font-size:.92rem}
 .result-card dt{font-weight:700;color:var(--sidebar)}
 .result-card dd{margin:0}
+.result-card #continue-signing{margin-top:1rem}
 
 /* Reason dialog */
 dialog{

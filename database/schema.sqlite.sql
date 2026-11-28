@@ -149,6 +149,20 @@ CREATE TABLE IF NOT EXISTS clearance_slips (
 CREATE INDEX IF NOT EXISTS ix_slips_student
     ON clearance_slips (student_id, expires_at);
 
+CREATE TABLE IF NOT EXISTS student_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_id TEXT NOT NULL COLLATE NOCASE UNIQUE
+        CHECK (length(card_id) BETWEEN 1 AND 128),
+    student_id INTEGER NOT NULL UNIQUE,
+    registered_by INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_student_cards_student FOREIGN KEY (student_id)
+        REFERENCES students (id) ON DELETE CASCADE,
+    CONSTRAINT fk_student_cards_user FOREIGN KEY (registered_by)
+        REFERENCES users (id) ON DELETE SET NULL
+);
+
 CREATE TABLE IF NOT EXISTS holidays (
     holiday_date TEXT NOT NULL,
     local_name TEXT NOT NULL CHECK (length(local_name) <= 160),

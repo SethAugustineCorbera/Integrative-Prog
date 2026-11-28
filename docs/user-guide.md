@@ -2,7 +2,7 @@
 
 ## Before using the Hub
 
-The operator must start the Python API and sign in with an account created for the correct role. Start XAMPP Apache only if serving the browser front end through XAMPP. The Hub stores its SQLite database outside Apache's document root; the browser never connects directly to the database.
+The operator starts the Python Hub, which serves both the browser pages and API, then signs in with an account created for the correct role. XAMPP is not required. The Hub stores data in SQLite; the browser never connects directly to the database file.
 
 ## Student account says the Registrar record is missing?
 
@@ -111,7 +111,7 @@ records.
    active records.
 7. **Create the Hub account.** Once sync succeeds, use either option:
    - **Student self-registration:** Open
-     `http://localhost/Integrative-Prog/`, choose **Register an account**, and
+     `http://127.0.0.1:8000/`, choose **Register an account**, and
      enter the student's exact roster student number and name, a unique
      username, and a password of at least 12 characters. Return to login and
      sign in with that new username/password.
@@ -136,9 +136,9 @@ records.
 - **Account already exists**: that student already has a Hub account, or the
   chosen username is already used. Try the existing login. If the student
   cannot access the account, an admin can set a new password from **Users**.
-- **Cannot reach the Hub API**: start/restart the Python API and make sure the
-  page is opened from XAMPP at `http://localhost/Integrative-Prog/`, not by
-  opening an `.html` file directly.
+- **Cannot reach the Hub API**: start/restart `python.py serve` and make sure
+  the page is opened at `http://127.0.0.1:8000/`, not by opening an `.html`
+  file directly.
 - **Login rejected**: use the Hub username and password created in step 7.
   Registrar API credentials are not student login credentials.
 
@@ -155,7 +155,7 @@ After signing in:
 
 1. Review the overall result and each required office's CLEARED/HOLD status and reason.
 2. Resolve holds with the named office. The student view is read-only.
-3. When every required office is CLEARED, open **Clearance slip** and show the signed QR code or short code to an office verifier.
+3. Open **Clearance slip** at any stage and show the unique signed QR code or short code to an office verifier. The QR encodes the exact same `ECH-...` value printed below it. The code is reused until it expires after 30 days; staff verification displays current progress.
 4. Open **Deadline** for the configured number of working days and the Philippine holidays/weekends skipped.
 5. Use **Log out** to invalidate the API session.
 
@@ -163,22 +163,37 @@ After signing in:
 
 1. Sign in with an account assigned to your office.
 2. Use **Office queue** to review active students. A staff account cannot access another office's queue.
-3. Choose **Sign off** only after checking the authoritative office record. Add a HOLD with a clear reason when an outstanding item exists.
+3. Choose **Sign off** only after checking the authoritative office record and explicitly confirming there are no outstanding obligations. Settling the last obligation does not sign a student off automatically. Add a HOLD with a clear reason when an outstanding item exists.
 4. Use **HOLD summary** for the office's current unresolved records.
-5. Use **Verify slip** to enter a student's signed short code or full signed token. A verifier may scan the QR with a QR reader and enter the returned token. The result shows whether the slip is valid, expired, revoked, or unknown.
-6. Every sign-off and hold action is recorded in the admin audit log.
+5. Use **Verify slip** to scan the QR/short code, enter the short code, paste a legacy signed token, or scan/type a registered card ID or exact Student ID. QR scans and short codes verify the signed slip. Registered cards and Student IDs show current status only and are not proof of a signed slip. Non-Registrar staff see only their own office's status; Registrar staff can see all offices.
+6. Select **Continue to clearance signing**, review the obligations, and click **Sign off now** only after confirming the student is clear. A staff account can sign only for its assigned office; Registrar's final signing checks the other offices too. Students can view their own status but cannot sign themselves off.
+7. Every sign-off and hold action is recorded in the admin audit log.
+
+### Phone as a wireless scanner (Option 2)
+
+Use a phone QR/barcode scanner app with a PC/Windows receiver that sends each scan as keyboard input (keyboard-wedge mode). This is the simplest local-network setup: the phone sends text to the PC receiver, and the Hub browser processes it; the phone does not connect directly to the Python API.
+
+For the full beginner walkthrough, including official Android/iPhone and Windows downloads, pairing, testing, and troubleshooting, see the repository's [phone setup guide](../phone_setup.txt).
+
+1. Connect the PC and phone to the same trusted Wi-Fi. Install the scanner app and its PC receiver, then pair them as directed by the app. If Windows Firewall prompts, allow the receiver on **Private networks only**.
+2. On the PC, sign in and open **Verify Slip**. Admin can look up/verify only; use the office account assigned to the student's office for sign-off.
+3. Click **Scan QR, registered card, or Student ID** in the PC browser. In the phone scanner app, enable sending scanned text to the paired PC and set an Enter/Return suffix if available.
+4. Scan the QR from the student's Clearance slip; it sends the same `ECH-...` short code printed below the QR. An Admin can first register a student's card by scanning its card ID in the Admin **Verify Slip** tab and entering that student's exact ID. After registration, scan the card at **Verify Slip** to show the student's current clearance. Card IDs and Student IDs are lookups, not signed slips.
+5. For a staff sign-off, select **Continue to clearance signing**, check the office obligations, then explicitly click **Sign off now**. A scan or a successful lookup never signs a student off by itself.
+
+If the scan does not appear, refocus the PC scan field and verify both devices are still paired. The Student ID, short-code, and signed-token inputs remain available for manual entry. Do not expose the Flask API to the public internet. A browser-only phone camera page requires HTTPS and is not part of this keyboard-scanner setup.
 
 ## Admin
 
 1. Sign in with an admin account.
 2. On **Import monitor**, upload a Library XML or Accounting CSV together with its signed manifest. The Hub validates the file and reports imported and rejected row counts.
-3. Select **Sync Registrar masterlist** to call the configured Registrar API.
+3. Select **Sync Registrar masterlist** to call the configured Registrar API. Syncing updates enrollment data but does not automatically sign students off; assigned Registrar staff must manually review pending records. Existing staff-entered decisions are preserved.
 4. Open **Users** to view/search accounts; filter by role or active status; create a student, staff, or admin account; edit the login ID, role, activation, linked student, profile, or staff office; or set a new password. Student accounts must link to an existing active Registrar record, and staff accounts require an office assignment.
 5. Account creation requires the administrator to choose an initial password. Password reset requires a new password and signs out all existing sessions. Share initial/reset passwords through an approved private channel; this system does not send email or password-reset links.
 6. The last active administrator cannot be deactivated or demoted, and an administrator cannot deactivate or demote their own account.
 7. Review **Reports** and download CSV, JSON, or XML. Student numbers are masked in each report.
 8. Review **Audit log**, **HOLD summary**, and **Import monitor** for operational events, including account changes.
-9. Admin queue pages are read-only; office sign-off and HOLD changes require an assigned staff account.
+9. Admin queue pages and the Admin **Verify Slip** tool are read-only for clearance changes. The Admin **Verify Slip** tab can register or replace one card for an active student; card scans then look up that student's current status. Office sign-off and HOLD changes require an assigned staff account.
 
 ## Import outcomes
 

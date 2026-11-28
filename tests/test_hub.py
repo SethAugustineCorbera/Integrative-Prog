@@ -134,6 +134,17 @@ class SqliteConnectionTests(HubTestCase):
                     ("a" * 64, -1, "2099-01-01 00:00:00"),
                 )
 
+    def test_get_db_adds_card_table_to_existing_database(self) -> None:
+        self.connection.execute("DROP TABLE student_cards")
+        self.connection.commit()
+        with hub.app.app_context():
+            connection = REAL_GET_DB()
+            table = connection.execute(
+                "SELECT name FROM sqlite_master "
+                "WHERE type = 'table' AND name = 'student_cards'"
+            ).fetchone()
+            self.assertIsNotNone(table)
+
     def test_auth_session_token_hash_cannot_be_null(self) -> None:
         cursor = self.connection.execute(
             "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
@@ -602,6 +613,26 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["database"], "connected")
 
+    def test_python_server_serves_frontend_without_exposing_private_files(self) -> None:
+        home = self.client.get("/")
+        self.assertEqual(home.status_code, 200)
+        self.assertIn("DNSC e-Clearance Hub", home.get_data(as_text=True))
+        home.close()
+        page = self.client.get("/modules/student/student.html")
+        self.assertEqual(page.status_code, 200)
+        page.close()
+        asset = self.client.get("/assets/js/api.js")
+        self.assertEqual(asset.status_code, 200)
+        asset.close()
+        self.assertEqual(self.client.get("/.env").status_code, 404)
+        self.assertEqual(
+            self.client.get("/database/schema.sqlite.sql").status_code, 404
+        )
+        self.assertEqual(
+            self.client.get("/database/dnsc_clearance_hub.sqlite3").status_code,
+            404,
+        )
+
     def test_protected_route_rejects_missing_token(self) -> None:
         self.assertEqual(self.client.get("/api/students/me/clearance").status_code, 401)
 
@@ -748,6 +779,65 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["overall"], "CLEARED")
 
+    def test_staff_student_id_lookup_is_limited_to_assigned_office(self) -> None:
+        token = self.login("test.library")
+        response = self.client.get(
+            "/api/students/clearance?student_number=2023-0001-14",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(body["scope"], "assigned_office")
+        self.assertEqual(body["office"]["office_code"], "library")
+        self.assertEqual(body["office"]["status"], "CLEARED")
+        self.assertNotIn("overall", body)
+        self.assertNotIn("offices", body)
+
+    def test_registrar_can_look_up_all_office_statuses_by_student_id(self) -> None:
+        token = self.login("test.registrar")
+        response = self.client.get(
+            "/api/students/clearance?student_number=2023-0001-14",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(body["scope"], "all_offices")
+        self.assertEqual(body["overall"], "CLEARED")
+        self.assertEqual(len(body["offices"]), 4)
+
+    def test_student_id_lookup_rejects_student_role_and_unknown_id(self) -> None:
+        student_token = self.login()
+        forbidden = self.client.get(
+            "/api/students/clearance?student_number=2023-0001-14",
+            headers={"Authorization": "Bearer " + student_token},
+        )
+        self.assertEqual(forbidden.status_code, 403)
+
+        registrar_token = self.login("test.registrar")
+        invalid_query = self.client.get(
+            "/api/students/clearance?student_number=2023-0001-14&unexpected=value",
+            headers={"Authorization": "Bearer " + registrar_token},
+        )
+        self.assertEqual(invalid_query.status_code, 400)
+
+        missing = self.client.get(
+            "/api/students/clearance?student_number=2023--0001-14",
+            headers={"Authorization": "Bearer " + registrar_token},
+        )
+        self.assertEqual(missing.status_code, 404)
+        self.assertIn("exact ID", missing.get_json()["error"])
+
+    def test_signoff_unknown_student_returns_actionable_not_found_error(self) -> None:
+        token = self.login("test.library")
+        response = self.client.post(
+            "/api/clearance/2023--0001-14/library/signoff",
+            json={"reason": "Checked at the desk."},
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.get_json()["code"], "student_not_found")
+        self.assertIn("exact ID", response.get_json()["error"])
+
     def test_student_cannot_read_office_queue(self) -> None:
         token = self.login()
         response = self.client.get(
@@ -764,6 +854,38 @@ class ApiTests(HubTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["office"]["code"], "library")
+
+    def test_signed_short_code_is_visible_only_in_registrar_and_library_queues(self) -> None:
+        student_token = self.login()
+        slip = self.client.get(
+            "/api/slips/me",
+            headers={"Authorization": "Bearer " + student_token},
+        ).get_json()
+        admin_token = self.login("test.admin")
+        for office in ("registrar", "library"):
+            response = self.client.get(
+                "/api/offices/" + office + "/students",
+                headers={"Authorization": "Bearer " + admin_token},
+            )
+            self.assertEqual(response.status_code, 200)
+            student = next(
+                row
+                for row in response.get_json()["students"]
+                if row["student_number"] == "2023-0001-14"
+            )
+            self.assertEqual(student["signed_short_code"], slip["public_code"])
+
+        accounting = self.client.get(
+            "/api/offices/accounting/students",
+            headers={"Authorization": "Bearer " + admin_token},
+        )
+        self.assertEqual(accounting.status_code, 200)
+        student = next(
+            row
+            for row in accounting.get_json()["students"]
+            if row["student_number"] == "2023-0001-14"
+        )
+        self.assertIsNone(student["signed_short_code"])
 
     def test_staff_cannot_read_another_office(self) -> None:
         token = self.login("test.library")
@@ -933,6 +1055,116 @@ class ApiTests(HubTestCase):
         self.assertEqual(updated["overall"], "CLEARED")
         self.assertEqual(updated["progress"], {"cleared": 4, "total": 4, "percent": 100})
 
+    def test_admin_can_register_card_and_staff_can_check_current_status(self) -> None:
+        admin_headers = {
+            "Authorization": "Bearer " + self.login("test.admin")
+        }
+        staff_headers = {
+            "Authorization": "Bearer " + self.login("test.library")
+        }
+        registered = self.client.post(
+            "/api/cards/register",
+            json={
+                "card_id": "CARD-0001",
+                "student_number": "2023-0001-14",
+            },
+            headers=admin_headers,
+        )
+        self.assertEqual(registered.status_code, 201)
+        self.assertEqual(
+            registered.get_json()["student"]["student_number"], "2023-0001-14"
+        )
+
+        verified = self.client.post(
+            "/api/cards/verify",
+            json={"card_id": "card-0001"},
+            headers=staff_headers,
+        )
+        self.assertEqual(verified.status_code, 200)
+        result = verified.get_json()
+        self.assertEqual(result["match_type"], "registered_card")
+        self.assertEqual(result["student"]["student_number"], "2023-0001-14")
+        self.assertEqual(result["scope"], "assigned_office")
+        self.assertEqual(result["office"]["office_code"], "library")
+        self.assertEqual(result["office"]["status"], "CLEARED")
+
+        admin_verified = self.client.post(
+            "/api/cards/verify",
+            json={"card_id": "CARD-0001"},
+            headers=admin_headers,
+        )
+        self.assertEqual(admin_verified.status_code, 200)
+        self.assertEqual(admin_verified.get_json()["scope"], "all_offices")
+        self.assertEqual(admin_verified.get_json()["overall"], "CLEARED")
+
+    def test_card_registration_is_admin_only_and_rejects_unknown_students(self) -> None:
+        student_headers = {
+            "Authorization": "Bearer " + self.login("test.student")
+        }
+        forbidden = self.client.post(
+            "/api/cards/register",
+            json={"card_id": "CARD-0002", "student_number": "2023-0001-14"},
+            headers=student_headers,
+        )
+        self.assertEqual(forbidden.status_code, 403)
+
+        admin_headers = {
+            "Authorization": "Bearer " + self.login("test.admin")
+        }
+        missing_student = self.client.post(
+            "/api/cards/register",
+            json={"card_id": "CARD-0002", "student_number": "2023-9999-99"},
+            headers=admin_headers,
+        )
+        self.assertEqual(missing_student.status_code, 404)
+        invalid_card = self.client.post(
+            "/api/cards/register",
+            json={"card_id": "CARD 0002", "student_number": "2023-0001-14"},
+            headers=admin_headers,
+        )
+        self.assertEqual(invalid_card.status_code, 400)
+
+    def test_card_cannot_be_assigned_to_another_student_and_can_be_replaced(self) -> None:
+        admin_headers = {
+            "Authorization": "Bearer " + self.login("test.admin")
+        }
+        first = self.client.post(
+            "/api/cards/register",
+            json={"card_id": "CARD-0003", "student_number": "2023-0001-14"},
+            headers=admin_headers,
+        )
+        self.assertEqual(first.status_code, 201)
+
+        conflict = self.client.post(
+            "/api/cards/register",
+            json={"card_id": "CARD-0003", "student_number": "2023-0002-14"},
+            headers=admin_headers,
+        )
+        self.assertEqual(conflict.status_code, 409)
+
+        replacement = self.client.post(
+            "/api/cards/register",
+            json={"card_id": "CARD-0004", "student_number": "2023-0001-14"},
+            headers=admin_headers,
+        )
+        self.assertEqual(replacement.status_code, 200)
+        self.assertTrue(replacement.get_json()["replaced_previous_card"])
+        staff_headers = {
+            "Authorization": "Bearer " + self.login("test.library")
+        }
+        old_card = self.client.post(
+            "/api/cards/verify",
+            json={"card_id": "CARD-0003"},
+            headers=staff_headers,
+        )
+        self.assertEqual(old_card.status_code, 404)
+        new_card = self.client.post(
+            "/api/cards/verify",
+            json={"card_id": "CARD-0004"},
+            headers=staff_headers,
+        )
+        self.assertEqual(new_card.status_code, 200)
+
     def test_qr_tokens_are_unique_to_each_student(self) -> None:
         student_slip = self.client.get(
             "/api/slips/me", headers={"Authorization": "Bearer " + self.login()}
@@ -942,6 +1174,22 @@ class ApiTests(HubTestCase):
         ).get_json()
         self.assertNotEqual(student_slip["signed_token"], held_slip["signed_token"])
         self.assertNotEqual(student_slip["public_code"], held_slip["public_code"])
+
+    def test_student_reuses_the_same_unexpired_qr_slip(self) -> None:
+        token = self.login()
+        first = self.client.get(
+            "/api/slips/me", headers={"Authorization": "Bearer " + token}
+        ).get_json()
+        second = self.client.get(
+            "/api/slips/me", headers={"Authorization": "Bearer " + token}
+        ).get_json()
+        self.assertEqual(second["signed_token"], first["signed_token"])
+        self.assertEqual(second["public_code"], first["public_code"])
+        with hub.app.app_context():
+            self.assertEqual(
+                hub.query_one("SELECT COUNT(*) AS count FROM clearance_slips")["count"],
+                1,
+            )
 
     def test_cleared_student_can_issue_and_verify_short_code(self) -> None:
         token = self.login()
@@ -956,8 +1204,82 @@ class ApiTests(HubTestCase):
         )
         self.assertEqual(verified.status_code, 200)
         self.assertTrue(verified.get_json()["verified"])
+        self.assertEqual(
+            verified.get_json()["student"]["student_number"], "2023-0001-14"
+        )
 
-    def test_slip_response_generates_qr_from_signed_token(self) -> None:
+    def test_registrar_sync_does_not_sign_off_active_students_automatically(self) -> None:
+        hub.app.config.update(
+            REGISTRAR_API_URL="https://registrar.example.invalid/api",
+            REGISTRAR_API_KEY="test-registrar-key",
+        )
+        with patch(
+            "integration_clients.fetch_registrar_students",
+            return_value=[
+                {
+                    "student_number": "2023-0003-14",
+                    "full_name": "New Active Student",
+                    "program": "BSIT",
+                    "year_level": 1,
+                    "active": 1,
+                }
+            ],
+        ):
+            response = self.client.post(
+                "/api/admin/sync-registrar",
+                json={},
+                headers={"Authorization": "Bearer " + self.login("test.admin")},
+            )
+        self.assertEqual(response.status_code, 200)
+        with hub.app.app_context():
+            student = hub.query_one(
+                "SELECT id FROM students WHERE student_number = ?",
+                ("2023-0003-14",),
+            )
+            registrar = hub.query_one(
+                "SELECT id FROM offices WHERE code = ?", ("registrar",)
+            )
+            record = hub.query_one(
+                "SELECT status, reason FROM clearance_records "
+                "WHERE student_id = ? AND office_id = ?",
+                (student["id"], registrar["id"]),
+            )
+        self.assertEqual(record["status"], "HOLD")
+        self.assertIn("awaiting manual review", record["reason"])
+        signoff = self.client.post(
+            "/api/clearance/2023-0003-14/registrar/signoff",
+            json={"reason": "Enrollment and office reviews checked."},
+            headers={"Authorization": "Bearer " + self.login("test.registrar")},
+        )
+        self.assertEqual(signoff.status_code, 200)
+        with patch(
+            "integration_clients.fetch_registrar_students",
+            return_value=[
+                {
+                    "student_number": "2023-0003-14",
+                    "full_name": "New Active Student",
+                    "program": "BSIT",
+                    "year_level": 1,
+                    "active": 1,
+                }
+            ],
+        ):
+            resync = self.client.post(
+                "/api/admin/sync-registrar",
+                json={},
+                headers={"Authorization": "Bearer " + self.login("test.admin")},
+            )
+        self.assertEqual(resync.status_code, 200)
+        with hub.app.app_context():
+            record = hub.query_one(
+                "SELECT status, source FROM clearance_records "
+                "WHERE student_id = ? AND office_id = ?",
+                (student["id"], registrar["id"]),
+            )
+        self.assertEqual(record["status"], "CLEARED")
+        self.assertEqual(record["source"], "staff")
+
+    def test_slip_response_generates_qr_from_signed_short_code(self) -> None:
         token = self.login()
         svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>'
         with patch("hub._slip_qr_svg", return_value=svg) as make_qr:
@@ -967,10 +1289,10 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         body = response.get_json()
         self.assertEqual(body["qr_svg"], svg)
-        make_qr.assert_called_once_with(body["signed_token"])
+        make_qr.assert_called_once_with(body["public_code"])
 
     def test_slip_qr_renderer_returns_valid_svg(self) -> None:
-        svg = hub._slip_qr_svg("signed-clearance-token")
+        svg = hub._slip_qr_svg("ECH-ABC123")
         root = ElementTree.fromstring(svg)
         self.assertEqual(root.tag.rsplit("}", 1)[-1], "svg")
         self.assertTrue(any(

@@ -1,29 +1,26 @@
 # Basic System Flow
 
 This guide explains the main user and data flows in the DNSC e-Clearance Hub.
-The browser UI may be served by XAMPP Apache; the Python Flask API validates
-requests and reads or writes the local SQLite database. The database is stored
-outside Apache's document root, and the browser never connects directly to it.
+The Python Flask application serves the browser UI and API from the same local
+origin and reads or writes the SQLite database. The browser never connects
+directly to the database file. XAMPP is not required.
 
 ## 1. Start the system
 
-1. Start **Apache** in the XAMPP Control Panel if serving the browser front end
-   through XAMPP. MySQL is not required.
-2. From the project folder, start the API in PowerShell:
+1. From the project folder, start the Hub in PowerShell:
 
    ```powershell
    python python.py serve
    ```
 
-3. Keep the API terminal open. Check `http://localhost:8000/api/health`; the
+2. Keep the terminal open. Check `http://127.0.0.1:8000/api/health`; the
    response should report `"status":"ok"` and `"database":"connected"`.
-4. Open `http://localhost/Integrative-Prog/` through Apache. Do not open the
-   HTML file directly.
-5. Sign in with an account provisioned for the correct role.
+3. Open `http://127.0.0.1:8000/` in a browser. Do not open the HTML file
+   directly.
+4. Sign in with an account provisioned for the correct role.
 
-If the page reports that it cannot complete an API request, confirm the API is
-running and `FRONTEND_ORIGINS` in `.env` includes the browser origin, normally
-`http://localhost`. Restart the API after changing `.env`.
+The UI and API share an origin in this setup, so no separate web server or
+CORS allow-list change is needed for local use.
 
 ## 2. Load the student roster
 
@@ -60,8 +57,8 @@ are blocked. Do not enter fabricated records as official students.
 4. The student signs in and opens **Clearance status** to review office
    decisions.
 5. Staff record a sign-off or HOLD. Once all required offices clear the student,
-   the student can issue a clearance slip containing a QR for the signed token
-   and a short code for manual verification.
+   the student can issue a clearance slip with a QR for the same signed short
+   code printed beneath it; the legacy signed token remains available.
 
 ## 4. Staff flow
 
@@ -110,9 +107,9 @@ are blocked. Do not enter fabricated records as official students.
 - Admin-only endpoints enforce role authorization in the API, not only in the
   page navigation.
 - Staff can change clearance records only for their assigned office.
-- QR codes are generated locally from the signed slip token; the verification
-  API validates token signature, expiry, and revocation without an external QR
-  service.
+- QR codes are generated locally from the signed slip short code; the
+  verification API checks the stored signature, expiry, and revocation without
+  an external QR service. Student ID scans remain roster lookups.
 - Run `database/migrations/001_user_management_audit.sql` once on an existing
   database created before account-management audit actions were added.
 

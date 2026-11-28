@@ -21,12 +21,12 @@ The group scope—not the optional individual scope—is used for this project:
 | Rubric area | Group evidence target | Current evidence / remaining action |
 |---|---|---|
 | R1–R2 automation | Import/archive/log automation plus scheduled daily per-office HOLD summaries | Automation and scheduler installer are present; confirm the registered tasks execute successfully and save logs/reports. |
-| R3–R4 design/technology | Solution design, transformation impact, and two justified components | Design is documented; PWA and locally generated signed-token QR slip are implemented. |
+| R3–R4 design/technology | Solution design, transformation impact, and two justified components | Design is documented; PWA and locally generated signed-short-code QR slip are implemented. |
 | R5–R6 external APIs | Registrar error handling and Nager.Date working-day deadline | Clients and focused tests exist; capture final-environment smoke evidence. |
 | R7–R8 API/client | At least eight endpoints and web views for each role | API spec lists 20+ routes; student, staff, and admin pages use the Hub API. Demonstrate role views. |
 | R9–R10 data/formats | XML/CSV imports with reject log; CSV/JSON/XML reports | Import mapping and report exports are implemented and covered by tests. |
 | R11–R16 security/exchange | Allowlists, salted hashes/RBAC, parameterized SQL, HMAC/replay protection, signed slips, masking, audit | Implementation and automated security cases exist; review with synthetic data and include final API/security test evidence. |
-| R17 testing | At least 20 cases, including mapping, API, and security evidence | Latest automated run: 87/87 passed on 2026-11-24. Complete the manual XAMPP/browser checklist and include dated evidence. |
+| R17 testing | At least 20 cases, including mapping, API, and security evidence | Latest automated run: 87/87 passed on 2026-11-24. Complete the manual local Python/SQLite browser checklist and include dated evidence. |
 | R18 evaluation | 30 outside raters with required group distribution, signed sheets, and consented photos | Not complete in code; collect real evidence and analyze results. |
 
 Course checkpoint targets: Week 15 design presentation; Week 16 progress demo

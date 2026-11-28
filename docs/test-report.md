@@ -106,8 +106,8 @@ individual test method contains the concrete fixture values and requests.
 |---|---|---|---|
 | `test_student_on_hold_cannot_request_slip` — student with unresolved HOLD | Slip issuance is denied. | Assertions passed. | PASS |
 | `test_cleared_student_can_issue_and_verify_short_code` — cleared student and staff verification | Slip is issued and short code verifies. | Assertions passed. | PASS |
-| `test_slip_response_generates_qr_from_signed_token` — issued slip response | QR renderer receives the exact signed token and its SVG is returned. | Assertions passed. | PASS |
-| `test_slip_qr_renderer_returns_valid_svg` — signed-token QR generation | QR renderer returns parseable SVG with path data. | Assertions passed. | PASS |
+| `test_slip_response_generates_qr_from_signed_short_code` — issued slip response | QR renderer receives the exact displayed signed short code and its SVG is returned. | Assertions passed. | PASS |
+| `test_slip_qr_renderer_returns_valid_svg` — signed-short-code QR generation | QR renderer returns parseable SVG with path data. | Assertions passed. | PASS |
 | `test_changed_slip_token_fails_signature` — modified signed token | Verification reports invalid signature. | Assertions passed. | PASS |
 | `test_expired_slip_is_not_verified` — expired slip | Verification reports invalid/expired. | Assertions passed. | PASS |
 | `test_public_json_report_masks_student_numbers` — public JSON report | Student numbers are masked. | Assertions passed. | PASS |

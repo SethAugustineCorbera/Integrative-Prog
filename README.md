@@ -8,7 +8,7 @@ Python/Flask REST API, local SQLite persistence, and a mobile-friendly browser c
 
 ## 1. Prerequisites
 
-- Windows with Python 3.11 or newer. XAMPP Apache is needed only to serve the browser front end at `http://localhost/Integrative-Prog/`; XAMPP MySQL and phpMyAdmin are not required.
+- Windows with Python 3.11 or newer. XAMPP is not required; the Python Hub serves both the browser front end and API, and SQLite stores the data. MySQL and phpMyAdmin are not used.
 - Python 3.11 or newer.
 - The bundled `IT312_Final_Project_Starter_Kit` contains a synthetic Registrar mock API and signed demo imports. Its roster contains fictional students for testing.
 - A browser. Nager.Date deadline calculation needs internet access on its first request for a year.
@@ -44,7 +44,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 Use the outputs for `FLASK_SECRET_KEY`, `HUB_HMAC_SECRET`, and `HUB_SLIP_SIGNING_KEY`. Do not commit `.env` or paste real secrets into this README.
 
-For a deployed HTTPS installation, set `HUB_SSL_CERT` and `HUB_SSL_KEY` in `.env` to the certificate and private-key files for the deployment hostname. The server must receive both paths or it will not start. The development XAMPP presentation may use loopback HTTP, but never expose real student data through that setup. A production deployment should normally terminate TLS with a managed HTTPS reverse proxy or host certificate instead of relying on Flask's development server.
+For a deployed HTTPS installation, set `HUB_SSL_CERT` and `HUB_SSL_KEY` in `.env` to the certificate and private-key files for the deployment hostname. The server must receive both paths or it will not start. Local development uses loopback HTTP; never expose real student data through that setup. A production deployment should normally terminate TLS with a managed HTTPS reverse proxy or host certificate instead of relying on Flask's development server.
 
 ### C. Add local demo records and accounts
 
@@ -61,15 +61,16 @@ This creates three synthetic students and the accounts `demo.student`, `demo.lib
 In one PowerShell window:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python python.py serve
+.\.venv\Scripts\python.exe python.py serve
 ```
 
-Confirm the API responds at `http://localhost:8000/api/health` with a database-connected result. Keep this window open. In a browser open `http://localhost/Integrative-Prog/` and log in with one of the demo usernames and the local `DEMO_PASSWORD`.
+Always start the API with the project virtual environment. The clearance-slip QR generator depends on `qrcode`, which is installed from [requirements.txt](requirements.txt); starting `python.py serve` with a different system Python can make slip requests return an internal server error. If needed, create the environment and install dependencies with `py -3 -m venv .venv` and `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`.
+
+The Python server hosts the UI and API together. Confirm `http://127.0.0.1:8000/api/health` reports a connected database, then open `http://127.0.0.1:8000/` in your browser and log in. Keep the PowerShell window open while using the Hub.
 
 To try student sign-up, start the bundled mock Registrar as described in [Registrar integration](#5-registrar-integration), then run `python python.py sync-registrar`. Select **Register an account** on the login page, enter an active student number and the matching roster name, then create a username and a password of at least 12 characters. The bundled roster includes synthetic student `2026-29417` / `Mark D. Navarro` for testing. After successful registration, return to the login form and sign in with the username and password you chose. Staff and admin accounts must be provisioned by an administrator. For the separate demo accounts, use `demo.student`, `demo.library`, or `demo.admin` with `DEMO_PASSWORD` configured before `seed-demo`. See the [user guide](docs/user-guide.md) for the full login flow.
 
-The browser UI is served by XAMPP Apache; the API binds to `127.0.0.1:8000` by default. The API CORS allow-list is in `FRONTEND_ORIGINS`. Do not expose the Flask development server to the public internet.
+The browser UI and API share `http://127.0.0.1:8000` by default, so no separate web server or CORS setup is needed for local use. Do not expose the Flask development server to the public internet.
 
 ### Admin account management
 
@@ -85,7 +86,7 @@ The runtime [SQLite schema](database/schema.sqlite.sql) includes account-managem
 2. The API identifies the linked student record; users cannot select a role in the browser.
 3. **Clearance status** loads one record per required office. Missing office review is shown as HOLD, not silently treated as cleared.
 4. Visit the office named in each HOLD reason and wait for an authorized staff update.
-5. Open **Clearance slip** at any point to display your unique, expiring QR code and short code. Staff verification shows your current status at each office and your overall progress; the QR stays useful as offices clear you.
+5. Open **Clearance slip** at any point to display your unique QR code and short code. The QR encodes the exact same `ECH-...` signed short code printed below it, so scanning the QR or entering the code uses the same verification path. The code is reused until its 30-day expiry, and verification always reads current office progress.
 6. Use **Deadline** to see the configured number of working days and the weekend/Philippine holidays skipped.
 7. **Log out** invalidates the server-side session.
 
@@ -93,13 +94,27 @@ The runtime [SQLite schema](database/schema.sqlite.sql) includes account-managem
 
 1. Sign in with an account assigned to one office.
 2. **Office queue** calls the Hub API and shows only that office's students. The role/office restriction is checked by the server, not trusted from the page.
-3. **Sign off** records the staff action and reason; **Place HOLD** requires a reason. Each change creates an audit event.
+3. **Sign off** requires an explicit staff confirmation and reason; no office is automatically signed off when a record is loaded or an obligation is settled. **Place HOLD** requires a reason. Each change creates an audit event.
 4. **HOLD summary** lists unresolved records for the assigned office.
-5. **Verify slip** accepts the short code or full signed token (which can be read from the QR), then checks signature, revocation, and expiry.
+5. **Verify slip** accepts the QR's signed short code, a manually entered short code, a legacy signed token, or a Student ID. The QR and short code are the same signed value and are checked for authenticity, revocation, and expiry before current office status is shown. Staff can continue to **Clearance Signing**, review the obligations, and explicitly click **Sign off now**. A Student ID lookup shows current status but does not verify a signed slip. Students cannot sign themselves off.
+
+### Phone as a wireless scanner (Option 2)
+
+The Hub's scan field works with a phone scanner app that has a Windows/PC receiver and sends scans as keyboard input (sometimes called *keyboard wedge* mode). The phone does not need direct access to the Hub API.
+
+For app download links, pairing instructions, and troubleshooting, follow the step-by-step [phone setup guide](phone_setup.txt).
+
+1. Connect the phone and PC to the same trusted Wi-Fi network. Install the scanner app on the phone and its companion receiver on the PC, then pair them using the app's instructions. Allow the receiver through Windows Firewall for **Private networks only** if prompted.
+2. Sign in on the PC. Open **Verify Slip** in Admin for lookup-only access, or open **Verify Slip** in the assigned office account when preparing an office sign-off.
+3. Click the **Scan QR or Student ID** field so it has focus. In the phone app, enable sending the scan as keyboard text and, if available, append Enter/Return.
+4. Scan the student's QR (it types the same `ECH-...` short code printed on the slip) to verify it, or scan their Student ID barcode to look up current status. If the app does not append Enter, click **Verify or look up** on the PC.
+5. For office staff, choose **Continue to clearance signing**, review the office checks, and click **Sign off now** only after confirming there are no outstanding obligations. Admin verification is read-only; only staff assigned to the office can sign off.
+
+If scans appear in the wrong place, refocus the PC scan field and scan again. The existing Student ID, short-code, and token fields remain available for manual entry. Use a scanner app that pairs directly with the PC over your local network or Bluetooth; do not expose the Flask API to the public internet.
 
 ### Admin flow
 
-1. Synchronize the official masterlist with **Sync Registrar masterlist** or `python python.py sync-registrar`.
+1. Synchronize the official masterlist with **Sync Registrar masterlist** or `python python.py sync-registrar`. Sync leaves unreviewed active students pending for manual Registrar review and preserves staff-entered decisions.
 2. Use **Users** to create and maintain student, staff, and admin accounts, assign student records/offices, and set/reset passwords.
 3. Upload an XML/CSV file and its matching JSON manifest in **Import monitor**, or put both files in `drop_folder\` and run the importer.
 4. Review each import outcome and row-level rejection reason. Invalid manifests are rejected before row processing; verified partial files apply valid rows and retain rejection reasons.

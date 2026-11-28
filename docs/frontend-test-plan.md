@@ -5,10 +5,10 @@ This is a manual verification checklist for a presentation setup. The automated 
 ## Setup
 
 1. Configure the local `.env`. For a new installation only, initialize the database with `python python.py init-db`; do not run this on the migrated database.
-2. Start XAMPP Apache if needed for the browser front end, then start the Flask API with `python python.py serve`.
-3. Confirm `http://localhost:8000/api/health` reports a connected database.
+2. Start the Flask Hub with `.\.venv\Scripts\python.exe python.py serve`; it serves both the browser front end and API, using the project's SQLite database.
+3. Confirm `http://127.0.0.1:8000/api/health` reports a connected database.
 4. Seed fictional accounts with `python python.py seed-demo`, using a unique local `DEMO_PASSWORD`.
-5. Open `http://localhost/Integrative-Prog/` in a browser and keep the API console available for errors.
+5. Open `http://127.0.0.1:8000/` in a browser and keep the Hub console available for errors.
 
 ## Manual cases
 
@@ -22,7 +22,7 @@ This is a manual verification checklist for a presentation setup. The automated 
 | FE-06 | Staff sign-off | Sign off an eligible queued record with a reason. | The status changes to CLEARED and the audit record is written. | Pending |
 | FE-07 | Staff HOLD | Place a HOLD with a reason; then try without a reason. | Valid HOLD is saved with an audit event; missing reason is rejected with a visible error. | Pending |
 | FE-08 | Cross-office staff restriction | Attempt to access or change a different office's record. | API rejects the action; no record is changed. | Pending |
-| FE-09 | Clearance slip eligibility and QR | Sign in as a held student, then as a fully cleared student. | Held account cannot issue a slip; cleared account sees a real QR encoding the signed token and a short code; the token/code verifies through the API. | Pending |
+| FE-09 | Clearance slip eligibility and QR | Sign in as a held student, then as a fully cleared student. | Held account cannot issue a slip; an eligible account sees a real QR encoding the exact short code printed beneath it; both scanned QR code and manually entered code verify through the API. | Pending |
 | FE-10 | Slip verification | Verify a valid code, then a modified/expired code. | Valid slip verifies; invalid or expired slip is reported as unverified. | Pending |
 | FE-11 | Admin access and import monitor | Sign in as `demo.admin`; open the monitor. | Admin can see import status and available admin actions; staff and student accounts cannot use these routes. | Pending |
 | FE-12 | Signed import | Upload a sample file with a valid matching manifest, then change the file and upload again. | Valid import reports row counts; changed content is rejected before data is applied. | Pending |
@@ -32,12 +32,13 @@ This is a manual verification checklist for a presentation setup. The automated 
 | FE-16 | Student registration and login | Register using a student number/name already in the active roster, then sign in with the new credentials. Try a mismatched name and a second account for the same student. | Matching student can register and log in; mismatches and duplicate student accounts are rejected; registration cannot select staff/admin. | Pending |
 | FE-17 | Registration without a roster | Attempt student registration when no active Registrar records are loaded. | The API returns a clear message that the administrator must sync the Registrar masterlist; it does not create an unverified student record. | Passed 2026-11-14 and rechecked 2026-11-15: browser displayed the missing Registrar API key guidance for a synthetic request. |
 | FE-18 | Admin user management | As admin, create an assigned staff account; change its role/office; reset its password; verify old sessions no longer work; then inspect the user audit log. | Only admins can manage accounts; role/office assignments are validated; account events appear in Audit log; passwords and sensitive values are not listed or audited. | Pending |
-| FE-19 | Admin account edit CORS | From the XAMPP-served Users page, edit an account and save a valid change. | The API preflight allows PUT from the configured frontend origin; the update completes and the account list refreshes. | Pending |
+| FE-19 | Same-origin UI and API | Open the UI at `http://127.0.0.1:8000/`, sign in, and edit an account as admin. | The UI loads from the Python Hub and API requests succeed on the same origin without a separate web server. | Pending |
+| FE-20 | Student ID status lookup and signing | On an office's Verify Slip tab, enter one exact active-roster student ID. Verify an assigned office sees only its own status, while Registrar sees all office statuses; choose **Continue to clearance signing** and try an eligible sign-off. | ID lookup is clearly labeled as status only, not a signed-slip verification; only authorized staff can sign for their office. Unknown/malformed IDs explain that the exact Registrar ID is required. | Pending |
 
 ## Completion record
 
 | Date | Tester | Browser/version | Passed | Failed | Notes/evidence location |
 |---|---|---|---:|---:|---|
-| Pending | — | — | — | — | Complete during the actual XAMPP presentation smoke test. |
+| Pending | — | — | — | — | Complete during the local Python/SQLite browser smoke test. |
 
-Do not mark a case passed until it has been run against the intended XAMPP setup. Capture only fictional demo data in screenshots. Do not include real student data, credentials, or tokens in evidence.
+Do not mark a case passed until it has been run against the intended local Python/SQLite setup. Capture only fictional demo data in screenshots. Do not include real student data, credentials, or tokens in evidence.

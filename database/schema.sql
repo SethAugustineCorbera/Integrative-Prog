@@ -140,6 +140,20 @@ CREATE TABLE IF NOT EXISTS clearance_slips (
     CONSTRAINT fk_slips_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS student_cards (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    card_id VARCHAR(128) NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    registered_by BIGINT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_student_cards_card_id (card_id),
+    UNIQUE KEY uq_student_cards_student_id (student_id),
+    CONSTRAINT fk_student_cards_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    CONSTRAINT fk_student_cards_user FOREIGN KEY (registered_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS holidays (
     holiday_date DATE NOT NULL,
     local_name VARCHAR(160) NOT NULL,

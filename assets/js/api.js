@@ -1,5 +1,7 @@
 /* The front end talks to the Hub API only; it never connects directly to the database (R8). */
-const HUB_API_BASE = "http://127.0.0.1:8000/api";
+const HUB_API_BASE = window.location.port === "8000"
+  ? window.location.origin + "/api"
+  : "http://127.0.0.1:8000/api";
 
 async function hubRequest(method, path, body) {
   const token = sessionStorage.getItem("token");
@@ -17,19 +19,22 @@ async function hubRequest(method, path, body) {
     res = await fetch(HUB_API_BASE + path, options);
   } catch (error) {
     throw new Error(
-      "The Hub API request could not be completed. Confirm the API is running, that FRONTEND_ORIGINS includes this site's origin, and reload the page."
+      "The Hub cannot be reached. Run python.py serve and open http://127.0.0.1:8000/ (do not open the HTML file directly)."
     );
   }
   if (!res.ok) {
     let message = "Hub API error " + res.status;
+    let code = "";
     try {
       const error = await res.json();
       if (error.error) message = error.error;
+      if (error.code) code = error.code;
     } catch (parseError) {
       message = "Hub API error " + res.status;
     }
     const apiError = new Error(message);
     apiError.status = res.status;
+    apiError.code = code;
     throw apiError;
   }
   if (res.status === 204) return null;
@@ -42,6 +47,19 @@ const HubApi = {
   me: () => hubRequest("GET", "/auth/me"),
   logout: () => hubRequest("POST", "/auth/logout", {}),
   myStatus: () => hubRequest("GET", "/students/me/clearance"),
+  studentClearance: (studentNumber) => hubRequest("GET", "/students/clearance?student_number=" + encodeURIComponent(studentNumber)),
+  scanStudentOrCard: async (identifier) => {
+    try {
+      return await hubRequest("POST", "/cards/verify", { card_id: identifier });
+    } catch (error) {
+      if (error.code !== "card_not_found") throw error;
+      return HubApi.studentClearance(identifier);
+    }
+  },
+  registerStudentCard: (cardId, studentNumber) => hubRequest("POST", "/cards/register", {
+    card_id: cardId,
+    student_number: studentNumber
+  }),
   mySlip: () => hubRequest("GET", "/slips/me"),
   deadline: () => hubRequest("GET", "/deadline"),
   officeQueue: (office, status) => hubRequest("GET", "/offices/" + encodeURIComponent(office) + "/students" + (status ? "?status=" + encodeURIComponent(status) : "")),

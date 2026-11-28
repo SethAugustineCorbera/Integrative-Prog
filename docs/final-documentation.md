@@ -51,6 +51,10 @@ The code includes a local Flask API, SQLite schema, browser client, the bundled 
 
 See [solution-design.md](./solution-design.md) for the architecture, data flow, emerging-technology justification, security controls, and R1–R18 implementation traceability.
 
+### Registrar role in clearance signing
+
+The Registrar is both the authoritative source for student identity and the final office in the clearance workflow. Registrar personnel match students to the active masterlist, review the status and recorded reason from Library, Accounting, and Student Affairs, and verify that required office sign-offs are complete before recording the final Registrar sign-off. If a requirement remains unresolved, Registrar staff can retain the HOLD and its reason rather than marking the student cleared. These decisions are authenticated and included in the Hub's audit history.
+
 ## Chapter 3 — Implementation
 
 - **Automation:** `python.py run-imports`, `python.py hold-summary`, timestamped logs, and archive.
@@ -58,7 +62,7 @@ See [solution-design.md](./solution-design.md) for the architecture, data flow, 
 - **Hub API/client:** Flask API documented in [api-spec.md](./api-spec.md); web screens use REST only.
 - **Data mapping:** CSV/XML field aliases and rejects are specified in [data-mapping.md](./data-mapping.md).
 - **Database:** SQLite tables are defined in `database/schema.sqlite.sql`; the runtime database is stored outside the web root.
-- **Emerging technology (R4):** mobile-friendly PWA plus a real, locally generated QR clearance slip encoding the signed token.
+- **Emerging technology (R4):** mobile-friendly PWA plus a real, locally generated QR clearance slip encoding the same signed short code shown on the slip.
 - **Security:** PBKDF2, bearer sessions, role/office guards, parameterized SQL, environment secrets, HMAC files, signed slips, masking, and audit events.
 
 ## Chapter 4 — Testing and Evaluation

@@ -370,7 +370,7 @@ async function loadSlip() {
         if (qr.dataset.imageUrl) URL.revokeObjectURL(qr.dataset.imageUrl);
         const imageUrl = URL.createObjectURL(new Blob([data.qr_svg], { type: "image/svg+xml" }));
         const image = document.createElement("img");
-        image.alt = "QR code containing the signed clearance token";
+        image.alt = "QR code containing the signed clearance short code";
         image.src = imageUrl;
         qr.dataset.imageUrl = imageUrl;
         qr.replaceChildren(image);
@@ -379,9 +379,9 @@ async function loadSlip() {
         code.hidden = false;
         slipData = data;
         document.getElementById("slip-download").hidden = false;
-        note.textContent = "Current progress: " + data.progress.cleared + " of "
+        note.textContent = "The QR and printed short code are the same signed value. This unique code stays the same until it expires. Current progress: " + data.progress.cleared + " of "
             + data.progress.total + " required offices cleared (" + data.progress.percent
-            + "%). Staff verification shows your latest progress. The QR expires "
+            + "%). Staff verification shows your latest progress. It expires "
             + new Date(data.expires_at).toLocaleString() + ".";
     } catch (error) {
         if (error.status === 401) throw error;

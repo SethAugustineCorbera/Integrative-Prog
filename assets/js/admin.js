@@ -608,29 +608,98 @@ function showResult(pairs) {
 
 document.getElementById("verify-form").addEventListener("submit", async function (event) {
     event.preventDefault();
-    const code = document.getElementById("slip-code-input").value.trim();
-    const token = document.getElementById("slip-token-input").value.trim();
-    if (!code && !token) {
-        showMessage("Enter a short code or a signed token.", true);
+    const scanInput = document.getElementById("scan-input");
+    const scanValue = scanInput.value.trim();
+    let studentNumber = "";
+    let code = "";
+    let token = "";
+    if (scanValue) {
+        if (/^[A-Za-z0-9_-]+\.[a-fA-F0-9]{64}$/.test(scanValue)) token = scanValue;
+        else if (/^ECH-[A-Z0-9]{6,12}$/i.test(scanValue)) code = scanValue;
+        else studentNumber = scanValue;
+    } else {
+        studentNumber = document.getElementById("student-number-input").value.trim();
+        code = document.getElementById("slip-code-input").value.trim();
+        token = document.getElementById("slip-token-input").value.trim();
+    }
+    if ([studentNumber, code, token].filter(Boolean).length !== 1) {
+        showMessage("Enter exactly one student ID, signed short code, or signed token.", true);
         return;
     }
     const button = document.getElementById("verify-btn");
     button.disabled = true;
     showMessage("", false);
+    let completed = false;
     try {
-        const result = await HubApi.verifySlip(token ? { token: token } : { code: code });
-        const pairs = [["Signature", badge(result.verified ? "VERIFIED" : "NOT VERIFIED")]];
-        if (result.verified) {
-            pairs.push(["Student", result.student.full_name + " (" + result.student.student_number + ")"]);
-            pairs.push(["Overall", badge(result.overall)]);
-            if (result.expires_at) pairs.push(["Expires", new Date(result.expires_at).toLocaleString()]);
-            pairs.push(["Result", "Valid signed clearance slip."]);
+        if (studentNumber) {
+            const result = scanValue
+                ? await HubApi.scanStudentOrCard(studentNumber)
+                : await HubApi.studentClearance(studentNumber);
+            const pairs = [
+                ["Lookup", result.match_type === "registered_card"
+                    ? "Registered card matched; this shows current status, not a signed QR slip."
+                    : "Current clearance status only; this does not verify a signed slip."],
+                ["Student", result.student.full_name + " (" + result.student.student_number + ")"],
+                ["Overall", badge(result.overall)]
+            ];
+            result.offices.forEach(function (item) {
+                pairs.push([item.office, badge(item.status)]);
+                pairs.push([item.office + " reason", item.reason]);
+            });
+            showResult(pairs);
+            completed = true;
         } else {
-            pairs.push(["Result", result.reason || "Slip could not be verified."]);
+            const result = await HubApi.verifySlip(token ? { token: token } : { code: code });
+            const pairs = [["Signature", badge(result.verified ? "VERIFIED" : "NOT VERIFIED")]];
+            if (result.verified) {
+                pairs.push(["Student", result.student.full_name + " (" + result.student.student_number + ")"]);
+                pairs.push(["Overall", badge(result.overall)]);
+                (result.offices || []).forEach(function (item) {
+                    pairs.push([item.office, badge(item.status)]);
+                });
+                if (result.expires_at) pairs.push(["Expires", new Date(result.expires_at).toLocaleString()]);
+                pairs.push(["Result", "Valid signed clearance slip."]);
+            } else {
+                pairs.push(["Result", result.reason || "Slip could not be verified."]);
+            }
+            showResult(pairs);
+            completed = result.verified;
         }
-        showResult(pairs);
     } catch (error) {
         handleError(error);
+    } finally {
+        button.disabled = false;
+        if (completed && scanValue) {
+            scanInput.value = "";
+            scanInput.focus();
+        }
+    }
+});
+
+document.getElementById("card-register-form").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const cardInput = document.getElementById("card-id-input");
+    const studentInput = document.getElementById("card-student-number-input");
+    const button = document.getElementById("register-card-btn");
+    const message = document.getElementById("card-registration-message");
+    button.disabled = true;
+    message.textContent = "";
+    message.hidden = false;
+    message.classList.remove("error");
+    try {
+        const result = await HubApi.registerStudentCard(
+            cardInput.value.trim(),
+            studentInput.value.trim()
+        );
+        message.textContent = result.message + (result.replaced_previous_card
+            ? " The student's previous card is no longer active."
+            : "");
+        cardInput.value = "";
+        studentInput.value = "";
+        cardInput.focus();
+    } catch (error) {
+        message.textContent = error.message || "Unable to register this card.";
+        message.classList.add("error");
     } finally {
         button.disabled = false;
     }
@@ -649,8 +718,10 @@ const API_ROWS = [
     ["POST", "/clearance/{student_number}/{office}/hold", "Put a student on hold with a reason", "Assigned staff", "200, 400, 403, 404"],
     ["GET", "/deadline", "Computed clearance deadline", "Authenticated", "200, 401"],
     ["GET", "/reports/clearance?format=csv|json|xml", "Export clearance data with masked IDs", "Admin, Registrar staff", "200, 400, 403"],
-    ["GET", "/slips/me", "Get own signed slip token and QR data", "Student", "200, 401"],
+    ["GET", "/slips/me", "Get own signed slip QR and short code", "Student", "200, 401"],
     ["POST", "/slips/verify", "Verify a signed slip token or short code", "Staff, Admin", "200, 400, 401"],
+    ["POST", "/cards/register", "Register or replace an Admin-managed student card", "Admin", "200, 201, 400, 403, 404, 409"],
+    ["POST", "/cards/verify", "Match a registered card and return current clearance", "Staff, Admin", "200, 400, 401, 403, 404, 409"],
     ["GET", "/audit", "View sign-off and hold history", "Admin", "200, 403"],
     ["GET", "/imports", "View imports and reject log", "Admin", "200, 403"],
     ["POST", "/admin/import", "Upload source file and signed manifest", "Admin", "200, 400, 403"],
@@ -695,6 +766,7 @@ async function showTab(name) {
     menuToggle.classList.remove("open");
     menuToggle.setAttribute("aria-expanded", "false");
     showMessage("", false);
+    if (name === "verify") document.getElementById("scan-input").focus();
     if (!LOADERS[name] || loaded[name]) return;
     loaded[name] = true;
     try {
