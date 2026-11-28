@@ -5,8 +5,8 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F4F4F2",
-  "theme_color": "#12354F",
+  "background_color": "#F7F9F8",
+  "theme_color": "#1F6B47",
   "icons": [
     {
       "src": "./assets/icons/clearance.svg",

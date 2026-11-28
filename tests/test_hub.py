@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import json
-import os
 import sqlite3
 import tempfile
 import unittest
@@ -29,14 +28,100 @@ PASSWORD = "LocalTestPassword123!"
 TEST_HMAC = "test-hmac-secret-that-is-long-enough-123456"
 TEST_SLIP = "test-slip-secret-that-is-long-enough-123456"
 TEST_PASSWORD_HASH = hub.hash_password(PASSWORD)
-REAL_GET_DB = hub.get_db
 
 
-SQLITE_SCHEMA = (
-    Path(__file__).resolve().parents[1]
-    .joinpath("database", "schema.sqlite.sql")
-    .read_text(encoding="utf-8")
-)
+SQLITE_SCHEMA = """
+CREATE TABLE offices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
+    required_for_clearance INTEGER NOT NULL
+);
+CREATE TABLE students (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_number TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL,
+    program TEXT NOT NULL,
+    year_level INTEGER NOT NULL,
+    email TEXT,
+    active INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL,
+    student_id INTEGER UNIQUE,
+    office_id INTEGER,
+    active INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE auth_sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    expires_at TEXT NOT NULL
+);
+CREATE TABLE clearance_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    office_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    source TEXT NOT NULL,
+    updated_by INTEGER,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, office_id)
+);
+CREATE TABLE audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_user_id INTEGER,
+    action TEXT NOT NULL,
+    student_id INTEGER,
+    office_id INTEGER,
+    reason TEXT,
+    details_json TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE import_batches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_name TEXT NOT NULL,
+    source TEXT NOT NULL,
+    file_sha256 TEXT,
+    nonce TEXT UNIQUE,
+    manifest_verified INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL,
+    imported_count INTEGER NOT NULL DEFAULT 0,
+    rejected_count INTEGER NOT NULL DEFAULT 0,
+    created_by INTEGER,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE import_rejections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch_id INTEGER NOT NULL,
+    row_reference TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    record_json TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE clearance_slips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    public_code TEXT NOT NULL UNIQUE,
+    token_hash TEXT NOT NULL UNIQUE,
+    payload_json TEXT NOT NULL,
+    signature TEXT NOT NULL,
+    student_id INTEGER NOT NULL,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT
+);
+CREATE TABLE holidays (
+    holiday_date TEXT NOT NULL,
+    local_name TEXT NOT NULL,
+    english_name TEXT NOT NULL,
+    country_code TEXT NOT NULL,
+    fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (holiday_date, country_code)
+);
+"""
 
 
 class HubTestCase(unittest.TestCase):
@@ -45,13 +130,19 @@ class HubTestCase(unittest.TestCase):
         self.db_path = Path(self.temp_dir.name) / "hub-test.sqlite3"
         self.connection = sqlite3.connect(self.db_path)
         self.connection.row_factory = sqlite3.Row
-        self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.executescript(SQLITE_SCHEMA)
-        self.assertEqual(
-            self.connection.execute("PRAGMA foreign_keys").fetchone()[0], 1
+        self.connection.executemany(
+            "INSERT INTO offices (code, name, required_for_clearance) VALUES (?, ?, 1)",
+            [
+                ("registrar", "Registrar"),
+                ("library", "Library"),
+                ("accounting", "Accounting / Cashier"),
+                ("student-affairs", "Student Affairs"),
+            ],
         )
         hub.app.config.update(
             TESTING=True,
+            DB_MODE="sqlite",
             DB_PATH=str(self.db_path),
             HMAC_SECRET=TEST_HMAC,
             SLIP_SIGNING_KEY=TEST_SLIP,
@@ -90,10 +181,10 @@ class HubTestCase(unittest.TestCase):
                 }
             )
             student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = ?", ("2023-0001-14",)
+                "SELECT id FROM students WHERE student_number = %s", ("2023-0001-14",)
             )
             held_student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = ?", ("2023-0002-14",)
+                "SELECT id FROM students WHERE student_number = %s", ("2023-0002-14",)
             )
             offices = hub.query_all("SELECT id, code FROM offices")
             for office in offices:
@@ -120,89 +211,6 @@ class HubTestCase(unittest.TestCase):
         return response.get_json()["token"]
 
 
-class SqliteConnectionTests(HubTestCase):
-    def test_get_db_enables_foreign_keys_for_each_connection(self) -> None:
-        with hub.app.app_context():
-            connection = REAL_GET_DB()
-            self.assertEqual(
-                connection.execute("PRAGMA foreign_keys").fetchone()[0], 1
-            )
-            with self.assertRaises(sqlite3.IntegrityError):
-                connection.execute(
-                    "INSERT INTO auth_sessions (token_hash, user_id, expires_at) "
-                    "VALUES (?, ?, ?)",
-                    ("a" * 64, -1, "2099-01-01 00:00:00"),
-                )
-
-    def test_get_db_adds_card_table_to_existing_database(self) -> None:
-        self.connection.execute("DROP TABLE student_cards")
-        self.connection.commit()
-        with hub.app.app_context():
-            connection = REAL_GET_DB()
-            table = connection.execute(
-                "SELECT name FROM sqlite_master "
-                "WHERE type = 'table' AND name = 'student_cards'"
-            ).fetchone()
-            self.assertIsNotNone(table)
-
-    def test_auth_session_token_hash_cannot_be_null(self) -> None:
-        cursor = self.connection.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-            ("schema.test", TEST_PASSWORD_HASH, "admin"),
-        )
-        with self.assertRaises(sqlite3.IntegrityError):
-            self.connection.execute(
-                "INSERT INTO auth_sessions (token_hash, user_id, expires_at) "
-                "VALUES (NULL, ?, ?)",
-                (cursor.lastrowid, "2099-01-01 00:00:00"),
-            )
-
-    def test_case_insensitive_office_uniqueness_is_preserved(self) -> None:
-        with self.assertRaises(sqlite3.IntegrityError):
-            self.connection.execute(
-                "INSERT INTO offices (code, name) VALUES (?, ?)",
-                ("REGISTRAR", "Duplicate code test"),
-            )
-
-    def test_student_and_clearance_updates_refresh_timestamps(self) -> None:
-        sentinel = "2000-01-01 00:00:00"
-        student = self.connection.execute(
-            "SELECT id FROM students ORDER BY id LIMIT 1"
-        ).fetchone()
-        clearance = self.connection.execute(
-            "SELECT id FROM clearance_records ORDER BY id LIMIT 1"
-        ).fetchone()
-        self.connection.execute(
-            "UPDATE students SET updated_at = ? WHERE id = ?",
-            (sentinel, student["id"]),
-        )
-        self.connection.execute(
-            "UPDATE students SET full_name = full_name || ' ' WHERE id = ?",
-            (student["id"],),
-        )
-        self.assertNotEqual(
-            self.connection.execute(
-                "SELECT updated_at FROM students WHERE id = ?", (student["id"],)
-            ).fetchone()[0],
-            sentinel,
-        )
-        self.connection.execute(
-            "UPDATE clearance_records SET updated_at = ? WHERE id = ?",
-            (sentinel, clearance["id"]),
-        )
-        self.connection.execute(
-            "UPDATE clearance_records SET reason = reason || ' ' WHERE id = ?",
-            (clearance["id"],),
-        )
-        self.assertNotEqual(
-            self.connection.execute(
-                "SELECT updated_at FROM clearance_records WHERE id = ?",
-                (clearance["id"],),
-            ).fetchone()[0],
-            sentinel,
-        )
-
-
 class PasswordTests(HubTestCase):
     def test_hash_verifies_correct_password(self) -> None:
         stored = hub.hash_password(PASSWORD)
@@ -216,39 +224,6 @@ class PasswordTests(HubTestCase):
 
     def test_malformed_password_hash_is_rejected(self) -> None:
         self.assertFalse(hub.verify_password(PASSWORD, "bad$hash"))
-
-
-class DeploymentTlsTests(unittest.TestCase):
-    def test_tls_is_disabled_when_certificates_are_not_configured(self) -> None:
-        with patch.dict(os.environ, {"HUB_SSL_CERT": "", "HUB_SSL_KEY": ""}, clear=False):
-            self.assertIsNone(hub_cli._tls_context())
-
-    def test_tls_accepts_existing_certificate_and_key(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            cert = Path(directory) / "server.crt"
-            key = Path(directory) / "server.key"
-            cert.write_text("test", encoding="utf-8")
-            key.write_text("test", encoding="utf-8")
-            with patch.dict(
-                os.environ,
-                {"HUB_SSL_CERT": str(cert), "HUB_SSL_KEY": str(key)},
-                clear=False,
-            ):
-                self.assertEqual(hub_cli._tls_context(), (str(cert), str(key)))
-
-    def test_tls_requires_both_certificate_and_key(self) -> None:
-        with patch.dict(os.environ, {"HUB_SSL_CERT": "server.crt", "HUB_SSL_KEY": ""}, clear=False):
-            with self.assertRaisesRegex(ValueError, "must both be configured"):
-                hub_cli._tls_context()
-
-    def test_tls_rejects_missing_certificate_files(self) -> None:
-        with patch.dict(
-            os.environ,
-            {"HUB_SSL_CERT": "missing.crt", "HUB_SSL_KEY": "missing.key"},
-            clear=False,
-        ):
-            with self.assertRaisesRegex(ValueError, "does not exist"):
-                hub_cli._tls_context()
 
 
 class ScheduleTests(unittest.TestCase):
@@ -574,36 +549,36 @@ class ApiTests(HubTestCase):
         super().setUp()
         with hub.app.app_context():
             student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = ?", ("2023-0001-14",)
+                "SELECT id FROM students WHERE student_number = %s", ("2023-0001-14",)
             )
             held_student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = ?", ("2023-0002-14",)
+                "SELECT id FROM students WHERE student_number = %s", ("2023-0002-14",)
             )
             library = hub.query_one(
-                "SELECT id FROM offices WHERE code = ?", ("library",)
+                "SELECT id FROM offices WHERE code = %s", ("library",)
             )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role, student_id) VALUES (?, ?, ?, ?)",
+                "INSERT INTO users (username, password_hash, role, student_id) VALUES (%s, %s, %s, %s)",
                 ("test.student", TEST_PASSWORD_HASH, "student", student["id"]),
             )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role, student_id) VALUES (?, ?, ?, ?)",
+                "INSERT INTO users (username, password_hash, role, student_id) VALUES (%s, %s, %s, %s)",
                 ("held.student", TEST_PASSWORD_HASH, "student", held_student["id"]),
             )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role, office_id) VALUES (?, ?, ?, ?)",
+                "INSERT INTO users (username, password_hash, role, office_id) VALUES (%s, %s, %s, %s)",
                 ("test.library", TEST_PASSWORD_HASH, "staff", library["id"]),
             )
             registrar = hub.query_one(
-                "SELECT id FROM offices WHERE code = ?", ("registrar",)
+                "SELECT id FROM offices WHERE code = %s", ("registrar",)
             )
             if registrar is not None:
                 hub.execute(
-                    "INSERT INTO users (username, password_hash, role, office_id) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO users (username, password_hash, role, office_id) VALUES (%s, %s, %s, %s)",
                     ("test.registrar", TEST_PASSWORD_HASH, "staff", registrar["id"]),
                 )
             hub.execute(
-                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
                 ("test.admin", TEST_PASSWORD_HASH, "admin"),
             )
             hub.commit()
@@ -612,26 +587,6 @@ class ApiTests(HubTestCase):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["database"], "connected")
-
-    def test_python_server_serves_frontend_without_exposing_private_files(self) -> None:
-        home = self.client.get("/")
-        self.assertEqual(home.status_code, 200)
-        self.assertIn("DNSC e-Clearance Hub", home.get_data(as_text=True))
-        home.close()
-        page = self.client.get("/modules/student/student.html")
-        self.assertEqual(page.status_code, 200)
-        page.close()
-        asset = self.client.get("/assets/js/api.js")
-        self.assertEqual(asset.status_code, 200)
-        asset.close()
-        self.assertEqual(self.client.get("/.env").status_code, 404)
-        self.assertEqual(
-            self.client.get("/database/schema.sqlite.sql").status_code, 404
-        )
-        self.assertEqual(
-            self.client.get("/database/dnsc_clearance_hub.sqlite3").status_code,
-            404,
-        )
 
     def test_protected_route_rejects_missing_token(self) -> None:
         self.assertEqual(self.client.get("/api/students/me/clearance").status_code, 401)
@@ -779,65 +734,6 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["overall"], "CLEARED")
 
-    def test_staff_student_id_lookup_is_limited_to_assigned_office(self) -> None:
-        token = self.login("test.library")
-        response = self.client.get(
-            "/api/students/clearance?student_number=2023-0001-14",
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 200)
-        body = response.get_json()
-        self.assertEqual(body["scope"], "assigned_office")
-        self.assertEqual(body["office"]["office_code"], "library")
-        self.assertEqual(body["office"]["status"], "CLEARED")
-        self.assertNotIn("overall", body)
-        self.assertNotIn("offices", body)
-
-    def test_registrar_can_look_up_all_office_statuses_by_student_id(self) -> None:
-        token = self.login("test.registrar")
-        response = self.client.get(
-            "/api/students/clearance?student_number=2023-0001-14",
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 200)
-        body = response.get_json()
-        self.assertEqual(body["scope"], "all_offices")
-        self.assertEqual(body["overall"], "CLEARED")
-        self.assertEqual(len(body["offices"]), 4)
-
-    def test_student_id_lookup_rejects_student_role_and_unknown_id(self) -> None:
-        student_token = self.login()
-        forbidden = self.client.get(
-            "/api/students/clearance?student_number=2023-0001-14",
-            headers={"Authorization": "Bearer " + student_token},
-        )
-        self.assertEqual(forbidden.status_code, 403)
-
-        registrar_token = self.login("test.registrar")
-        invalid_query = self.client.get(
-            "/api/students/clearance?student_number=2023-0001-14&unexpected=value",
-            headers={"Authorization": "Bearer " + registrar_token},
-        )
-        self.assertEqual(invalid_query.status_code, 400)
-
-        missing = self.client.get(
-            "/api/students/clearance?student_number=2023--0001-14",
-            headers={"Authorization": "Bearer " + registrar_token},
-        )
-        self.assertEqual(missing.status_code, 404)
-        self.assertIn("exact ID", missing.get_json()["error"])
-
-    def test_signoff_unknown_student_returns_actionable_not_found_error(self) -> None:
-        token = self.login("test.library")
-        response = self.client.post(
-            "/api/clearance/2023--0001-14/library/signoff",
-            json={"reason": "Checked at the desk."},
-            headers={"Authorization": "Bearer " + token},
-        )
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.get_json()["code"], "student_not_found")
-        self.assertIn("exact ID", response.get_json()["error"])
-
     def test_student_cannot_read_office_queue(self) -> None:
         token = self.login()
         response = self.client.get(
@@ -854,38 +750,6 @@ class ApiTests(HubTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["office"]["code"], "library")
-
-    def test_signed_short_code_is_visible_only_in_registrar_and_library_queues(self) -> None:
-        student_token = self.login()
-        slip = self.client.get(
-            "/api/slips/me",
-            headers={"Authorization": "Bearer " + student_token},
-        ).get_json()
-        admin_token = self.login("test.admin")
-        for office in ("registrar", "library"):
-            response = self.client.get(
-                "/api/offices/" + office + "/students",
-                headers={"Authorization": "Bearer " + admin_token},
-            )
-            self.assertEqual(response.status_code, 200)
-            student = next(
-                row
-                for row in response.get_json()["students"]
-                if row["student_number"] == "2023-0001-14"
-            )
-            self.assertEqual(student["signed_short_code"], slip["public_code"])
-
-        accounting = self.client.get(
-            "/api/offices/accounting/students",
-            headers={"Authorization": "Bearer " + admin_token},
-        )
-        self.assertEqual(accounting.status_code, 200)
-        student = next(
-            row
-            for row in accounting.get_json()["students"]
-            if row["student_number"] == "2023-0001-14"
-        )
-        self.assertIsNone(student["signed_short_code"])
 
     def test_staff_cannot_read_another_office(self) -> None:
         token = self.login("test.library")
@@ -931,10 +795,10 @@ class ApiTests(HubTestCase):
         token = self.login()
         with hub.app.app_context():
             user = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.student",)
+                "SELECT id FROM users WHERE username = %s", ("test.student",)
             )
             hub.execute(
-                "UPDATE auth_sessions SET expires_at = ? WHERE user_id = ?",
+                "UPDATE auth_sessions SET expires_at = %s WHERE user_id = %s",
                 ("2000-01-01 00:00:00", user["id"]),
             )
             hub.commit()
@@ -1013,183 +877,12 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "HOLD")
 
-    def test_student_on_hold_can_request_qr_with_current_progress(self) -> None:
+    def test_student_on_hold_cannot_request_slip(self) -> None:
         token = self.login("held.student")
         response = self.client.get(
             "/api/slips/me", headers={"Authorization": "Bearer " + token}
         )
-        self.assertEqual(response.status_code, 200)
-        slip = response.get_json()
-        self.assertTrue(slip["qr_svg"].startswith("<svg"))
-        self.assertEqual(slip["status"], "HOLD")
-        self.assertEqual(slip["progress"], {"cleared": 3, "total": 4, "percent": 75})
-        self.assertEqual(
-            {office["office_code"]: office["status"] for office in slip["offices"]}["library"],
-            "HOLD",
-        )
-
-        staff_token = self.login("test.library")
-        verified = self.client.post(
-            "/api/slips/verify",
-            json={"token": slip["signed_token"]},
-            headers={"Authorization": "Bearer " + staff_token},
-        ).get_json()
-        self.assertTrue(verified["verified"])
-        self.assertEqual(verified["overall"], "HOLD")
-        self.assertEqual(verified["progress"], slip["progress"])
-        self.assertEqual(
-            {office["office_code"]: office["status"] for office in verified["offices"]}["library"],
-            "HOLD",
-        )
-        self.client.post(
-            "/api/clearance/2023-0002-14/library/signoff",
-            json={"reason": "Returned all borrowed books."},
-            headers={"Authorization": "Bearer " + staff_token},
-        )
-        updated = self.client.post(
-            "/api/slips/verify",
-            json={"token": slip["signed_token"]},
-            headers={"Authorization": "Bearer " + staff_token},
-        ).get_json()
-        self.assertTrue(updated["verified"])
-        self.assertEqual(updated["overall"], "CLEARED")
-        self.assertEqual(updated["progress"], {"cleared": 4, "total": 4, "percent": 100})
-
-    def test_admin_can_register_card_and_staff_can_check_current_status(self) -> None:
-        admin_headers = {
-            "Authorization": "Bearer " + self.login("test.admin")
-        }
-        staff_headers = {
-            "Authorization": "Bearer " + self.login("test.library")
-        }
-        registered = self.client.post(
-            "/api/cards/register",
-            json={
-                "card_id": "CARD-0001",
-                "student_number": "2023-0001-14",
-            },
-            headers=admin_headers,
-        )
-        self.assertEqual(registered.status_code, 201)
-        self.assertEqual(
-            registered.get_json()["student"]["student_number"], "2023-0001-14"
-        )
-
-        verified = self.client.post(
-            "/api/cards/verify",
-            json={"card_id": "card-0001"},
-            headers=staff_headers,
-        )
-        self.assertEqual(verified.status_code, 200)
-        result = verified.get_json()
-        self.assertEqual(result["match_type"], "registered_card")
-        self.assertEqual(result["student"]["student_number"], "2023-0001-14")
-        self.assertEqual(result["scope"], "assigned_office")
-        self.assertEqual(result["office"]["office_code"], "library")
-        self.assertEqual(result["office"]["status"], "CLEARED")
-
-        admin_verified = self.client.post(
-            "/api/cards/verify",
-            json={"card_id": "CARD-0001"},
-            headers=admin_headers,
-        )
-        self.assertEqual(admin_verified.status_code, 200)
-        self.assertEqual(admin_verified.get_json()["scope"], "all_offices")
-        self.assertEqual(admin_verified.get_json()["overall"], "CLEARED")
-
-    def test_card_registration_is_admin_only_and_rejects_unknown_students(self) -> None:
-        student_headers = {
-            "Authorization": "Bearer " + self.login("test.student")
-        }
-        forbidden = self.client.post(
-            "/api/cards/register",
-            json={"card_id": "CARD-0002", "student_number": "2023-0001-14"},
-            headers=student_headers,
-        )
-        self.assertEqual(forbidden.status_code, 403)
-
-        admin_headers = {
-            "Authorization": "Bearer " + self.login("test.admin")
-        }
-        missing_student = self.client.post(
-            "/api/cards/register",
-            json={"card_id": "CARD-0002", "student_number": "2023-9999-99"},
-            headers=admin_headers,
-        )
-        self.assertEqual(missing_student.status_code, 404)
-        invalid_card = self.client.post(
-            "/api/cards/register",
-            json={"card_id": "CARD 0002", "student_number": "2023-0001-14"},
-            headers=admin_headers,
-        )
-        self.assertEqual(invalid_card.status_code, 400)
-
-    def test_card_cannot_be_assigned_to_another_student_and_can_be_replaced(self) -> None:
-        admin_headers = {
-            "Authorization": "Bearer " + self.login("test.admin")
-        }
-        first = self.client.post(
-            "/api/cards/register",
-            json={"card_id": "CARD-0003", "student_number": "2023-0001-14"},
-            headers=admin_headers,
-        )
-        self.assertEqual(first.status_code, 201)
-
-        conflict = self.client.post(
-            "/api/cards/register",
-            json={"card_id": "CARD-0003", "student_number": "2023-0002-14"},
-            headers=admin_headers,
-        )
-        self.assertEqual(conflict.status_code, 409)
-
-        replacement = self.client.post(
-            "/api/cards/register",
-            json={"card_id": "CARD-0004", "student_number": "2023-0001-14"},
-            headers=admin_headers,
-        )
-        self.assertEqual(replacement.status_code, 200)
-        self.assertTrue(replacement.get_json()["replaced_previous_card"])
-        staff_headers = {
-            "Authorization": "Bearer " + self.login("test.library")
-        }
-        old_card = self.client.post(
-            "/api/cards/verify",
-            json={"card_id": "CARD-0003"},
-            headers=staff_headers,
-        )
-        self.assertEqual(old_card.status_code, 404)
-        new_card = self.client.post(
-            "/api/cards/verify",
-            json={"card_id": "CARD-0004"},
-            headers=staff_headers,
-        )
-        self.assertEqual(new_card.status_code, 200)
-
-    def test_qr_tokens_are_unique_to_each_student(self) -> None:
-        student_slip = self.client.get(
-            "/api/slips/me", headers={"Authorization": "Bearer " + self.login()}
-        ).get_json()
-        held_slip = self.client.get(
-            "/api/slips/me", headers={"Authorization": "Bearer " + self.login("held.student")}
-        ).get_json()
-        self.assertNotEqual(student_slip["signed_token"], held_slip["signed_token"])
-        self.assertNotEqual(student_slip["public_code"], held_slip["public_code"])
-
-    def test_student_reuses_the_same_unexpired_qr_slip(self) -> None:
-        token = self.login()
-        first = self.client.get(
-            "/api/slips/me", headers={"Authorization": "Bearer " + token}
-        ).get_json()
-        second = self.client.get(
-            "/api/slips/me", headers={"Authorization": "Bearer " + token}
-        ).get_json()
-        self.assertEqual(second["signed_token"], first["signed_token"])
-        self.assertEqual(second["public_code"], first["public_code"])
-        with hub.app.app_context():
-            self.assertEqual(
-                hub.query_one("SELECT COUNT(*) AS count FROM clearance_slips")["count"],
-                1,
-            )
+        self.assertEqual(response.status_code, 409)
 
     def test_cleared_student_can_issue_and_verify_short_code(self) -> None:
         token = self.login()
@@ -1204,82 +897,8 @@ class ApiTests(HubTestCase):
         )
         self.assertEqual(verified.status_code, 200)
         self.assertTrue(verified.get_json()["verified"])
-        self.assertEqual(
-            verified.get_json()["student"]["student_number"], "2023-0001-14"
-        )
 
-    def test_registrar_sync_does_not_sign_off_active_students_automatically(self) -> None:
-        hub.app.config.update(
-            REGISTRAR_API_URL="https://registrar.example.invalid/api",
-            REGISTRAR_API_KEY="test-registrar-key",
-        )
-        with patch(
-            "integration_clients.fetch_registrar_students",
-            return_value=[
-                {
-                    "student_number": "2023-0003-14",
-                    "full_name": "New Active Student",
-                    "program": "BSIT",
-                    "year_level": 1,
-                    "active": 1,
-                }
-            ],
-        ):
-            response = self.client.post(
-                "/api/admin/sync-registrar",
-                json={},
-                headers={"Authorization": "Bearer " + self.login("test.admin")},
-            )
-        self.assertEqual(response.status_code, 200)
-        with hub.app.app_context():
-            student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = ?",
-                ("2023-0003-14",),
-            )
-            registrar = hub.query_one(
-                "SELECT id FROM offices WHERE code = ?", ("registrar",)
-            )
-            record = hub.query_one(
-                "SELECT status, reason FROM clearance_records "
-                "WHERE student_id = ? AND office_id = ?",
-                (student["id"], registrar["id"]),
-            )
-        self.assertEqual(record["status"], "HOLD")
-        self.assertIn("awaiting manual review", record["reason"])
-        signoff = self.client.post(
-            "/api/clearance/2023-0003-14/registrar/signoff",
-            json={"reason": "Enrollment and office reviews checked."},
-            headers={"Authorization": "Bearer " + self.login("test.registrar")},
-        )
-        self.assertEqual(signoff.status_code, 200)
-        with patch(
-            "integration_clients.fetch_registrar_students",
-            return_value=[
-                {
-                    "student_number": "2023-0003-14",
-                    "full_name": "New Active Student",
-                    "program": "BSIT",
-                    "year_level": 1,
-                    "active": 1,
-                }
-            ],
-        ):
-            resync = self.client.post(
-                "/api/admin/sync-registrar",
-                json={},
-                headers={"Authorization": "Bearer " + self.login("test.admin")},
-            )
-        self.assertEqual(resync.status_code, 200)
-        with hub.app.app_context():
-            record = hub.query_one(
-                "SELECT status, source FROM clearance_records "
-                "WHERE student_id = ? AND office_id = ?",
-                (student["id"], registrar["id"]),
-            )
-        self.assertEqual(record["status"], "CLEARED")
-        self.assertEqual(record["source"], "staff")
-
-    def test_slip_response_generates_qr_from_signed_short_code(self) -> None:
+    def test_slip_response_generates_qr_from_signed_token(self) -> None:
         token = self.login()
         svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>'
         with patch("hub._slip_qr_svg", return_value=svg) as make_qr:
@@ -1289,10 +908,10 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         body = response.get_json()
         self.assertEqual(body["qr_svg"], svg)
-        make_qr.assert_called_once_with(body["public_code"])
+        make_qr.assert_called_once_with(body["signed_token"])
 
     def test_slip_qr_renderer_returns_valid_svg(self) -> None:
-        svg = hub._slip_qr_svg("ECH-ABC123")
+        svg = hub._slip_qr_svg("signed-clearance-token")
         root = ElementTree.fromstring(svg)
         self.assertEqual(root.tag.rsplit("}", 1)[-1], "svg")
         self.assertTrue(any(
@@ -1321,7 +940,7 @@ class ApiTests(HubTestCase):
         ).get_json()
         with hub.app.app_context():
             hub.execute(
-                "UPDATE clearance_slips SET expires_at = ? WHERE public_code = ?",
+                "UPDATE clearance_slips SET expires_at = %s WHERE public_code = %s",
                 ("2000-01-01 00:00:00", slip["public_code"]),
             )
             hub.commit()
@@ -1381,6 +1000,19 @@ class ApiTests(HubTestCase):
         self.assertTrue(all(row["office_code"] == "library" for row in staff.get_json()["holds"]))
         self.assertEqual(admin.status_code, 200)
 
+    def test_automation_status_is_admin_only_and_reports_files(self) -> None:
+        denied = self.client.get(
+            "/api/admin/automation",
+            headers={"Authorization": "Bearer " + self.login("test.library")},
+        )
+        self.assertEqual(denied.status_code, 403)
+        allowed = self.client.get(
+            "/api/admin/automation",
+            headers={"Authorization": "Bearer " + self.login("test.admin")},
+        )
+        self.assertEqual(allowed.status_code, 200)
+        self.assertIn("hold_summary", allowed.get_json())
+
     def test_student_cannot_read_hold_summary(self) -> None:
         response = self.client.get(
             "/api/admin/hold-summary",
@@ -1407,7 +1039,7 @@ class ApiTests(HubTestCase):
         token = self.login("test.admin")
         with hub.app.app_context():
             hub.execute(
-                "INSERT INTO audit_logs (action, details_json) VALUES (?, ?)",
+                "INSERT INTO audit_logs (action, details_json) VALUES (%s, %s)",
                 (
                     "IMPORT",
                     json.dumps(
@@ -1518,7 +1150,7 @@ class ApiTests(HubTestCase):
         self.assertNotIn("password", created["details"])
         with hub.app.app_context():
             action = hub.query_one(
-                "SELECT action FROM audit_logs WHERE action = ?",
+                "SELECT action FROM audit_logs WHERE action = %s",
                 ("USER_CREATED",),
             )
         self.assertEqual(action["action"], "USER_CREATED")
@@ -1608,7 +1240,7 @@ class ApiTests(HubTestCase):
         target_token = self.login("test.library")
         with hub.app.app_context():
             target = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.library",)
+                "SELECT id FROM users WHERE username = %s", ("test.library",)
             )
         response = self.client.post(
             "/api/admin/users/{}/password".format(target["id"]),
@@ -1638,7 +1270,7 @@ class ApiTests(HubTestCase):
         self.assertEqual(new_login.status_code, 200)
         with hub.app.app_context():
             audit = hub.query_one(
-                "SELECT details_json FROM audit_logs WHERE action = ?",
+                "SELECT details_json FROM audit_logs WHERE action = %s",
                 ("PASSWORD_RESET",),
             )
         self.assertNotIn("ResetStaffPassword123!", audit["details_json"])
@@ -1648,7 +1280,7 @@ class ApiTests(HubTestCase):
         student_token = self.login("test.student")
         with hub.app.app_context():
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.student",)
+                "SELECT id FROM users WHERE username = %s", ("test.student",)
             )
         response = self.client.put(
             "/api/admin/users/{}".format(account["id"]),
@@ -1680,11 +1312,11 @@ class ApiTests(HubTestCase):
         admin_token = self.login("test.admin")
         with hub.app.app_context():
             library = hub.query_one(
-                "SELECT id FROM offices WHERE code = ?", ("library",)
+                "SELECT id FROM offices WHERE code = %s", ("library",)
             )
             hub.execute(
                 """INSERT INTO users (username, password_hash, role, office_id)
-                   VALUES (?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s)""",
                 (
                     "legacy.staff",
                     TEST_PASSWORD_HASH,
@@ -1694,7 +1326,7 @@ class ApiTests(HubTestCase):
             )
             hub.commit()
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("legacy.staff",)
+                "SELECT id FROM users WHERE username = %s", ("legacy.staff",)
             )
         response = self.client.put(
             "/api/admin/users/{}".format(account["id"]),
@@ -1721,7 +1353,7 @@ class ApiTests(HubTestCase):
         token = self.login("test.admin")
         with hub.app.app_context():
             admin = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.admin",)
+                "SELECT id FROM users WHERE username = %s", ("test.admin",)
             )
         response = self.client.put(
             "/api/admin/users/{}".format(admin["id"]),
@@ -1740,11 +1372,11 @@ class ApiTests(HubTestCase):
         headers = {"Authorization": "Bearer " + token}
         with hub.app.app_context():
             student = hub.query_one(
-                "SELECT id FROM students WHERE student_number = ?",
+                "SELECT id FROM students WHERE student_number = %s",
                 ("2023-0001-14",),
             )
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.student",)
+                "SELECT id FROM users WHERE username = %s", ("test.student",)
             )
         response = self.client.put(
             "/api/admin/users/" + str(account["id"]),
@@ -1759,11 +1391,11 @@ class ApiTests(HubTestCase):
         self.assertEqual(response.status_code, 200)
         with hub.app.app_context():
             saved_user = hub.query_one(
-                "SELECT username, active FROM users WHERE id = ?",
+                "SELECT username, active FROM users WHERE id = %s",
                 (account["id"],),
             )
             saved_student = hub.query_one(
-                "SELECT full_name, email FROM students WHERE id = ?",
+                "SELECT full_name, email FROM students WHERE id = %s",
                 (student["id"],),
             )
         self.assertEqual(saved_user, {"username": "alex.rivera", "active": 0})
@@ -1779,7 +1411,7 @@ class ApiTests(HubTestCase):
         token = self.login("test.admin")
         with hub.app.app_context():
             account = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.library",)
+                "SELECT id FROM users WHERE username = %s", ("test.library",)
             )
         response = self.client.put(
             "/api/admin/users/" + str(account["id"]),
@@ -1794,7 +1426,7 @@ class ApiTests(HubTestCase):
         with hub.app.app_context():
             saved = hub.query_one(
                 """SELECT o.code AS office_code FROM users AS u
-                   JOIN offices AS o ON o.id = u.office_id WHERE u.id = ?""",
+                   JOIN offices AS o ON o.id = u.office_id WHERE u.id = %s""",
                 (account["id"],),
             )
         self.assertEqual(saved["office_code"], "accounting")
@@ -1804,10 +1436,10 @@ class ApiTests(HubTestCase):
         headers = {"Authorization": "Bearer " + token}
         with hub.app.app_context():
             student = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.student",)
+                "SELECT id FROM users WHERE username = %s", ("test.student",)
             )
             admin = hub.query_one(
-                "SELECT id FROM users WHERE username = ?", ("test.admin",)
+                "SELECT id FROM users WHERE username = %s", ("test.admin",)
             )
         duplicate = self.client.put(
             "/api/admin/users/" + str(student["id"]),

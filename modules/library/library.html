@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#12354F">
+<meta name="theme-color" content="#1F6B47">
 <title>Library | DNSC e-Clearance Hub</title>
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icons/library.svg" type="image/svg+xml">
@@ -27,9 +27,11 @@
     </div>
 
     <nav class="navigation" id="main-navigation" aria-label="Library sections">
-        <a href="#queue" class="nav-link active" data-tab="queue">Borrowers</a>
+        <a href="#summary" class="nav-link active" data-tab="summary">Summary</a>
+        <a href="#queue" class="nav-link" data-tab="queue">Borrowers</a>
+        <a href="#holds" class="nav-link" data-tab="holds">Outstanding</a>
         <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
-        <a href="#sign" class="nav-link" data-tab="sign">Clearance Signing</a>
+        <a href="#sign" class="nav-link" data-tab="sign">Sign a Student</a>
         <a href="#lend" class="nav-link" data-tab="lend">Lend Books</a>
         <button class="logout" id="logout-btn" type="button">Log out</button>
     </nav>
@@ -42,44 +44,79 @@
 <div class="stage-inner">
     <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
 
-    <!-- OFFICE QUEUE + HOLD SUMMARY -->
-    <section class="tab" id="tab-queue" aria-labelledby="office-title">
+    <!-- SUMMARY (first tab) -->
+    <section class="tab" id="tab-summary" aria-labelledby="office-title">
         <div class="welcome">
             <h1 id="office-title">Library</h1>
             <p class="lead" id="office-sub">Nightly XML export</p>
         </div>
-        <div class="panel split split-queue">
-            <div class="split-main">
-                <h2>Library Borrowers</h2>
-                <p class="panel-sub">Unreturned books and fines per borrower. Click a student to see the details.</p>
-                <div class="toolbar">
-                    <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
-                    <select id="queue-filter" aria-label="Filter by status">
-                        <option value="">All</option>
-                        <option value="HOLD" id="filter-hold">On HOLD</option>
-                        <option value="CLEARED" id="filter-clear">Cleared</option>
-                    </select>
+        <div class="panel panel-full summary-panel">
+            <h2>Sign-off summary</h2>
+            <p class="panel-sub">How many students this office has signed off, and how many are still waiting.</p>
+            <div class="sum-hero">
+                <div class="donut" id="sum-donut" role="img" aria-label="Sign-off progress">
+                    <div class="donut-hole"><strong id="sum-pct">&ndash;</strong><span>signed off</span></div>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr id="queue-head"></tr></thead>
-                        <tbody id="queue-body"></tbody>
-                    </table>
+                <div class="sum-legend">
+                    <div class="sum-row sum-ok"><span class="dot"></span><div><strong id="sum-ok-pct">&ndash;</strong><span>Signed off</span></div><b id="sum-ok-n">&ndash;</b></div>
+                    <div class="sum-row sum-no"><span class="dot"></span><div><strong id="sum-no-pct">&ndash;</strong><span>Not signed off</span></div><b id="sum-no-n">&ndash;</b></div>
+                    <div class="sum-bar" aria-hidden="true"><i id="sum-bar-ok"></i></div>
                 </div>
             </div>
-            <div class="split-side">
-                <h2>Outstanding</h2>
-                <p class="panel-sub">Borrowers who must settle books or fines before sign-off.</p>
-                <div class="cards">
-                    <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
-                    <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
-                </div>
+            <div class="cards cards-3">
+                <div class="card"><h3>Students</h3><div class="big" id="count-total">&ndash;</div></div>
+                <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
+                <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
+            </div>
+            <div id="sum-offices" class="sum-offices" hidden>
+                <h3>Sign-off by office</h3>
+                <div id="sum-offices-list"></div>
+            </div>
+            <div class="sum-attn">
+                <h3>Needs attention</h3>
                 <div class="table-wrap">
                     <table>
                         <thead><tr><th>Student</th><th>Reason</th></tr></thead>
-                        <tbody id="hold-body"></tbody>
+                        <tbody id="attn-body"></tbody>
                     </table>
                 </div>
+                <p class="panel-sub"><a href="#holds">See the full Outstanding list</a></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLEARANCE TABLE -->
+    <section class="tab" id="tab-queue" aria-labelledby="h-queue" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-queue">Library Borrowers</h2>
+            <p class="panel-sub">Unreturned books and fines per borrower. Click a student to see the details.</p>
+            <div class="toolbar">
+                <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
+                <select id="queue-filter" aria-label="Filter by status">
+                    <option value="">All</option>
+                    <option value="HOLD" id="filter-hold">On HOLD</option>
+                    <option value="CLEARED" id="filter-clear">Cleared</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr id="queue-head"></tr></thead>
+                    <tbody id="queue-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOLDS -->
+    <section class="tab" id="tab-holds" aria-labelledby="h-holds" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-holds">Outstanding</h2>
+            <p class="panel-sub">Borrowers who must settle books or fines before sign-off.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Student</th><th>Reason</th></tr></thead>
+                    <tbody id="hold-body"></tbody>
+                </table>
             </div>
         </div>
     </section>
@@ -88,22 +125,18 @@
     <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
         <div class="panel panel-full">
             <h2 id="h-verify">Verify Slip</h2>
-            <p class="panel-sub">Scan a signed QR or short code to verify a slip. Registered cards and Student IDs show current status, not a signed slip. Review this office's obligations; sign-off always requires staff confirmation.</p>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
             <div class="verify-layout">
                 <form id="verify-form" class="verify-form">
-                    <label for="scan-input">Scan QR, registered card, or Student ID</label>
-                    <input type="text" id="scan-input" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Focus here, then scan">
-                    <label for="student-number-input">Student ID (status lookup)</label>
-                    <input type="text" id="student-number-input" maxlength="40" autocomplete="off" placeholder="Use the exact ID from the Registrar masterlist">
                     <label for="slip-code-input">Signed short code</label>
                     <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
-                    <label for="slip-token-input">Or signed token (legacy)</label>
-                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste a signed token if one was provided">
-                    <button class="btn" id="verify-btn" type="submit">Verify or look up</button>
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
                 </form>
                 <div class="result-card" id="verify-result" aria-live="polite">
                     <h3>Verification result</h3>
-                    <div class="result-empty" id="verify-empty">Enter one student ID, signed code, or token.</div>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
                     <dl id="verify-list" hidden></dl>
                 </div>
             </div>
@@ -121,8 +154,8 @@
                     <label for="sign-name">Student name</label>
                     <input type="text" id="sign-name" list="sign-names" maxlength="160" autocomplete="off" placeholder="Full name or student ID" required>
                     <datalist id="sign-names"></datalist>
-                    <label for="sign-code">Signed short code or legacy token</label>
-                    <input type="text" id="sign-code" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ECH-XXXXXX or scan the signed QR (optional)">
+                    <label for="sign-code">Slip code</label>
+                    <input type="text" id="sign-code" maxlength="16" autocomplete="off" placeholder="ECH-XXXXXX (optional)">
                     <button class="btn" id="sign-check" type="submit">Check clearance</button>
                 </form>
                 <div class="form-card" id="sign-result" aria-live="polite">
@@ -142,8 +175,7 @@
                 <form id="book-form" class="verify-form form-card">
                     <h3>Lend a book</h3>
                     <label for="book-student">Student ID</label>
-                    <input type="text" id="book-student" list="book-students" maxlength="40" autocomplete="off" placeholder="Choose an ID from the Registrar masterlist" required>
-                    <datalist id="book-students"></datalist>
+                    <input type="text" id="book-student" maxlength="40" autocomplete="off" placeholder="2026-00001" required>
                     <label for="book-title">Book title</label>
                     <input type="text" id="book-title" maxlength="60" autocomplete="off" placeholder="e.g. Database Systems" required>
                     <label for="book-due">Due date</label>
@@ -213,6 +245,9 @@
 </dialog>
 
 <script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/idle.js"></script>
+<script src="../../assets/js/vendor/jsQR.js"></script>
+<script src="../../assets/js/scanner.js"></script>
 <script src="../../assets/js/office.js"></script>
 </body>
 </html>

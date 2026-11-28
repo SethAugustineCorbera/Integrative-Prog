@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#12354F">
+<meta name="theme-color" content="#1F6B47">
 <title>Registrar | DNSC e-Clearance Hub</title>
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icons/registrar.svg" type="image/svg+xml">
@@ -27,10 +27,12 @@
     </div>
 
     <nav class="navigation" id="main-navigation" aria-label="Registrar sections">
-        <a href="#queue" class="nav-link active" data-tab="queue">Master List</a>
-        <a href="#open-signoffs" class="nav-link" data-tab="open-signoffs">Open Sign-offs</a>
+        <a href="#summary" class="nav-link active" data-tab="summary">Summary</a>
+        <a href="#master" class="nav-link" data-tab="master">Masterlist</a>
+        <a href="#queue" class="nav-link" data-tab="queue">Clearance Signing</a>
+        <a href="#holds" class="nav-link" data-tab="holds">Not in Good Standing</a>
         <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
-        <a href="#sign" class="nav-link" data-tab="sign">Clearance Signing</a>
+        <a href="#sign" class="nav-link" data-tab="sign">Sign a Student</a>
         <a href="#reports" class="nav-link" data-tab="reports">Reports</a>
         <button class="logout" id="logout-btn" type="button">Log out</button>
     </nav>
@@ -43,15 +45,70 @@
 <div class="stage-inner">
     <p class="msg" id="api-message" role="status" aria-live="polite" hidden></p>
 
-    <!-- OFFICE QUEUE + HOLD SUMMARY -->
-    <section class="tab" id="tab-queue" aria-labelledby="office-title">
+    <!-- SUMMARY (first tab) -->
+    <section class="tab" id="tab-summary" aria-labelledby="office-title">
         <div class="welcome">
             <h1 id="office-title">Registrar</h1>
             <p class="lead" id="office-sub">Official masterlist (JSON API)</p>
         </div>
+        <div class="panel panel-full summary-panel">
+            <h2>Sign-off summary</h2>
+            <p class="panel-sub">How many students this office has signed off, and how many are still waiting.</p>
+            <div class="sum-hero">
+                <div class="donut" id="sum-donut" role="img" aria-label="Sign-off progress">
+                    <div class="donut-hole"><strong id="sum-pct">&ndash;</strong><span>signed off</span></div>
+                </div>
+                <div class="sum-legend">
+                    <div class="sum-row sum-ok"><span class="dot"></span><div><strong id="sum-ok-pct">&ndash;</strong><span>Signed off</span></div><b id="sum-ok-n">&ndash;</b></div>
+                    <div class="sum-row sum-no"><span class="dot"></span><div><strong id="sum-no-pct">&ndash;</strong><span>Not signed off</span></div><b id="sum-no-n">&ndash;</b></div>
+                    <div class="sum-bar" aria-hidden="true"><i id="sum-bar-ok"></i></div>
+                </div>
+            </div>
+            <div class="cards cards-3">
+                <div class="card"><h3>Students</h3><div class="big" id="count-total">&ndash;</div></div>
+                <div class="card"><h3 id="card-a-label">On HOLD</h3><div class="big" id="count-hold">&ndash;</div></div>
+                <div class="card"><h3 id="card-b-label">Cleared</h3><div class="big" id="count-cleared">&ndash;</div></div>
+            </div>
+            <div id="sum-offices" class="sum-offices" hidden>
+                <h3>Sign-off by office</h3>
+                <div id="sum-offices-list"></div>
+            </div>
+            <div class="sum-attn">
+                <h3>Needs attention</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Student</th><th>Reason</th></tr></thead>
+                        <tbody id="attn-body"></tbody>
+                    </table>
+                </div>
+                <p class="panel-sub"><a href="#holds">See the full Not in Good Standing list</a></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- MASTERLIST (Registrar): plain list of enrolled students, no clearance data -->
+    <section class="tab" id="tab-master" aria-labelledby="h-master" hidden>
         <div class="panel panel-full">
-            <h2>Official Student Master List</h2>
-            <p class="panel-sub">Every active student on the Registrar masterlist, including the Student ID and any issued signed short code.</p>
+            <h2 id="h-master">Official Student Masterlist</h2>
+            <p class="panel-sub">Every student enrolled at DNSC. This list has nothing to do with clearance signing.</p>
+            <div class="toolbar">
+                <input type="search" id="master-search" placeholder="Search student number, name or program" aria-label="Search the masterlist" maxlength="80" autocomplete="off">
+                <span class="muted" id="master-count"></span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Student ID</th><th>Name</th><th>Program</th></tr></thead>
+                    <tbody id="master-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLEARANCE TABLE -->
+    <section class="tab" id="tab-queue" aria-labelledby="h-queue" hidden>
+        <div class="panel panel-full">
+            <h2 id="h-queue">Clearance Signing</h2>
+            <p class="panel-sub">Registrar standing and the sign-off status of the other three offices for each student.</p>
             <div class="toolbar">
                 <input type="search" id="queue-search" placeholder="Search student number or name" aria-label="Search students" maxlength="80" autocomplete="off">
                 <select id="queue-filter" aria-label="Filter by status">
@@ -69,15 +126,15 @@
         </div>
     </section>
 
-    <section class="tab" id="tab-open-signoffs" aria-labelledby="h-open-signoffs" hidden>
+    <!-- HOLDS -->
+    <section class="tab" id="tab-holds" aria-labelledby="h-holds" hidden>
         <div class="panel panel-full">
-            <h2 id="h-open-signoffs">Open Sign-offs</h2>
-            <p class="panel-sub">Students with a pending office sign-off and the latest reason. This list refreshes automatically every 30 seconds.</p>
-            <p class="muted" id="open-signoffs-updated" aria-live="polite"></p>
+            <h2 id="h-holds">Not in Good Standing</h2>
+            <p class="panel-sub">Inactive or on-leave students on the masterlist.</p>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Student ID</th><th>Student</th><th>Office</th><th>Pending reason</th></tr></thead>
-                    <tbody id="open-signoffs-body"></tbody>
+                    <thead><tr><th>Student</th><th>Reason</th></tr></thead>
+                    <tbody id="hold-body"></tbody>
                 </table>
             </div>
         </div>
@@ -87,22 +144,18 @@
     <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
         <div class="panel panel-full">
             <h2 id="h-verify">Verify Slip</h2>
-            <p class="panel-sub">Scan a signed QR or short code to verify a slip. Registered cards and Student IDs show current status, not a signed slip. Review current clearance; sign-off always requires staff confirmation.</p>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
             <div class="verify-layout">
                 <form id="verify-form" class="verify-form">
-                    <label for="scan-input">Scan QR, registered card, or Student ID</label>
-                    <input type="text" id="scan-input" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Focus here, then scan">
-                    <label for="student-number-input">Student ID (status lookup)</label>
-                    <input type="text" id="student-number-input" maxlength="40" autocomplete="off" placeholder="Use the exact ID from the Registrar masterlist">
                     <label for="slip-code-input">Signed short code</label>
                     <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
-                    <label for="slip-token-input">Or signed token (legacy)</label>
-                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste a signed token if one was provided">
-                    <button class="btn" id="verify-btn" type="submit">Verify or look up</button>
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
                 </form>
                 <div class="result-card" id="verify-result" aria-live="polite">
                     <h3>Verification result</h3>
-                    <div class="result-empty" id="verify-empty">Enter one student ID, signed code, or token.</div>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
                     <dl id="verify-list" hidden></dl>
                 </div>
             </div>
@@ -120,8 +173,8 @@
                     <label for="sign-name">Student name</label>
                     <input type="text" id="sign-name" list="sign-names" maxlength="160" autocomplete="off" placeholder="Full name or student ID" required>
                     <datalist id="sign-names"></datalist>
-                    <label for="sign-code">Signed short code or legacy token</label>
-                    <input type="text" id="sign-code" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ECH-XXXXXX or scan the signed QR (optional)">
+                    <label for="sign-code">Slip code</label>
+                    <input type="text" id="sign-code" maxlength="16" autocomplete="off" placeholder="ECH-XXXXXX (optional)">
                     <button class="btn" id="sign-check" type="submit">Check clearance</button>
                 </form>
                 <div class="form-card" id="sign-result" aria-live="polite">
@@ -191,6 +244,9 @@
 </dialog>
 
 <script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/idle.js"></script>
+<script src="../../assets/js/vendor/jsQR.js"></script>
+<script src="../../assets/js/scanner.js"></script>
 <script src="../../assets/js/office.js"></script>
 </body>
 </html>

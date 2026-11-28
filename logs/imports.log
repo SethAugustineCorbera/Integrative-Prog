@@ -4563,3 +4563,246 @@ pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'localhos
 2026-11-28 15:00:42,332 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:00:42] "GET /modules/student-affairs/student-affairs.html HTTP/1.1" 200 -
 2026-11-28 15:00:45,045 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:00:45] "GET /modules/library/library.html HTTP/1.1" 200 -
 2026-11-28 15:00:46,123 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:00:46] "GET /modules/registrar/registrar.html HTTP/1.1" 200 -
+2026-11-28 15:12:00,548 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8000
+2026-11-28 15:12:00,548 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-11-28 15:12:35,770 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:12:35] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-28 15:12:35,773 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:12:35,792 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:12:35] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:12:49,993 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8000
+2026-11-28 15:12:49,993 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-11-28 15:12:51,713 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:12:51] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-28 15:12:51,716 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:12:51,718 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:12:51] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:03,129 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:03] "OPTIONS /api/auth/login HTTP/1.1" 200 -
+2026-11-28 15:13:03,133 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:03,134 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:03] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:04,374 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:04,376 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:04] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:04,573 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:04,574 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:04] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:04,740 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:04,741 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:04] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:04,920 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:04,921 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:04] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:05,099 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:05,100 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:05] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -
+2026-11-28 15:13:05,300 ERROR hub Exception on /api/auth/login [POST]
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\xampp\htdocs\Integrative-Prog-main\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 513, in login
+    user = query_one(
+        """SELECT u.id, u.username, u.password_hash, u.role, u.student_id, u.office_id,
+    ...<5 lines>...
+        (username,),
+    )
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 125, in query_one
+    cursor = get_db().cursor()
+             ~~~~~~^^
+  File "C:\xampp\htdocs\Integrative-Prog-main\hub.py", line 85, in get_db
+    raise FileNotFoundError(
+        "Configured SQLite database does not exist: " + str(database_path)
+    )
+FileNotFoundError: Configured SQLite database does not exist: C:\Users\User\DNSC e-Clearance Hub\dnsc_clearance_hub.sqlite3
+2026-11-28 15:13:05,301 INFO werkzeug 127.0.0.1 - - [28/Nov/2026 15:13:05] "[35m[1mPOST /api/auth/login HTTP/1.1[0m" 500 -

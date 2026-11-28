@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#12354F">
+<meta name="theme-color" content="#1F6B47">
 <title>Admin | DNSC e-Clearance Hub</title>
 <link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" href="../../assets/icons/admin.svg" type="image/svg+xml">
@@ -33,7 +33,7 @@
         <a href="#reports" class="nav-link" data-tab="reports">Reports</a>
         <a href="#holds" class="nav-link" data-tab="holds">Hold Summary</a>
         <a href="#audit" class="nav-link" data-tab="audit">Audit Log</a>
-        <a href="#verify" class="nav-link" data-tab="verify">Scan / Verify</a>
+        <a href="#verify" class="nav-link" data-tab="verify">Verify Slip</a>
         <a href="#api" class="nav-link" data-tab="api">API Reference</a>
         <button class="logout" id="logout-btn" type="button">Log out</button>
     </nav>
@@ -93,7 +93,7 @@
                 </form>
                 <div class="form-card">
                     <h3>Registrar masterlist</h3>
-                    <p class="muted">Pull the official student list from the Registrar service. Syncing adds or updates roster records but does not automatically sign students off; office clearance decisions remain manual.</p>
+                    <p class="muted">Pull the official student list from the Registrar service. Active students are signed off by the Registrar automatically.</p>
                     <button class="btn" id="sync-registrar" type="button">Sync Registrar masterlist</button>
                 </div>
             </div>
@@ -168,6 +168,7 @@
         <div class="panel panel-full">
             <h2 id="h-holds">Hold Summary</h2>
             <p class="panel-sub">Students on HOLD in each office with the reason. The scheduled script writes the same summary every day.</p>
+            <p class="last-run" id="hold-lastrun">Checking the automation script&hellip;</p>
             <div class="cards" id="hold-cards"></div>
             <div class="toolbar">
                 <select id="hold-office" aria-label="Filter by office"><option value="">All offices</option></select>
@@ -205,36 +206,21 @@
     <!-- VERIFY SLIP -->
     <section class="tab" id="tab-verify" aria-labelledby="h-verify" hidden>
         <div class="panel panel-full">
-            <h2 id="h-verify">Student ID, Card &amp; QR Scanner</h2>
-            <p class="panel-sub">Scan a signed QR or short code to verify a slip. Registered cards and Student IDs show current clearance status but are not signed slips. Admins can register a student's card below; scanning that card later will find the linked student.</p>
-            <p><a href="../../phone_setup.txt" target="_blank" rel="noopener">Open the detailed phone scanner setup guide</a></p>
+            <h2 id="h-verify">Verify Slip</h2>
+            <p class="panel-sub">Check a student's clearance slip through the Hub.</p>
             <div class="verify-layout">
                 <form id="verify-form" class="verify-form">
-                    <label for="scan-input">Phone scanner input: QR, registered card, or Student ID</label>
-                    <input type="text" id="scan-input" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Click here before scanning">
-                    <label for="student-number-input">Manual Student ID lookup</label>
-                    <input type="text" id="student-number-input" maxlength="40" autocomplete="off" placeholder="Use the exact ID from the Registrar masterlist">
                     <label for="slip-code-input">Signed short code</label>
                     <input type="text" id="slip-code-input" maxlength="24" autocomplete="off" placeholder="ECH-XXXXXX">
-                    <label for="slip-token-input">Or signed token (legacy)</label>
-                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste a signed token if one was provided">
-                    <button class="btn" id="verify-btn" type="submit">Verify or look up</button>
+                    <label for="slip-token-input">Or signed token</label>
+                    <input type="text" id="slip-token-input" maxlength="512" autocomplete="off" placeholder="Paste the full token from the QR code">
+                    <button class="btn" id="verify-btn" type="submit">Verify slip</button>
                 </form>
                 <div class="result-card" id="verify-result" aria-live="polite">
                     <h3>Verification result</h3>
-                    <div class="result-empty" id="verify-empty">Enter one student ID, signed code, or token.</div>
+                    <div class="result-empty" id="verify-empty">Enter a code or token to see the result.</div>
                     <dl id="verify-list" hidden></dl>
                 </div>
-                <form id="card-register-form" class="verify-form form-card">
-                    <h3>Register student card</h3>
-                    <p class="panel-sub">Scan the card ID, then enter the student's exact Registrar ID. Each student can have one registered card; registering a replacement deactivates the previous card.</p>
-                    <label for="card-id-input">Scan or enter card ID</label>
-                    <input type="text" id="card-id-input" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}" autocomplete="off" autocapitalize="off" spellcheck="false" required>
-                    <label for="card-student-number-input">Student ID</label>
-                    <input type="text" id="card-student-number-input" maxlength="40" autocomplete="off" required>
-                    <p id="card-registration-message" class="msg" role="status" aria-live="polite" hidden></p>
-                    <button class="btn" id="register-card-btn" type="submit">Register card</button>
-                </form>
             </div>
         </div>
     </section>
@@ -337,6 +323,9 @@
 
 <script src="../../assets/js/tables.js"></script>
 <script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/idle.js"></script>
+<script src="../../assets/js/vendor/jsQR.js"></script>
+<script src="../../assets/js/scanner.js"></script>
 <script src="../../assets/js/admin.js"></script>
 </body>
 </html>

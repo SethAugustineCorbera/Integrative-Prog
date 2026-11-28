@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "dnsc-clearance-shell-v31";
+const CACHE_NAME = "dnsc-clearance-shell-v30";
 const BASE_URL = new URL("./", self.registration.scope);
 const APP_SHELL = [
   "index.html",
@@ -23,6 +23,9 @@ const APP_SHELL = [
   "assets/icons/contours.svg",
   "assets/js/api.js",
   "assets/js/tables.js",
+  "assets/js/idle.js",
+  "assets/js/scanner.js",
+  "assets/js/vendor/jsQR.js",
   "assets/js/admin.js",
   "modules/admin/admin.html",
   "assets/icons/clearance.svg",
